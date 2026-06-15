@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Tracker</title>
+<style>
+  :root {
+    --bg: #f7f6f3; --surface: #ffffff; --surface2: #f0ede8;
+    --border: #e2ddd7; --border-strong: #c8c2ba;
+    --text: #1a1917; --text-muted: #7a746c; --text-faint: #b0aa9f;
+    --accent: #2d6a4f; --accent-light: #e8f5ee; --accent-text: #1b4332;
+    --sidebar-w: 220px; --header-h: 56px;
+    --red: #c0392b; --red-bg: #fdf0ee;
+    --amber: #b7650a; --amber-bg: #fdf5e6;
+    --green: #2d6a4f; --green-bg: #e8f5ee;
+    --blue: #1a5fa8; --blue-bg: #eaf2fb;
+    --purple: #5b3fa8; --purple-bg: #f0edfc;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-size: 14px; }
+
+  .app { display: flex; flex: 1; overflow: hidden; }
+  .sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  header { height: var(--header-h); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 12px; flex-shrink: 0; }
+  .app-name { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+  .app-name span { color: var(--accent); }
+  header .spacer { flex: 1; }
+  .header-search { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; width: 220px; transition: border-color 0.15s; }
+  .header-search:focus-within { border-color: var(--accent); background: var(--surface); }
+  .header-search input { border: none; outline: none; background: transparent; font-size: 13px; color: var(--text); width: 100%; }
+  .header-search input::placeholder { color: var(--text-faint); }
+  .header-stats { display: flex; gap: 16px; }
+  .hstat { text-align: center; }
+  .hstat-val { font-size: 17px; font-weight: 600; line-height: 1; }
+  .hstat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+
+  .sidebar-section { padding: 12px 0 4px; }
+  .sidebar-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); padding: 0 14px 6px; }
+  .list-item { display: flex; align-items: center; gap: 8px; padding: 7px 14px; cursor: pointer; border-radius: 0; transition: background 0.1s; border: none; background: none; width: 100%; text-align: left; font-size: 13px; color: var(--text-muted); position: relative; }
+  .list-item:hover { background: var(--surface2); color: var(--text); }
+  .list-item.active { background: var(--accent-light); color: var(--accent-text); font-weight: 500; }
+  .list-item.active::before { content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 3px; background: var(--accent); border-radius: 0 2px 2px 0; }
+  .list-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .list-count { margin-left: auto; font-size: 11px; color: var(--text-faint); background: var(--surface2); padding: 1px 6px; border-radius: 10px; }
+  .list-item.active .list-count { background: var(--accent); color: white; }
+  .sidebar-add-list { display: flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 12px; color: var(--text-faint); cursor: pointer; border: none; background: none; width: 100%; }
+  .sidebar-add-list:hover { color: var(--accent); }
+  .list-item-edit { opacity: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 4px; border: none; background: none; color: var(--text-muted); font-size: 12px; cursor: pointer; flex-shrink: 0; transition: opacity 0.1s, background 0.1s; }
+  .list-item-wrap:hover .list-item-edit { opacity: 1; }
+  .list-item-edit:hover { background: var(--border); }
+  .list-name-input { background: transparent; border: none; border-bottom: 1.5px solid var(--accent); outline: none; font-size: 13px; font-weight: 500; color: var(--text); font-family: inherit; width: 100%; padding: 0; }
+  .list-title-input { background: transparent; border: none; border-bottom: 1.5px solid var(--accent); outline: none; font-size: 20px; font-weight: 600; letter-spacing: -0.02em; color: var(--text); font-family: inherit; min-width: 80px; }
+
+  .content { flex: 1; overflow-y: auto; padding: 20px 24px; }
+  .list-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+  .list-title { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; cursor: default; }
+  .list-title-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .list-header .spacer { flex: 1; }
+
+  .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-btn { padding: 5px 12px; border-radius: 16px; font-size: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; transition: all 0.1s; }
+  .filter-btn:hover { border-color: var(--border-strong); color: var(--text); }
+  .filter-btn.active { background: var(--text); color: var(--surface); border-color: var(--text); }
+  .toolbar-sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
+
+  .inline-add { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; cursor: text; transition: border-color 0.15s; }
+  .inline-add.expanded { border-color: var(--accent); cursor: default; }
+  .inline-add-collapsed { display: flex; align-items: center; gap: 8px; }
+  .inline-add-fields { display: none; flex-direction: column; gap: 10px; margin-top: 10px; }
+  .inline-add.expanded .inline-add-fields { display: flex; }
+  .inline-add-name { width: 100%; border: none; outline: none; font-size: 14px; background: transparent; color: var(--text); font-family: inherit; }
+  .inline-add-name::placeholder { color: var(--text-faint); }
+  .inline-add-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .inline-field { display: flex; flex-direction: column; gap: 3px; }
+  .inline-field label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-faint); }
+  .inline-field input, .inline-field select, .inline-field textarea { border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 13px; color: var(--text); background: var(--surface); outline: none; font-family: inherit; transition: border-color 0.15s; width: 100%; }
+  .inline-field input:focus, .inline-field select:focus, .inline-field textarea:focus { border-color: var(--accent); }
+  .inline-field textarea { resize: vertical; min-height: 52px; }
+  .inline-add-footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 2px; }
+
+  .btn { padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all 0.1s; }
+  .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .btn-primary:hover { background: var(--accent-text); }
+  .btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-danger { background: transparent; color: var(--red); border-color: var(--red); }
+  .btn-danger:hover { background: var(--red-bg); }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+  .tasks-section { margin-bottom: 24px; }
+  .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; transition: border-color 0.15s; }
+  .task-card:hover { border-color: var(--border-strong); }
+  .task-card.done { opacity: 0.5; }
+  .task-card.drag-over { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
+  .task-card.dragging { opacity: 0.4; }
+  .task-row { display: flex; align-items: flex-start; gap: 10px; padding: 11px 14px; }
+  .drag-handle { color: var(--text-faint); cursor: grab; font-size: 14px; padding-top: 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.1s; }
+  .task-card:hover .drag-handle { opacity: 1; }
+  .check-wrap { padding-top: 1px; flex-shrink: 0; }
+  .check { width: 17px; height: 17px; border: 1.5px solid var(--border-strong); border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+  .check:hover { border-color: var(--accent); }
+  .check.checked { background: var(--accent); border-color: var(--accent); }
+  .check.checked::after { content: ''; width: 9px; height: 5px; border-left: 2px solid white; border-bottom: 2px solid white; transform: rotate(-45deg) translateY(-1px); display: block; }
+  .task-body { flex: 1; min-width: 0; }
+  .task-name { font-size: 14px; font-weight: 500; line-height: 1.4; margin-bottom: 5px; word-break: break-word; }
+  .task-name.done { text-decoration: line-through; color: var(--text-muted); }
+  .task-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .badge { font-size: 11px; padding: 2px 7px; border-radius: 10px; font-weight: 500; white-space: nowrap; }
+  .badge-high { background: var(--red-bg); color: var(--red); }
+  .badge-medium { background: var(--amber-bg); color: var(--amber); }
+  .badge-low { background: var(--green-bg); color: var(--green); }
+  .badge-status { background: var(--surface2); color: var(--text-muted); }
+  .badge-status.inprog { background: var(--blue-bg); color: var(--blue); }
+  .badge-cat { background: var(--purple-bg); color: var(--purple); }
+  .badge-due { background: var(--surface2); color: var(--text-muted); }
+  .badge-due.overdue { background: var(--red-bg); color: var(--red); }
+  .badge-dodate { background: var(--blue-bg); color: var(--blue); }
+  .badge-recurring { background: var(--green-bg); color: var(--green); }
+  .badge-list { background: var(--surface2); color: var(--text-muted); }
+  .task-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .icon-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; border: none; background: none; color: var(--text-faint); font-size: 15px; transition: all 0.1s; }
+  .icon-btn:hover { background: var(--surface2); color: var(--text); }
+  .icon-btn.danger:hover { background: var(--red-bg); color: var(--red); }
+
+  .subtasks { border-top: 1px solid var(--border); padding: 6px 14px 10px 41px; display: flex; flex-direction: column; gap: 4px; }
+  .subtask-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
+  .subtask-name { font-size: 13px; flex: 1; color: var(--text); }
+  .subtask-name.done { text-decoration: line-through; color: var(--text-muted); }
+  .subtask-add-wrap { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; flex: 1; margin-top: 4px; }
+  .subtask-add-wrap input { flex: 1; font-size: 13px; border: none; outline: none; background: transparent; color: var(--text); }
+  .subtask-add-wrap input::placeholder { color: var(--text-faint); }
+  .progress-bar { height: 3px; background: var(--surface2); border-radius: 2px; margin: 4px 0 0; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
+  .task-note { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; font-style: italic; }
+
+  .empty { text-align: center; padding: 60px 20px; color: var(--text-faint); }
+  .empty-icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-title { font-size: 15px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; }
+  .search-group { margin-bottom: 20px; }
+  .search-group-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .search-group-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* Modal */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal { background: var(--surface); border-radius: 14px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 0; }
+  .modal-title { font-size: 16px; font-weight: 600; }
+  .modal-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+  .modal-footer { padding: 0 20px 18px; display: flex; gap: 8px; justify-content: flex-end; }
+  .field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .field input, .field select, .field textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 14px; color: var(--text); background: var(--surface); outline: none; font-family: inherit; transition: border-color 0.15s; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .field textarea { resize: vertical; min-height: 70px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
+  .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.1s; }
+  .color-dot:hover { transform: scale(1.15); }
+  .color-dot.selected { border-color: var(--text); }
+
+  /* Gmail sync modal */
+  .gmail-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
+  .gmail-item input[type=checkbox] { margin-top: 3px; flex-shrink: 0; accent-color: var(--accent); width: 15px; height: 15px; }
+  .gmail-item-body { flex: 1; }
+  .gmail-item-subject { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+  .gmail-item-preview { font-size: 12px; color: var(--text-muted); }
+  .gmail-status { font-size: 13px; color: var(--text-muted); text-align: center; padding: 16px; }
+  /* Ideas */
+  .idea-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; transition: border-color 0.15s; }
+  .idea-card:hover { border-color: var(--border-strong); }
+  .idea-text { flex: 1; font-size: 14px; line-height: 1.5; word-break: break-word; }
+  .idea-date { font-size: 11px; color: var(--text-faint); margin-top: 4px; }
+  .idea-add { display: flex; gap: 8px; margin-bottom: 16px; }
+  .idea-add textarea { flex: 1; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 14px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; resize: none; min-height: 60px; transition: border-color 0.15s; }
+  .idea-add textarea:focus { border-color: var(--accent); }
+  .idea-add-btn { align-self: flex-end; }
+  .idea-modal-text { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 14px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; resize: vertical; min-height: 100px; transition: border-color 0.15s; }
+  .idea-modal-text:focus { border-color: var(--accent); }
+
+  /* Mobile */
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99; }
+  .sidebar-overlay.visible { display: block; }
+  .menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 4px 6px; color: var(--text); font-size: 22px; line-height: 1; flex-shrink: 0; }
+
+  @media (max-width: 640px) {
+    header { padding: 0 12px; gap: 8px; }
+    .menu-btn { display: flex; align-items: center; }
+    .app-name { font-size: 14px; }
+    .header-search { flex: 1; min-width: 0; width: auto; }
+    .header-stats { gap: 10px; }
+    .hstat-val { font-size: 14px; }
+    .hstat-label { font-size: 9px; }
+
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 100; transform: translateX(-100%); transition: transform 0.25s ease; width: 260px; box-shadow: 4px 0 20px rgba(0,0,0,0.15); }
+    .sidebar.open { transform: translateX(0); }
+
+    .content { padding: 14px; }
+    .list-header { margin-bottom: 12px; }
+    .list-title { font-size: 17px; }
+    .toolbar { gap: 6px; margin-bottom: 12px; }
+    .filter-btn { padding: 4px 10px; font-size: 11px; }
+
+    .task-row { padding: 10px; gap: 8px; }
+    .drag-handle { display: none; }
+    .task-name { font-size: 13px; word-break: break-word; }
+    .badge { font-size: 10px; padding: 2px 6px; }
+    .task-right { gap: 2px; }
+    .icon-btn { width: 30px; height: 30px; font-size: 15px; }
+
+    .inline-add { padding: 10px 12px; }
+    .inline-add-row { grid-template-columns: 1fr; }
+
+    .list-item-edit { opacity: 1; }
+
+    .modal-bg { padding: 0; align-items: flex-end; }
+    .modal { border-radius: 16px 16px 0 0; max-height: 90vh; max-width: 100%; }
+  }
+
+</style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+<header>
+  <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+  <span class="app-name">My <span>Tracker</span></span>
+  <div class="spacer"></div>
+  <div class="header-search">
+    <span style="color:var(--text-faint);font-size:13px">⌕</span>
+    <input id="global-search" placeholder="Search tasks…" oninput="handleSearch(this.value)" />
+  </div>
+  <div class="header-stats" id="header-stats"></div>
+</header>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Views</div>
+      <button class="list-item" id="today-btn" onclick="setActiveList('__today__')">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;display:inline-block"></span>
+        <span>Today</span>
+        <span class="list-count" id="today-count" style="display:none"></span>
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Lists</div>
+      <div id="list-nav"></div>
+      <button class="sidebar-add-list" onclick="openNewListModal()">＋ New list</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Ideas</div>
+      <div id="idea-nav"></div>
+      <button class="sidebar-add-list" onclick="openNewIdeaModal()">＋ New idea space</button>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="content" id="content"></div>
+  </main>
+</div>
+
+<!-- Task Edit Modal -->
+<div class="modal-bg" id="task-modal" style="display:none" onclick="if(event.target===this)closeTaskModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Edit task</span>
+      <button class="icon-btn" onclick="closeTaskModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Task name</label><input id="tm-name" placeholder="What needs to be done?" /></div>
+      <div class="field-row">
+        <div class="field"><label>Status</label><select id="tm-status"><option>To do</option><option>In progress</option><option>Done</option></select></div>
+        <div class="field"><label>Priority</label><select id="tm-priority"><option>High</option><option selected>Medium</option><option>Low</option></select></div>
+      </div>
+      <div class="field"><label>Category</label><input id="tm-category" placeholder="e.g. Design, Dev…" /></div>
+      <div class="field-row">
+        <div class="field"><label>Deadline date</label><input type="date" id="tm-deadline-date" /></div>
+        <div class="field"><label>Deadline time</label><input type="time" id="tm-deadline-time" /></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Do date</label><input type="date" id="tm-do-date" /></div>
+        <div class="field"><label>Do time</label><input type="time" id="tm-do-time" /></div>
+      </div>
+      <div class="field"><label>Recurrence</label><select id="tm-recurrence"><option value="">None</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>
+      <div class="field"><label>Move to list</label><select id="tm-list"></select></div>
+      <div class="field"><label>Notes</label><textarea id="tm-notes" placeholder="Any extra context…"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeTaskModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTask()">Save task</button>
+    </div>
+  </div>
+</div>
+
+<!-- List Modal -->
+<div class="modal-bg" id="list-modal" style="display:none" onclick="if(event.target===this)closeListModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="list-modal-title">New list</span>
+      <button class="icon-btn" onclick="closeListModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>List name</label><input id="lm-name" placeholder="e.g. Work, Personal, Q3 Goals…" /></div>
+      <div class="field"><label>Color</label><div class="color-picker" id="lm-colors"></div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="lm-delete-btn" onclick="deleteListFromModal()" style="margin-right:auto;display:none">Delete list</button>
+      <button class="btn btn-ghost" onclick="closeListModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveList()">Save list</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gmail Sync Modal -->
+<div class="modal-bg" id="gmail-modal" style="display:none" onclick="if(event.target===this)closeGmailModal()">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <span class="modal-title">Sync from Gmail</span>
+      <button class="icon-btn" onclick="closeGmailModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-muted)">Emails with <strong>[task]</strong> in the subject will be parsed into tasks. Select which ones to import.</p>
+      <div id="gmail-list"><div class="gmail-status">Loading emails…</div></div>
+    </div>
+    <div class="modal-footer">
+      <span id="gmail-import-count" style="font-size:12px;color:var(--text-muted);margin-right:auto"></span>
+      <button class="btn btn-ghost" onclick="closeGmailModal()">Cancel</button>
+      <button class="btn btn-primary" id="gmail-import-btn" onclick="importSelectedEmails()" style="display:none">Import selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- Idea Edit Modal -->
+<div class="modal-bg" id="idea-modal" style="display:none" onclick="if(event.target===this)closeIdeaModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="idea-modal-title">Edit idea</span>
+      <button class="icon-btn" onclick="closeIdeaModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <textarea class="idea-modal-text" id="im-text" placeholder="Your idea…"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" onclick="deleteIdeaFromModal()" style="margin-right:auto">Delete</button>
+      <button class="btn btn-ghost" onclick="closeIdeaModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveIdea()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Idea Space Modal (new/edit space) -->
+<div class="modal-bg" id="idea-space-modal" style="display:none" onclick="if(event.target===this)closeIdeaSpaceModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="idea-space-modal-title">New idea space</span>
+      <button class="icon-btn" onclick="closeIdeaSpaceModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Name</label><input id="ism-name" placeholder="e.g. Book ideas, Travel, Side projects…" /></div>
+      <div class="field"><label>Color</label><div class="color-picker" id="ism-colors"></div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="ism-delete-btn" onclick="deleteIdeaSpaceFromModal()" style="margin-right:auto;display:none">Delete space</button>
+      <button class="btn btn-ghost" onclick="closeIdeaSpaceModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveIdeaSpace()">Save</button>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+const STORE_KEY = 'tracker_v3';
+const LIST_COLORS = ['#2d6a4f','#1a5fa8','#b7650a','#c0392b','#5b3fa8','#7a746c','#0077b6','#e76f51'];
+const TODAY = new Date().toISOString().slice(0,10);
+
+let state = {
+  lists: [
+    { id: 'tasks', name: 'Active tasks', color: '#2d6a4f' },
+  ],
+  ideas: [
+    { id: 'goals', name: 'Long-term goals', color: '#1a5fa8' },
+    { id: 'think', name: 'Things to think about', color: '#b7650a' },
+  ],
+  tasks: [],
+  activeList: 'tasks',
+  filterStatus: 'All',
+  filterPriority: 'All',
+  manualOrders: {},
+  completedCollapsed: {},
+};
+
+let editingTaskId = null;
+let editingListId = null;
+let expandedTasks = new Set();
+let pickedColor = LIST_COLORS[0];
+let searchQuery = '';
+let dragSrcId = null;
+let pendingEmails = [];
+
+// ── Persist ──────────────────────────────────────────────────────────
+let saveTimer = null;
+
+async function load() {
+  // Load from localStorage immediately so app is instant
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      state = { ...state, ...saved };
+      expandedTasks = new Set(saved._expanded || []);
+      migrateState();
+    }
+  } catch(e) {}
+  render();
+
+  // Then load from cloud and merge (cloud wins)
+  try {
+    const res = await fetch('/api/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'load' })
+    });
+    const data = await res.json();
+    if (data.state) {
+      state = { ...state, ...data.state };
+      expandedTasks = new Set(data.state._expanded || []);
+      migrateState();
+      localStorage.setItem(STORE_KEY, JSON.stringify({ ...state, _expanded: [...expandedTasks] }));
+      render();
+    }
+  } catch(e) {
+    console.warn('Cloud load failed, using local data:', e);
+  }
+}
+
+function migrateState() {
+  // Ensure ideas array exists
+  if (!state.ideas) state.ideas = [];
+  if (!state.notes) state.notes = [];
+
+  // Move goals/think from lists to ideas if they're still in lists
+  const ideaIds = ['goals', 'think'];
+  ideaIds.forEach(id => {
+    const inLists = state.lists.find(l => l.id === id);
+    const inIdeas = state.ideas.find(l => l.id === id);
+    if (inLists && !inIdeas) {
+      // Move to ideas
+      state.ideas.push(inLists);
+      state.lists = state.lists.filter(l => l.id !== id);
+    }
+  });
+
+  // If no lists remain, add default
+  if (state.lists.length === 0) {
+    state.lists.push({ id: 'tasks', name: 'Active tasks', color: '#2d6a4f' });
+  }
+
+  // If activeList is now in ideas, keep it; if it's gone entirely, reset
+  const allIds = [...state.lists.map(l=>l.id), ...state.ideas.map(l=>l.id), '__today__'];
+  if (!allIds.includes(state.activeList)) {
+    state.activeList = state.lists[0]?.id || '';
+  }
+}
+
+function save() {
+  // Save to localStorage immediately
+  const payload = { ...state, _expanded: [...expandedTasks] };
+  localStorage.setItem(STORE_KEY, JSON.stringify(payload));
+
+  // Debounce cloud save — wait 1.5s after last change before saving
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'save', state: payload })
+      });
+    } catch(e) {
+      console.warn('Cloud save failed:', e);
+    }
+  }, 1500);
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+// ── Helpers ──────────────────────────────────────────────────────────
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function fmtDateTime(date, time) {
+  if (!date) return '';
+  const dt = new Date(date + 'T00:00:00');
+  const datePart = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (!time) return datePart;
+  const [h, m] = time.split(':');
+  const hour = parseInt(h);
+  return `${datePart} ${hour%12||12}:${m}${hour>=12?'pm':'am'}`;
+}
+
+function isOverdue(deadlineDate, status) {
+  if (!deadlineDate || status === 'Done') return false;
+  return new Date(deadlineDate + 'T00:00:00') < new Date(TODAY + 'T00:00:00');
+}
+
+function isToday(date) { return date === TODAY; }
+function getList(id) { return state.lists.find(l => l.id === id); }
+function getIdea(id) { return (state.ideas||[]).find(l => l.id === id); }
+function isIdeaSpace(id) { return !!(state.ideas||[]).find(l => l.id === id); }
+function getListTasks(listId) { return state.tasks.filter(t => t.listId === listId && !t.parentId); }
+function getIdeaNotes(spaceId) { return (state.notes||[]).filter(n => n.spaceId === spaceId); }
+function getSubtasks(parentId) { return state.tasks.filter(t => t.parentId === parentId); }
+
+function advanceDate(date, recurrence) {
+  if (!date) return '';
+  const d = new Date(date + 'T00:00:00');
+  if (recurrence === 'daily') d.setDate(d.getDate() + 1);
+  else if (recurrence === 'weekly') d.setDate(d.getDate() + 7);
+  else if (recurrence === 'monthly') d.setMonth(d.getMonth() + 1);
+  return d.toISOString().slice(0,10);
+}
+
+function earliestDate(t) {
+  const dates = [t.doDate, t.deadlineDate].filter(Boolean);
+  if (!dates.length) return null;
+  return dates.reduce((min, d) => d < min ? d : min);
+}
+
+function sortedTasks(tasks, listId) {
+  const order = state.manualOrders[listId];
+  if (order && order.length) {
+    const map = new Map(tasks.map(t => [t.id, t]));
+    const sorted = order.map(id => map.get(id)).filter(Boolean);
+    tasks.forEach(t => { if (!order.includes(t.id)) sorted.push(t); });
+    return sorted;
+  }
+  return [...tasks].sort((a, b) => {
+    if (a.status === 'Done' && b.status !== 'Done') return 1;
+    if (b.status === 'Done' && a.status !== 'Done') return -1;
+    const da = earliestDate(a), db = earliestDate(b);
+    if (da && db) return new Date(da) - new Date(db);
+    if (da) return -1;
+    if (db) return 1;
+    return 0;
+  });
+}
+
+// ── Render ───────────────────────────────────────────────────────────
+function render() {
+  renderSidebar();
+  renderContent();
+  renderHeaderStats();
+}
+
+function renderHeaderStats() {
+  const total = state.tasks.filter(t => !t.parentId).length;
+  const done = state.tasks.filter(t => !t.parentId && t.status === 'Done').length;
+  const overdue = state.tasks.filter(t => !t.parentId && isOverdue(t.deadlineDate, t.status)).length;
+  document.getElementById('header-stats').innerHTML = `
+    <div class="hstat"><div class="hstat-val">${total}</div><div class="hstat-label">Total</div></div>
+    <div class="hstat"><div class="hstat-val">${done}</div><div class="hstat-label">Done</div></div>
+    <div class="hstat"><div class="hstat-val" style="color:${overdue>0?'var(--red)':'inherit'}">${overdue}</div><div class="hstat-label">Overdue</div></div>
+  `;
+  const todayCount = state.tasks.filter(t => !t.parentId && isToday(t.doDate) && t.status !== 'Done').length;
+  const tc = document.getElementById('today-count');
+  if (tc) { tc.textContent = todayCount; tc.style.display = todayCount > 0 ? '' : 'none'; }
+  document.getElementById('today-btn').className = 'list-item' + (state.activeList === '__today__' ? ' active' : '');
+}
+
+function renderSidebar() {
+  const nav = document.getElementById('list-nav');
+  nav.innerHTML = state.lists.map(l => {
+    const count = getListTasks(l.id).filter(t => t.status !== 'Done').length;
+    return `<div class="list-item-wrap" style="display:flex;align-items:center;position:relative">
+      <button class="list-item${state.activeList === l.id ? ' active' : ''}" style="flex:1;padding-right:28px" onclick="handleSidebarListClick(event,'${l.id}')">
+        <span class="list-dot" style="background:${l.color}"></span>
+        <span id="sidebar-list-name-${l.id}">${esc(l.name)}</span>
+        ${count > 0 ? `<span class="list-count">${count}</span>` : ''}
+      </button>
+      <button class="list-item-edit" style="position:absolute;right:6px" onclick="event.stopPropagation();openEditListModal('${l.id}')" title="Edit list">✎</button>
+    </div>`;
+  }).join('');
+
+  const ideaNav = document.getElementById('idea-nav');
+  ideaNav.innerHTML = (state.ideas||[]).map(l => {
+    const count = getIdeaNotes(l.id).length;
+    return `<div class="list-item-wrap" style="display:flex;align-items:center;position:relative">
+      <button class="list-item${state.activeList === l.id ? ' active' : ''}" style="flex:1;padding-right:28px" onclick="handleSidebarListClick(event,'${l.id}')">
+        <span class="list-dot" style="background:${l.color}"></span>
+        <span id="sidebar-list-name-${l.id}">${esc(l.name)}</span>
+        ${count > 0 ? `<span class="list-count">${count}</span>` : ''}
+      </button>
+      <button class="list-item-edit" style="position:absolute;right:6px" onclick="event.stopPropagation();openEditIdeaSpaceModal('${l.id}')" title="Edit">✎</button>
+    </div>`;
+  }).join('');
+}
+
+function renderContent() {
+  if (searchQuery.trim()) { renderSearch(); return; }
+  if (state.activeList === '__today__') { renderTodayView(); return; }
+  if (isIdeaSpace(state.activeList)) { renderIdeaView(); return; }
+  renderListView();
+}
+
+function renderListView() {
+  const list = getList(state.activeList);
+  if (!list) return;
+  const isThink = list.id === 'think';
+  const hasManualOrder = !!(state.manualOrders[list.id] && state.manualOrders[list.id].length);
+
+  let tasks = getListTasks(state.activeList);
+  if (state.filterStatus !== 'All') tasks = tasks.filter(t => t.status === state.filterStatus);
+  if (state.filterPriority !== 'All') tasks = tasks.filter(t => t.priority === state.filterPriority);
+
+  const allSorted = sortedTasks(tasks, list.id);
+  const active = allSorted.filter(t => t.status !== 'Done');
+  const done = allSorted.filter(t => t.status === 'Done');
+  const doneCollapsed = state.completedCollapsed[list.id] !== false;
+  const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const visibleDone = done.filter(t => !t.completedAt || new Date(t.completedAt) > sevenDaysAgo);
+
+  document.getElementById('content').innerHTML = `
+    <div class="list-header">
+      <span class="list-title-dot" style="background:${list.color}"></span>
+      <span class="list-title" id="list-title-display" onclick="handleTitleClick(event,'${list.id}')" title="Triple-click to rename">${esc(list.name)}</span>
+      <div class="spacer"></div>
+      ${hasManualOrder ? `<button class="btn btn-ghost btn-sm" onclick="resetOrder('${list.id}')">↺ Auto-sort</button>` : ''}
+      <button class="btn btn-ghost btn-sm" onclick="openGmailModal()" style="gap:5px;display:flex;align-items:center">
+        <span style="font-size:14px">✉</span> Sync Gmail
+      </button>
+    </div>
+    <div class="toolbar">
+      ${['All','To do','In progress','Done'].map(s =>
+        `<button class="filter-btn${state.filterStatus===s?' active':''}" onclick="setFilterStatus('${s}')">${s}</button>`
+      ).join('')}
+      <div class="toolbar-sep"></div>
+      ${['All','High','Medium','Low'].map(p =>
+        `<button class="filter-btn${state.filterPriority===p?' active':''}" onclick="setFilterPriority('${p}')">${p}</button>`
+      ).join('')}
+    </div>
+    ${renderInlineAdd()}
+    <div id="task-sections">
+      ${active.length === 0 && visibleDone.length === 0 ? renderEmpty(isThink) : ''}
+      ${active.length > 0 ? `<div class="tasks-section">${renderTaskCards(active, isThink, list.id)}</div>` : ''}
+      ${visibleDone.length > 0 ? `
+        <div class="tasks-section">
+          <div class="section-label" onclick="toggleDoneCollapsed('${list.id}')">
+            ${doneCollapsed ? '▶' : '▼'} Completed (${visibleDone.length})
+          </div>
+          ${doneCollapsed ? '' : renderTaskCards(visibleDone, isThink, list.id)}
+        </div>` : ''}
+    </div>
+  `;
+  initDrag();
+}
+
+function renderTodayView() {
+  const todayTasks = state.tasks.filter(t => !t.parentId && isToday(t.doDate));
+  const active = todayTasks.filter(t => t.status !== 'Done');
+  const done = todayTasks.filter(t => t.status === 'Done');
+  const doneCollapsed = state.completedCollapsed['__today__'] !== false;
+
+  document.getElementById('content').innerHTML = `
+    <div class="list-header">
+      <span class="list-title">Today</span>
+      <div class="spacer"></div>
+    </div>
+    <div id="task-sections">
+      ${todayTasks.length === 0 ? `<div class="empty"><div class="empty-icon">🎉</div><div class="empty-title">Nothing scheduled for today</div><div class="empty-sub">Tasks with today's Do Date appear here</div></div>` : ''}
+      ${active.length > 0 ? `<div class="tasks-section">${active.map(t => renderSingleTaskCard(t, false, null, getList(t.listId))).join('')}</div>` : ''}
+      ${done.length > 0 ? `
+        <div class="tasks-section">
+          <div class="section-label" onclick="toggleDoneCollapsed('__today__')">${doneCollapsed?'▶':'▼'} Completed (${done.length})</div>
+          ${doneCollapsed ? '' : done.map(t => renderSingleTaskCard(t, false, null, getList(t.listId))).join('')}
+        </div>` : ''}
+    </div>
+  `;
+}
+
+
+// ── Gmail Sync ────────────────────────────────────────────────────────
+async function openGmailModal() {
+  document.getElementById('gmail-modal').style.display = 'flex';
+  document.getElementById('gmail-list').innerHTML = '<div class="gmail-status">Searching for emails with [task] in subject…</div>';
+  document.getElementById('gmail-import-btn').style.display = 'none';
+  document.getElementById('gmail-import-count').textContent = '';
+  pendingEmails = [];
+
+  try {
+    const response = await fetch('/api/outlook', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'fetch' })
+    });
+
+    // Handle auth redirect
+    if (response.status === 401) {
+      const data = await response.json();
+      if (data.error === 'NOT_AUTHED') {
+        document.getElementById('gmail-list').innerHTML = `
+          <div class="gmail-status">
+            <p style="margin-bottom:12px">You need to connect your Gmail account first.</p>
+            <button class="btn btn-primary" onclick="connectGmail()">Connect Gmail</button>
+          </div>`;
+        return;
+      }
+    }
+
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    let emails = data.emails || [];
+
+    if (!emails || emails.length === 0) {
+      document.getElementById('gmail-list').innerHTML = '<div class="gmail-status">No emails found with [task] in the subject.</div>';
+      return;
+    }
+
+    pendingEmails = emails;
+    document.getElementById('gmail-list').innerHTML = emails.map((e, i) => `
+      <div class="gmail-item">
+        <input type="checkbox" id="email-${i}" checked onchange="updateImportCount()">
+        <div class="gmail-item-body">
+          <div class="gmail-item-subject">${esc(e.subject)}</div>
+          <div class="gmail-item-preview">${esc(e.from)} · ${esc(e.date)}</div>
+          <div class="gmail-item-preview" style="margin-top:3px">${esc((e.body||'').slice(0,120))}…</div>
+        </div>
+      </div>`).join('');
+    document.getElementById('gmail-import-btn').style.display = '';
+    updateImportCount();
+  } catch(err) {
+    document.getElementById('gmail-list').innerHTML = `<div class="gmail-status">Error: ${esc(String(err))}.<br>Make sure Gmail is connected in Claude settings.</div>`;
+  }
+}
+
+function updateImportCount() {
+  const checked = pendingEmails.filter((_,i) => document.getElementById('email-'+i)?.checked).length;
+  document.getElementById('gmail-import-count').textContent = `${checked} email${checked!==1?'s':''} selected`;
+}
+
+async function importSelectedEmails() {
+  const selected = pendingEmails.filter((_,i) => document.getElementById('email-'+i)?.checked);
+  if (!selected.length) return;
+
+  document.getElementById('gmail-import-btn').textContent = 'Importing…';
+  document.getElementById('gmail-import-btn').disabled = true;
+
+  for (const email of selected) {
+    try {
+      const parseRes = await fetch('/api/outlook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'parse', email, listIds: state.lists.map(l => l.id) })
+      });
+      const parseData = await parseRes.json();
+      if (parseData.error) throw new Error(parseData.error);
+      const parsed = parseData.task;
+      state.tasks.push({
+          id: uid(),
+          name: parsed.name || email.subject.replace(/\[task\]/gi,'').trim(),
+          listId: state.lists.find(l => l.id === parsed.listId) ? parsed.listId : state.lists[0].id,
+          status: 'To do',
+          priority: ['High','Medium','Low'].includes(parsed.priority) ? parsed.priority : 'Medium',
+          category: parsed.category || '',
+          deadlineDate: parsed.deadlineDate || '',
+          deadlineTime: '',
+          doDate: parsed.doDate || '',
+          doTime: '',
+          recurrence: '',
+          notes: parsed.notes || '',
+          parentId: null,
+          importedFromEmail: email.id,
+        });
+    } catch(e) {
+      console.error('Failed to parse email:', e);
+      // fallback: add with subject as name
+      state.tasks.push({
+        id: uid(), name: email.subject.replace(/\[task\]/gi,'').trim(),
+        listId: state.lists[0].id, status: 'To do', priority: 'Medium',
+        category: '', deadlineDate: '', deadlineTime: '', doDate: '', doTime: '',
+        recurrence: '', notes: email.body || '', parentId: null
+      });
+    }
+  }
+
+  save();
+  closeGmailModal();
+  render();
+}
+
+async function connectGmail() {
+  const clientId = 'a187c147-706a-4de2-bb67-a5eb8a566c20';
+  const tenantId = '5618660f-3008-458d-9f44-ed60f5495a14';
+  const redirectUri = window.location.origin + '/api/auth';
+  const scope = 'https://graph.microsoft.com/Mail.Read offline_access';
+  const url = 'https://login.microsoftonline.com/' + tenantId + '/oauth2/v2.0/authorize?client_id=' + clientId + '&redirect_uri=' + encodeURIComponent(redirectUri) + '&response_type=code&scope=' + encodeURIComponent(scope) + '&prompt=consent';
+  const popup = window.open(url, 'outlook_auth', 'width=500,height=600');
+  if (!popup) { alert('Please allow popups for this site and try again.'); return; }
+  window.addEventListener('message', async (e) => {
+    if (e.data === 'outlook_authed') {
+      popup && popup.close();
+      document.getElementById('gmail-list').innerHTML = '<div class="gmail-status">Outlook connected! Loading emails…</div>';
+      await openGmailModal();
+    }
+  }, { once: true });
+}
+
+function closeGmailModal() {
+  document.getElementById('gmail-modal').style.display = 'none';
+  document.getElementById('gmail-import-btn').textContent = 'Import selected';
+  document.getElementById('gmail-import-btn').disabled = false;
+}
+
+// ── Idea View ─────────────────────────────────────────────────────────
+function renderIdeaView() {
+  const space = getIdea(state.activeList);
+  if (!space) return;
+  const notes = getIdeaNotes(state.activeList).sort((a,b) => b.createdAt - a.createdAt);
+
+  document.getElementById('content').innerHTML = `
+    <div class="list-header">
+      <span class="list-title-dot" style="background:${space.color}"></span>
+      <span class="list-title" id="list-title-display" onclick="handleTitleClick(event,'${space.id}')">${esc(space.name)}</span>
+      <div class="spacer"></div>
+    </div>
+    <div class="idea-add">
+      <textarea id="idea-input" placeholder="Capture an idea…" onkeydown="handleIdeaEnter(event)"></textarea>
+      <button class="btn btn-primary idea-add-btn" onclick="submitIdea()">Add</button>
+    </div>
+    <div id="idea-list">
+      ${notes.length === 0 ? `<div class="empty"><div class="empty-icon">💡</div><div class="empty-title">No ideas yet</div><div class="empty-sub">Start capturing your thoughts above</div></div>` :
+        notes.map(n => `
+          <div class="idea-card" onclick="openIdeaModal('${n.id}')">
+            <div style="flex:1">
+              <div class="idea-text">${esc(n.text)}</div>
+              <div class="idea-date">${new Date(n.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+            </div>
+            <button class="icon-btn danger" onclick="event.stopPropagation();deleteNote('${n.id}')" style="flex-shrink:0">🗑</button>
+          </div>`).join('')}
+    </div>
+  `;
+  setTimeout(() => document.getElementById('idea-input')?.focus(), 50);
+}
+
+function handleIdeaEnter(e) {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submitIdea(); }
+}
+
+function submitIdea() {
+  const text = document.getElementById('idea-input')?.value.trim();
+  if (!text) return;
+  if (!state.notes) state.notes = [];
+  state.notes.push({ id: uid(), spaceId: state.activeList, text, createdAt: Date.now() });
+  save(); renderIdeaView();
+}
+
+// Idea edit modal
+let editingNoteId = null;
+function openIdeaModal(id) {
+  editingNoteId = id;
+  const note = (state.notes||[]).find(n => n.id === id);
+  if (!note) return;
+  document.getElementById('idea-modal-title').textContent = 'Edit idea';
+  document.getElementById('im-text').value = note.text;
+  document.getElementById('idea-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('im-text').focus(), 50);
+}
+function closeIdeaModal() { document.getElementById('idea-modal').style.display = 'none'; }
+function saveIdea() {
+  const text = document.getElementById('im-text').value.trim();
+  if (!text) return;
+  const note = (state.notes||[]).find(n => n.id === editingNoteId);
+  if (note) note.text = text;
+  closeIdeaModal(); save(); renderIdeaView();
+}
+function deleteIdeaFromModal() {
+  if (!confirm('Delete this idea?')) return;
+  deleteNote(editingNoteId);
+  closeIdeaModal();
+}
+function deleteNote(id) {
+  state.notes = (state.notes||[]).filter(n => n.id !== id);
+  save(); renderIdeaView();
+}
+
+// Idea space modal
+let editingIdeaSpaceId = null;
+let pickedIdeaColor = LIST_COLORS[2];
+
+function renderIdeaColorPicker() {
+  document.getElementById('ism-colors').innerHTML = LIST_COLORS.map(c =>
+    `<div class="color-dot${pickedIdeaColor===c?' selected':''}" style="background:${c}" onclick="pickIdeaColor('${c}')"></div>`).join('');
+}
+function pickIdeaColor(c) { pickedIdeaColor = c; renderIdeaColorPicker(); }
+
+function openNewIdeaModal() {
+  editingIdeaSpaceId = null; pickedIdeaColor = LIST_COLORS[2];
+  document.getElementById('idea-space-modal-title').textContent = 'New idea space';
+  document.getElementById('ism-name').value = '';
+  document.getElementById('ism-delete-btn').style.display = 'none';
+  renderIdeaColorPicker();
+  document.getElementById('idea-space-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('ism-name').focus(), 50);
+}
+function openEditIdeaSpaceModal(id) {
+  editingIdeaSpaceId = id;
+  const space = getIdea(id); pickedIdeaColor = space.color;
+  document.getElementById('idea-space-modal-title').textContent = 'Edit idea space';
+  document.getElementById('ism-name').value = space.name;
+  document.getElementById('ism-delete-btn').style.display = 'block';
+  renderIdeaColorPicker();
+  document.getElementById('idea-space-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('ism-name').focus(), 50);
+}
+function closeIdeaSpaceModal() { document.getElementById('idea-space-modal').style.display = 'none'; }
+function saveIdeaSpace() {
+  const name = document.getElementById('ism-name').value.trim(); if (!name) return;
+  if (!state.ideas) state.ideas = [];
+  if (editingIdeaSpaceId) {
+    const s = getIdea(editingIdeaSpaceId); s.name = name; s.color = pickedIdeaColor;
+  } else {
+    state.ideas.push({ id: uid(), name, color: pickedIdeaColor });
+  }
+  closeIdeaSpaceModal(); save(); render();
+}
+function deleteIdeaSpaceFromModal() {
+  const space = getIdea(editingIdeaSpaceId);
+  const noteCount = getIdeaNotes(editingIdeaSpaceId).length;
+  if (!confirm(noteCount > 0 ? `Delete "${space.name}"? This will delete ${noteCount} idea${noteCount>1?'s':''}.` : `Delete "${space.name}"?`)) return;
+  state.ideas = (state.ideas||[]).filter(s => s.id !== editingIdeaSpaceId);
+  state.notes = (state.notes||[]).filter(n => n.spaceId !== editingIdeaSpaceId);
+  if (state.activeList === editingIdeaSpaceId) state.activeList = state.lists[0]?.id || '';
+  closeIdeaSpaceModal(); save(); render();
+}
+
+
+function renderSearch() {
+  const q = searchQuery.toLowerCase();
+  const matches = state.tasks.filter(t => !t.parentId && (
+    t.name.toLowerCase().includes(q) ||
+    (t.category||'').toLowerCase().includes(q) ||
+    (t.notes||'').toLowerCase().includes(q)
+  ));
+  const byList = {};
+  matches.forEach(t => { if (!byList[t.listId]) byList[t.listId] = []; byList[t.listId].push(t); });
+  document.getElementById('content').innerHTML = `
+    <div class="list-header">
+      <span class="list-title">Search: "${esc(searchQuery)}"</span>
+      <div class="spacer"></div>
+      <span style="font-size:13px;color:var(--text-muted)">${matches.length} result${matches.length!==1?'s':''}</span>
+    </div>
+    ${matches.length === 0 ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No results</div></div>` :
+      Object.entries(byList).map(([listId, tasks]) => {
+        const list = getList(listId);
+        return `<div class="search-group">
+          <div class="search-group-label"><span class="list-dot" style="background:${list?.color||'#999'}"></span>${esc(list?.name||listId)}</div>
+          ${tasks.map(t => renderSingleTaskCard(t, list?.id==='think', null, null)).join('')}
+        </div>`;
+      }).join('')}
+  `;
+}
+
+function renderInlineAdd() {
+  return `<div class="inline-add" id="inline-add" onclick="expandInlineAdd()">
+    <div class="inline-add-collapsed">
+      <span style="color:var(--text-faint);font-size:16px">+</span>
+      <input class="inline-add-name" id="ia-name" placeholder="Add a task…" oninput="expandInlineAdd()" />
+    </div>
+    <div class="inline-add-fields">
+      <div class="inline-add-row">
+        <div class="inline-field"><label>Status</label><select id="ia-status"><option>To do</option><option>In progress</option><option>Done</option></select></div>
+        <div class="inline-field"><label>Priority</label><select id="ia-priority"><option>High</option><option selected>Medium</option><option>Low</option></select></div>
+      </div>
+      <div class="inline-field"><label>Category</label><input id="ia-category" placeholder="e.g. Design, Dev…" /></div>
+      <div class="inline-add-row">
+        <div class="inline-field"><label>Deadline date</label><input type="date" id="ia-deadline-date" /></div>
+        <div class="inline-field"><label>Deadline time</label><input type="time" id="ia-deadline-time" /></div>
+      </div>
+      <div class="inline-add-row">
+        <div class="inline-field"><label>Do date</label><input type="date" id="ia-do-date" /></div>
+        <div class="inline-field"><label>Do time</label><input type="time" id="ia-do-time" /></div>
+      </div>
+      <div class="inline-field"><label>Recurrence</label><select id="ia-recurrence"><option value="">None</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>
+      <div class="inline-field"><label>Notes</label><textarea id="ia-notes" placeholder="Any extra context…"></textarea></div>
+      <div class="inline-add-footer">
+        <button class="btn btn-ghost" onclick="collapseInlineAdd()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitInlineAdd()">Add task</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderTaskCards(tasks, isThink, listId) {
+  return tasks.map(t => renderSingleTaskCard(t, isThink, listId, null)).join('');
+}
+
+function renderSingleTaskCard(t, isThink, listId, sourceList) {
+  const subs = getSubtasks(t.id);
+  const doneSubs = subs.filter(s => s.status === 'Done').length;
+  const expanded = expandedTasks.has(t.id);
+  const over = isOverdue(t.deadlineDate, t.status);
+  const progressPct = subs.length > 0 ? Math.round((doneSubs / subs.length) * 100) : 0;
+  const list = sourceList || getList(t.listId);
+
+  return `<div class="task-card${t.status==='Done'?' done':''}${isThink?' think-card':''}" id="tc-${t.id}"
+    draggable="true" ondragstart="dragStart(event,'${t.id}')" ondragover="dragOver(event,'${t.id}')" ondrop="dragDrop(event,'${t.id}','${listId||t.listId}')" ondragleave="dragLeave(event)" ondragend="dragEnd(event)">
+    <div class="task-row" onclick="openTaskModal('${t.id}')" style="cursor:pointer">
+      <span class="drag-handle" title="Drag to reorder">⠿</span>
+      <div class="check-wrap" onclick="event.stopPropagation()"><div class="check${t.status==='Done'?' checked':''}" onclick="toggleDone('${t.id}')"></div></div>
+      <div class="task-body">
+        <div class="task-name${t.status==='Done'?' done':''}">${esc(t.name)}</div>
+        ${t.notes ? `<div class="task-note">${esc(t.notes)}</div>` : ''}
+        <div class="task-meta" style="margin-top:5px">
+          <span class="badge badge-${t.priority.toLowerCase()}">${t.priority}</span>
+          ${t.status !== 'To do' ? `<span class="badge badge-status${t.status==='In progress'?' inprog':''}">${t.status}</span>` : ''}
+          ${t.category ? `<span class="badge badge-cat">${esc(t.category)}</span>` : ''}
+          ${t.deadlineDate ? `<span class="badge badge-due${over?' overdue':''}">⏰ ${fmtDateTime(t.deadlineDate, t.deadlineTime)}${over?' · overdue':''}</span>` : ''}
+          ${t.doDate ? `<span class="badge badge-dodate">🗓 ${fmtDateTime(t.doDate, t.doTime)}</span>` : ''}
+          ${t.recurrence ? `<span class="badge badge-recurring">↻ ${t.recurrence}</span>` : ''}
+          ${(state.activeList === '__today__' || searchQuery) && list ? `<span class="badge badge-list">${esc(list.name)}</span>` : ''}
+          ${subs.length > 0 ? `<span class="badge badge-status">${doneSubs}/${subs.length} subtasks</span>` : ''}
+        </div>
+        ${subs.length > 0 ? `<div class="progress-bar"><div class="progress-fill" style="width:${progressPct}%"></div></div>` : ''}
+      </div>
+      <div class="task-right" onclick="event.stopPropagation()">
+        <button class="icon-btn" onclick="toggleExpand('${t.id}')">${expanded ? '▲' : '▼'}</button>
+        <button class="icon-btn" onclick="openTaskModal('${t.id}')">✎</button>
+        <button class="icon-btn danger" onclick="deleteTask('${t.id}')">🗑</button>
+      </div>
+    </div>
+    ${expanded ? renderSubtasks(t.id, subs) : ''}
+  </div>`;
+}
+
+function renderSubtasks(parentId, subs) {
+  return `<div class="subtasks">
+    ${subs.map(s => `<div class="subtask-row">
+      <div class="check${s.status==='Done'?' checked':''}" onclick="toggleDone('${s.id}')" style="width:15px;height:15px;border-radius:4px;flex-shrink:0"></div>
+      <span class="subtask-name${s.status==='Done'?' done':''}">${esc(s.name)}</span>
+      <button class="icon-btn danger" style="width:22px;height:22px;font-size:12px" onclick="deleteTask('${s.id}')">✕</button>
+    </div>`).join('')}
+    <div class="subtask-add-wrap">
+      <div style="color:var(--text-faint);font-size:13px">+</div>
+      <input placeholder="Add subtask…" onkeydown="handleSubtaskAdd(event,'${parentId}')" />
+    </div>
+  </div>`;
+}
+
+function renderEmpty(isThink) {
+  if (isThink) return `<div class="empty"><div class="empty-icon">💭</div><div class="empty-title">Nothing to think about yet</div><div class="empty-sub">Add ideas, questions, or things to revisit later</div></div>`;
+  return `<div class="empty"><div class="empty-icon">✓</div><div class="empty-title">All clear</div><div class="empty-sub">Click the + above to add a task</div></div>`;
+}
+
+// ── Drag & Drop ──────────────────────────────────────────────────────
+function initDrag() {}
+function dragStart(e, id) {
+  dragSrcId = id; e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => { const el = document.getElementById('tc-'+id); if(el) el.classList.add('dragging'); }, 0);
+}
+function dragOver(e, id) {
+  e.preventDefault(); e.dataTransfer.dropEffect = 'move';
+  if (id === dragSrcId) return;
+  document.querySelectorAll('.task-card.drag-over').forEach(el => el.classList.remove('drag-over'));
+  const el = document.getElementById('tc-'+id); if(el) el.classList.add('drag-over');
+}
+function dragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+function dragDrop(e, targetId, listId) {
+  e.preventDefault();
+  if (!dragSrcId || dragSrcId === targetId) return;
+  const cards = [...document.querySelectorAll('#task-sections .task-card')].map(el => el.id.replace('tc-',''));
+  const srcIdx = cards.indexOf(dragSrcId), tgtIdx = cards.indexOf(targetId);
+  if (srcIdx < 0 || tgtIdx < 0) return;
+  cards.splice(srcIdx, 1); cards.splice(tgtIdx, 0, dragSrcId);
+  state.manualOrders[listId] = cards;
+  save(); render();
+}
+function dragEnd(e) {
+  document.querySelectorAll('.task-card').forEach(el => el.classList.remove('dragging','drag-over'));
+  dragSrcId = null;
+}
+function resetOrder(listId) { delete state.manualOrders[listId]; save(); render(); }
+
+// ── Actions ──────────────────────────────────────────────────────────
+function setActiveList(id) {
+  state.activeList = id; state.filterStatus = 'All'; state.filterPriority = 'All';
+  searchQuery = ''; document.getElementById('global-search').value = '';
+  closeSidebar();
+  save(); render();
+}
+function setFilterStatus(s) { state.filterStatus = s; save(); render(); }
+function setFilterPriority(p) { state.filterPriority = p; save(); render(); }
+
+function toggleSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('visible');
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('visible');
+}
+
+
+function toggleDoneCollapsed(listId) {
+  const cur = state.completedCollapsed[listId];
+  state.completedCollapsed[listId] = (cur === false) ? true : false;
+  save(); render();
+}
+
+function toggleDone(id) {
+  const t = state.tasks.find(x => x.id === id);
+  if (!t) return;
+  const wasDone = t.status === 'Done';
+  t.status = wasDone ? 'To do' : 'Done';
+  if (!wasDone) {
+    t.completedAt = new Date().toISOString();
+    if (t.recurrence && !t.parentId) {
+      state.tasks.push({ ...t, id: uid(), status: 'To do', completedAt: null,
+        doDate: advanceDate(t.doDate, t.recurrence),
+        deadlineDate: advanceDate(t.deadlineDate, t.recurrence) });
+    }
+  } else { t.completedAt = null; }
+  save(); render();
+}
+
+function toggleExpand(id) {
+  if (expandedTasks.has(id)) expandedTasks.delete(id); else expandedTasks.add(id);
+  save(); render();
+}
+
+function deleteTask(id) {
+  state.tasks = state.tasks.filter(t => t.id !== id && t.parentId !== id);
+  Object.keys(state.manualOrders).forEach(listId => {
+    state.manualOrders[listId] = state.manualOrders[listId].filter(tid => tid !== id);
+  });
+  save(); render();
+}
+
+function handleSubtaskAdd(e, parentId) {
+  if (e.key !== 'Enter') return;
+  const val = e.target.value.trim(); if (!val) return;
+  const parent = state.tasks.find(t => t.id === parentId);
+  state.tasks.push({ id: uid(), name: val, listId: parent.listId, status: 'To do', priority: 'Medium', category: '', deadlineDate: '', deadlineTime: '', doDate: '', doTime: '', recurrence: '', notes: '', parentId });
+  expandedTasks.add(parentId); save(); render();
+}
+
+function handleSearch(val) { searchQuery = val; renderContent(); renderHeaderStats(); }
+
+// ── Inline Add ───────────────────────────────────────────────────────
+function expandInlineAdd() {
+  const el = document.getElementById('inline-add');
+  if (!el || el.classList.contains('expanded')) return;
+  el.classList.add('expanded'); document.getElementById('ia-name').focus();
+}
+function collapseInlineAdd() {
+  const el = document.getElementById('inline-add'); if (!el) return;
+  el.classList.remove('expanded');
+  ['ia-name','ia-category','ia-deadline-date','ia-deadline-time','ia-do-date','ia-do-time','ia-notes'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+  const s = document.getElementById('ia-status'); if (s) s.value = 'To do';
+  const p = document.getElementById('ia-priority'); if (p) p.value = 'Medium';
+  const r = document.getElementById('ia-recurrence'); if (r) r.value = '';
+}
+function submitInlineAdd() {
+  const name = document.getElementById('ia-name').value.trim();
+  if (!name) { document.getElementById('ia-name').focus(); return; }
+  state.tasks.push({
+    id: uid(), name,
+    listId: state.activeList === '__today__' ? state.lists[0]?.id : state.activeList,
+    status: document.getElementById('ia-status').value,
+    priority: document.getElementById('ia-priority').value,
+    category: document.getElementById('ia-category').value.trim(),
+    deadlineDate: document.getElementById('ia-deadline-date').value,
+    deadlineTime: document.getElementById('ia-deadline-time').value,
+    doDate: document.getElementById('ia-do-date').value,
+    doTime: document.getElementById('ia-do-time').value,
+    recurrence: document.getElementById('ia-recurrence').value,
+    notes: document.getElementById('ia-notes').value.trim(),
+    parentId: null,
+  });
+  collapseInlineAdd(); save(); render();
+  setTimeout(expandInlineAdd, 50);
+}
+
+// ── Task Modal ───────────────────────────────────────────────────────
+function openTaskModal(id) {
+  editingTaskId = id;
+  const t = state.tasks.find(x => x.id === id); if (!t) return;
+  document.getElementById('tm-name').value = t.name;
+  document.getElementById('tm-status').value = t.status;
+  document.getElementById('tm-priority').value = t.priority;
+  document.getElementById('tm-category').value = t.category || '';
+  document.getElementById('tm-deadline-date').value = t.deadlineDate || '';
+  document.getElementById('tm-deadline-time').value = t.deadlineTime || '';
+  document.getElementById('tm-do-date').value = t.doDate || '';
+  document.getElementById('tm-do-time').value = t.doTime || '';
+  document.getElementById('tm-recurrence').value = t.recurrence || '';
+  document.getElementById('tm-notes').value = t.notes || '';
+  document.getElementById('tm-list').innerHTML = state.lists.map(l => `<option value="${l.id}"${t.listId===l.id?' selected':''}>${esc(l.name)}</option>`).join('');
+  document.getElementById('task-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('tm-name').focus(), 50);
+}
+function closeTaskModal() { document.getElementById('task-modal').style.display = 'none'; }
+function saveTask() {
+  const name = document.getElementById('tm-name').value.trim(); if (!name) return;
+  const i = state.tasks.findIndex(t => t.id === editingTaskId); if (i < 0) return;
+  state.tasks[i] = { ...state.tasks[i], name,
+    status: document.getElementById('tm-status').value,
+    priority: document.getElementById('tm-priority').value,
+    category: document.getElementById('tm-category').value.trim(),
+    deadlineDate: document.getElementById('tm-deadline-date').value,
+    deadlineTime: document.getElementById('tm-deadline-time').value,
+    doDate: document.getElementById('tm-do-date').value,
+    doTime: document.getElementById('tm-do-time').value,
+    recurrence: document.getElementById('tm-recurrence').value,
+    notes: document.getElementById('tm-notes').value.trim(),
+    listId: document.getElementById('tm-list').value,
+  };
+  closeTaskModal(); save(); render();
+}
+
+// ── List Modal ───────────────────────────────────────────────────────
+function renderColorPicker() {
+  document.getElementById('lm-colors').innerHTML = LIST_COLORS.map(c =>
+    `<div class="color-dot${pickedColor===c?' selected':''}" style="background:${c}" onclick="pickColor('${c}')"></div>`).join('');
+}
+function pickColor(c) { pickedColor = c; renderColorPicker(); }
+function openNewListModal() {
+  editingListId = null; pickedColor = LIST_COLORS[0];
+  document.getElementById('list-modal-title').textContent = 'New list';
+  document.getElementById('lm-name').value = '';
+  document.getElementById('lm-delete-btn').style.display = 'none';
+  renderColorPicker(); document.getElementById('list-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('lm-name').focus(), 50);
+}
+function openEditListModal(id) {
+  editingListId = id; const l = getList(id); pickedColor = l.color;
+  document.getElementById('list-modal-title').textContent = 'Edit list';
+  document.getElementById('lm-name').value = l.name;
+  document.getElementById('lm-delete-btn').style.display = 'block';
+  renderColorPicker(); document.getElementById('list-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('lm-name').focus(), 50);
+}
+function deleteListFromModal() { closeListModal(); deleteList(editingListId); }
+function closeListModal() { document.getElementById('list-modal').style.display = 'none'; }
+function saveList() {
+  const name = document.getElementById('lm-name').value.trim(); if (!name) return;
+  if (editingListId) { const l = getList(editingListId); l.name = name; l.color = pickedColor; }
+  else { state.lists.push({ id: uid(), name, color: pickedColor }); }
+  closeListModal(); save(); render();
+}
+function deleteList(id) {
+  const list = getList(id);
+  const taskCount = state.tasks.filter(t => t.listId === id).length;
+  if (!confirm(taskCount > 0 ? `Delete "${list.name}"? This will permanently delete ${taskCount} task${taskCount>1?'s':''}.` : `Delete "${list.name}"?`)) return;
+  state.tasks = state.tasks.filter(t => t.listId !== id);
+  state.lists = state.lists.filter(l => l.id !== id);
+  delete state.manualOrders[id];
+  if (state.activeList === id) state.activeList = state.lists[0]?.id || '';
+  save(); render();
+}
+
+// ── Inline name editing ──────────────────────────────────────────────
+let titleClickCount = 0, titleClickTimer = null;
+function handleTitleClick(e, listId) {
+  titleClickCount++;
+  clearTimeout(titleClickTimer);
+  titleClickTimer = setTimeout(() => {
+    if (titleClickCount >= 3) startInlineTitleEdit(listId);
+    titleClickCount = 0;
+  }, 300);
+}
+let sidebarClicks = {}, sidebarTimers = {};
+function handleSidebarListClick(e, listId) {
+  sidebarClicks[listId] = (sidebarClicks[listId] || 0) + 1;
+  clearTimeout(sidebarTimers[listId]);
+  sidebarTimers[listId] = setTimeout(() => {
+    const count = sidebarClicks[listId]; sidebarClicks[listId] = 0;
+    if (count >= 3) startInlineSidebarEdit(listId); else setActiveList(listId);
+  }, 300);
+}
+function startInlineTitleEdit(id) {
+  const item = getList(id) || getIdea(id);
+  if (!item) return;
+  const display = document.getElementById('list-title-display'); if (!display) return;
+  const input = document.createElement('input'); input.className = 'list-title-input'; input.value = item.name;
+  display.replaceWith(input); input.focus(); input.select();
+  const commit = () => { const v = input.value.trim(); if (v) { item.name = v; save(); } render(); };
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e => { if (e.key==='Enter') input.blur(); if (e.key==='Escape') { input.value=item.name; input.blur(); } });
+}
+function startInlineSidebarEdit(listId) {
+  const list = getList(listId); const span = document.getElementById(`sidebar-list-name-${listId}`); if (!span) return;
+  const input = document.createElement('input'); input.className = 'list-name-input'; input.value = list.name;
+  span.replaceWith(input); input.focus(); input.select();
+  const commit = () => {
+    const v = input.value.trim(); if (v) { list.name = v; save(); }
+    renderSidebar();
+    const d = document.getElementById('list-title-display'); if (d) d.textContent = list.name;
+  };
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', e => { if (e.key==='Enter') input.blur(); if (e.key==='Escape') { input.value=list.name; input.blur(); } });
+}
+
+// ── Keyboard shortcuts ───────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeTaskModal(); closeListModal(); closeGmailModal(); collapseInlineAdd(); closeIdeaModal(); closeIdeaSpaceModal(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); expandInlineAdd(); }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    e.preventDefault();
+    if (document.getElementById('task-modal').style.display !== 'none') { saveTask(); return; }
+    if (document.getElementById('list-modal').style.display !== 'none') { saveList(); return; }
+    if (document.getElementById('idea-modal').style.display !== 'none') { saveIdea(); return; }
+    if (document.getElementById('idea-space-modal').style.display !== 'none') { saveIdeaSpace(); return; }
+    const el = document.getElementById('inline-add');
+    if (el && el.classList.contains('expanded')) { submitInlineAdd(); return; }
+  }
+});
+
+document.addEventListener('click', e => {
+  const ctx = document.getElementById('ctx-menu');
+  if (ctx) ctx.style.display = 'none';
+});
+
+load();
+</script>
+</body>
+</html>
