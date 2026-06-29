@@ -544,6 +544,8 @@ let pickedWorkspaceColor = LIST_COLORS[0];
 let searchQuery = '';
 let dragSrcId = null;
 let pendingEmails = [];
+let calendarConnected = false;
+const SYNC_WORKSPACES = ['embrace', 'personal', 'acu'];
 
 // ── Persist ──────────────────────────────────────────────────────────
 let saveTimer = null;
@@ -575,6 +577,15 @@ async function load() {
   } catch(e) {
     console.warn('Cloud load failed, using local data:', e);
   }
+
+  // Check Google Calendar connection status (non-blocking)
+  fetch('/api/calendar', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'status' })
+  }).then(r => r.json()).then(d => {
+    calendarConnected = !!d.connected;
+  }).catch(() => {});
 }
 
 function serialize() {
@@ -832,6 +843,10 @@ function renderListView() {
       <button class="btn btn-ghost btn-sm" onclick="openGmailModal()" style="gap:5px;display:flex;align-items:center">
         <span style="font-size:14px">✉</span> Sync Gmail
       </button>
+      ${SYNC_WORKSPACES.includes(state.activeWorkspace) ? `
+      <button class="btn btn-ghost btn-sm" id="cal-sync-btn" onclick="handleCalendarSync()" style="gap:5px;display:flex;align-items:center">
+        <span style="font-size:14px">📅</span> ${calendarConnected ? 'Sync Calendar' : 'Connect Calendar'}
+      </button>` : ''}
     </div>
     <div class="toolbar">
       ${['All','To do','In progress','Done'].map(s =>
@@ -1542,6 +1557,115 @@ document.addEventListener('click', e => {
   const ctx = document.getElementById('ctx-menu');
   if (ctx) ctx.style.display = 'none';
 });
+
+// ── Google Calendar Sync ─────────────────────────────────────────────
+async function handleCalendarSync() {
+  if (!calendarConnected) {
+    await connectGoogleCalendar();
+  } else {
+    await runCalendarSync();
+  }
+}
+
+async function connectGoogleCalendar() {
+  const btn = document.getElementById('cal-sync-btn');
+  if (btn) { btn.textContent = 'Connecting…'; btn.disabled = true; }
+
+  try {
+    const res = await fetch('/api/calendar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'auth_url', origin: window.location.origin })
+    });
+    const { url } = await res.json();
+    const popup = window.open(url, 'google_calendar_auth', 'width=500,height=620');
+    if (!popup) { alert('Please allow popups for this site, then try again.'); return; }
+
+    window.addEventListener('message', async (e) => {
+      if (e.data === 'calendar_authed') {
+        popup && popup.close();
+        calendarConnected = true;
+        await runCalendarSync();
+      } else if (e.data === 'calendar_auth_error') {
+        popup && popup.close();
+        alert('Google Calendar connection failed. Please try again.');
+        if (btn) { btn.textContent = '📅 Connect Calendar'; btn.disabled = false; }
+      }
+    }, { once: true });
+  } catch(e) {
+    alert('Could not reach the server. Try again.');
+    if (btn) { btn.disabled = false; }
+  }
+}
+
+async function runCalendarSync() {
+  const btn = document.getElementById('cal-sync-btn');
+  if (btn) { btn.textContent = '📅 Syncing…'; btn.disabled = true; }
+
+  // Collect all tasks in this workspace with a doDate or deadlineDate that aren't Done
+  const tasks = ws().tasks.filter(t =>
+    !t.parentId &&
+    t.status !== 'Done' &&
+    (t.doDate || t.deadlineDate)
+  );
+
+  if (tasks.length === 0) {
+    showCalendarToast('No tasks with dates to sync.');
+    if (btn) { btn.textContent = '📅 Sync Calendar'; btn.disabled = false; }
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/calendar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'sync', tasks })
+    });
+
+    if (res.status === 401) {
+      calendarConnected = false;
+      if (btn) { btn.textContent = '📅 Connect Calendar'; btn.disabled = false; }
+      alert('Calendar session expired. Please reconnect.');
+      return;
+    }
+
+    const data = await res.json();
+
+    // Write back event IDs to tasks in state
+    if (data.tasks) {
+      data.tasks.forEach(updated => {
+        const idx = ws().tasks.findIndex(t => t.id === updated.id);
+        if (idx >= 0) ws().tasks[idx] = updated;
+      });
+      save();
+    }
+
+    const msg = [
+      data.created > 0 ? `${data.created} created` : '',
+      data.updated > 0 ? `${data.updated} updated` : '',
+      data.errors > 0 ? `${data.errors} failed` : '',
+    ].filter(Boolean).join(', ');
+    showCalendarToast(`Calendar synced: ${msg || 'nothing to do'}`);
+  } catch(e) {
+    showCalendarToast('Sync failed — check your connection.');
+  } finally {
+    if (btn) { btn.textContent = '📅 Sync Calendar'; btn.disabled = false; }
+  }
+}
+
+function showCalendarToast(msg) {
+  let toast = document.getElementById('cal-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'cal-toast';
+    toast.style.cssText = 'position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#16335B;color:white;padding:10px 18px;border-radius:24px;font-size:13px;font-weight:500;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,0.25);pointer-events:none;transition:opacity 0.3s';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 3500);
+}
 
 load();
 
