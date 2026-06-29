@@ -1664,9 +1664,14 @@ load();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').then(reg => {
-      // When app comes to foreground, check for a new deployment
+      // When app comes to foreground: check for new code AND refresh data from cloud
       document.addEventListener('visibilitychange', () => {
-        if (document.visibilityState === 'visible') reg.update();
+        if (document.visibilityState !== 'visible') return;
+        reg.update();
+        // Skip data refresh if user has a modal open or is typing a new task
+        const modalOpen = [...document.querySelectorAll('.modal')].some(m => m.style.display === 'flex');
+        const inlineOpen = document.getElementById('inline-add')?.classList.contains('expanded');
+        if (!modalOpen && !inlineOpen) load();
       });
     }).catch(err => {
       console.warn('SW registration failed:', err);
