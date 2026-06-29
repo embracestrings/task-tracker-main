@@ -89,5 +89,71 @@ export default async function handler(req, res) {
     return res.json({ ok: true, summary: summarize(merged) });
   }
 
-  return res.status(400).json({ error: 'Unknown action. Use: preview | run' });
+  // ── Import old flat personal tracker data ───────────────────────────
+  if (action === 'import_flat') {
+    const { flatState } = req.body;
+    if (!flatState) return res.status(400).json({ error: 'Missing flatState' });
+
+    // Map old list IDs to destination workspaces
+    const LIST_WORKSPACE_MAP = {
+      'mq8szlicf4vmm5tbvr': 'personal',   // Everyday
+      'mq8v7v8z7qf8jnghlo7': 'embrace',   // Embrace Finance
+      'mqfvy2vfd133q75u0g': 'embrace',     // Embrace
+      'mqy0gsr3enn47esmfdn': 'acu',        // ACU Angel Network
+    };
+    const IDEA_WORKSPACE_MAP = {
+      'goals': 'personal',                 // Long-term goals
+      'think': 'personal',                 // Things to think about
+      'mqvl86z8082oamltnuvx': 'embrace',  // Product Ideas
+    };
+
+    const current = await kv.get('tracker_state');
+    if (!current) return res.status(400).json({ error: 'No current state in KV' });
+    const merged = JSON.parse(JSON.stringify(current));
+
+    // Import lists
+    for (const list of (flatState.lists || [])) {
+      const wsId = LIST_WORKSPACE_MAP[list.id];
+      if (!wsId || !merged.workspaces[wsId]) continue;
+      const ws = merged.workspaces[wsId];
+      if (!(ws.lists || []).find(l => l.id === list.id)) {
+        ws.lists = [...(ws.lists || []), list];
+      }
+    }
+
+    // Import tasks (map to correct workspace via list)
+    for (const task of (flatState.tasks || [])) {
+      const wsId = LIST_WORKSPACE_MAP[task.listId];
+      if (!wsId || !merged.workspaces[wsId]) continue;
+      const ws = merged.workspaces[wsId];
+      if (!(ws.tasks || []).find(t => t.id === task.id)) {
+        ws.tasks = [...(ws.tasks || []), task];
+      }
+    }
+
+    // Import ideas
+    for (const idea of (flatState.ideas || [])) {
+      const wsId = IDEA_WORKSPACE_MAP[idea.id];
+      if (!wsId || !merged.workspaces[wsId]) continue;
+      const ws = merged.workspaces[wsId];
+      if (!(ws.ideas || []).find(i => i.id === idea.id)) {
+        ws.ideas = [...(ws.ideas || []), idea];
+      }
+    }
+
+    // Import notes (map via idea)
+    for (const note of (flatState.notes || [])) {
+      const wsId = IDEA_WORKSPACE_MAP[note.spaceId];
+      if (!wsId || !merged.workspaces[wsId]) continue;
+      const ws = merged.workspaces[wsId];
+      if (!(ws.notes || []).find(n => n.id === note.id)) {
+        ws.notes = [...(ws.notes || []), note];
+      }
+    }
+
+    await kv.set('tracker_state', merged);
+    return res.json({ ok: true, summary: summarize(merged) });
+  }
+
+  return res.status(400).json({ error: 'Unknown action. Use: preview | run | import_flat' });
 }
