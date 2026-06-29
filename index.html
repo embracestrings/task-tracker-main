@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -127,7 +127,7 @@
   .list-item.active { background: rgba(255,255,255,0.14); color: white; font-weight: 500; }
   .list-item.active::before { content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 3px; background: var(--gold); border-radius: 0 2px 2px 0; }
   .list-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .list-count { margin-left: auto; font-size: 11px; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.12); padding: 1px 6px; border-radius: 10px; }
+  .list-count { margin-left: auto; font-size: 11px; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.12); padding: 1px 6px; border-radius: 10px; min-width: 26px; text-align: right; box-sizing: border-box; flex-shrink: 0; }
   .list-item.active .list-count { background: var(--gold); color: white; }
   .sidebar-add-list { display: flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 12px; color: rgba(255,255,255,0.4); cursor: pointer; border: none; background: none; width: 100%; }
   .sidebar-add-list:hover { color: var(--gold); }
@@ -333,7 +333,7 @@
     <div class="workspace-switcher" id="workspace-switcher"></div>
     <div class="sidebar-section">
       <div class="sidebar-section-label">Views</div>
-      <button class="list-item" id="today-btn" onclick="setActiveList('__today__')">
+      <button class="list-item" id="today-btn" style="padding-right:28px" onclick="setActiveList('__today__')">
         <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block"></span>
         <span>Today</span>
         <span class="list-count" id="today-count" style="display:none"></span>
