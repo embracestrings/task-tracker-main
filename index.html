@@ -1366,7 +1366,6 @@ function submitInlineAdd() {
   };
   ws().tasks.push(newTask);
   collapseInlineAdd(); save(); render();
-  setTimeout(expandInlineAdd, 50);
   autoSyncTask(newTask);
 }
 
@@ -1505,7 +1504,17 @@ document.addEventListener('keydown', e => {
 document.addEventListener('click', e => {
   const ctx = document.getElementById('ctx-menu');
   if (ctx) ctx.style.display = 'none';
+  // Collapse inline-add when clicking outside it
+  const ia = document.getElementById('inline-add');
+  if (ia && ia.classList.contains('expanded') && !ia.contains(e.target)) {
+    collapseInlineAdd();
+  }
 });
+
+document.getElementById('content').addEventListener('scroll', () => {
+  const ia = document.getElementById('inline-add');
+  if (ia && ia.classList.contains('expanded')) collapseInlineAdd();
+}, { passive: true });
 
 // ── Calendar auto-sync helpers ────────────────────────────────────────
 async function autoSyncTask(task) {
