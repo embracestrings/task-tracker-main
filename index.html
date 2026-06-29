@@ -43,6 +43,7 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
+  html { background: var(--bg); }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -78,10 +79,7 @@
   .header-search:focus-within { background: rgba(255,255,255,0.22); border-color: var(--gold); }
   .header-search input { border: none; outline: none; background: transparent; font-size: 13px; color: white; width: 100%; }
   .header-search input::placeholder { color: rgba(255,255,255,0.45); }
-  .header-stats { display: flex; gap: 14px; }
-  .hstat { text-align: center; }
-  .hstat-val { font-size: 16px; font-weight: 700; line-height: 1; color: white; }
-  .hstat-label { font-size: 9px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+
   .menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 4px 6px; color: white; font-size: 22px; line-height: 1; flex-shrink: 0; }
 
   /* ── Sidebar ─────────────────────────────── */
@@ -286,10 +284,6 @@
     .menu-btn { display: flex; align-items: center; }
     .app-name { font-size: 15px; }
     .header-search { flex: 1; min-width: 0; width: auto; }
-    .header-stats { gap: 10px; }
-    .hstat-val { font-size: 14px; }
-    .hstat-label { font-size: 9px; }
-
     .sidebar {
       position: fixed; left: 0; top: 0; bottom: 0; z-index: 100;
       transform: translateX(-100%); transition: transform 0.25s ease;
@@ -328,11 +322,10 @@
   <button class="menu-btn" onclick="toggleSidebar()">☰</button>
   <span class="app-name">My <span>Tracker</span></span>
   <div class="spacer"></div>
-  <div class="header-search">
+  <div class="header-search" style="flex:1;max-width:360px">
     <span style="color:rgba(255,255,255,0.45);font-size:13px">⌕</span>
     <input id="global-search" placeholder="Search tasks…" oninput="handleSearch(this.value)" />
   </div>
-  <div class="header-stats" id="header-stats"></div>
 </header>
 
 <div class="app">
@@ -758,14 +751,6 @@ function renderWorkspaceSwitcher() {
 }
 
 function renderHeaderStats() {
-  const total = ws().tasks.filter(t => !t.parentId).length;
-  const done = ws().tasks.filter(t => !t.parentId && t.status === 'Done').length;
-  const overdue = ws().tasks.filter(t => !t.parentId && isOverdue(t.deadlineDate, t.status)).length;
-  document.getElementById('header-stats').innerHTML = `
-    <div class="hstat"><div class="hstat-val">${total}</div><div class="hstat-label">Total</div></div>
-    <div class="hstat"><div class="hstat-val">${done}</div><div class="hstat-label">Done</div></div>
-    <div class="hstat"><div class="hstat-val" style="color:${overdue>0?'#ffb3a7':'white'}">${overdue}</div><div class="hstat-label">Overdue</div></div>
-  `;
   const todayCount = ws().tasks.filter(t => !t.parentId && isToday(t.doDate) && t.status !== 'Done').length;
   const tc = document.getElementById('today-count');
   if (tc) { tc.textContent = todayCount; tc.style.display = todayCount > 0 ? '' : 'none'; }
