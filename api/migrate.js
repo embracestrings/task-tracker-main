@@ -121,8 +121,8 @@ export default async function handler(req, res) {
       }
     }
 
-    // Import tasks (map to correct workspace via list)
-    for (const task of (flatState.tasks || [])) {
+    // Import tasks (map to correct workspace via list, strip legacy fields)
+    for (const { priority, category, filterStatus, filterPriority, ...task } of (flatState.tasks || [])) {
       const wsId = LIST_WORKSPACE_MAP[task.listId];
       if (!wsId || !merged.workspaces[wsId]) continue;
       const ws = merged.workspaces[wsId];
