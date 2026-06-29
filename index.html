@@ -333,7 +333,7 @@
     <div class="workspace-switcher" id="workspace-switcher"></div>
     <div class="sidebar-section">
       <div class="sidebar-section-label">Views</div>
-      <button class="list-item" id="today-btn" style="padding-right:28px" onclick="setActiveList('__today__')">
+      <button class="list-item" id="today-btn" onclick="setActiveList('__today__')">
         <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block"></span>
         <span>Today</span>
         <span class="list-count" id="today-count" style="display:none"></span>
@@ -761,27 +761,21 @@ function renderSidebar() {
   const nav = document.getElementById('list-nav');
   nav.innerHTML = ws().lists.map(l => {
     const count = getListTasks(l.id).filter(t => t.status !== 'Done').length;
-    return `<div class="list-item-wrap" style="display:flex;align-items:center;position:relative">
-      <button class="list-item${ws().activeList === l.id ? ' active' : ''}" style="flex:1;padding-right:28px" onclick="handleSidebarListClick(event,'${l.id}')">
-        <span class="list-dot" style="background:${l.color}"></span>
-        <span id="sidebar-list-name-${l.id}">${esc(l.name)}</span>
-        ${count > 0 ? `<span class="list-count">${count}</span>` : ''}
-      </button>
-      <button class="list-item-edit" style="position:absolute;right:6px" onclick="event.stopPropagation();openEditListModal('${l.id}')" title="Edit list">✎</button>
-    </div>`;
+    return `<button class="list-item${ws().activeList === l.id ? ' active' : ''}" onclick="handleSidebarListClick(event,'${l.id}')">
+      <span class="list-dot" style="background:${l.color}"></span>
+      <span id="sidebar-list-name-${l.id}">${esc(l.name)}</span>
+      ${count > 0 ? `<span class="list-count">${count}</span>` : ''}
+    </button>`;
   }).join('');
 
   const ideaNav = document.getElementById('idea-nav');
   ideaNav.innerHTML = (ws().ideas||[]).map(l => {
     const count = getIdeaNotes(l.id).length;
-    return `<div class="list-item-wrap" style="display:flex;align-items:center;position:relative">
-      <button class="list-item${ws().activeList === l.id ? ' active' : ''}" style="flex:1;padding-right:28px" onclick="handleSidebarListClick(event,'${l.id}')">
-        <span class="list-dot" style="background:${l.color}"></span>
-        <span id="sidebar-list-name-${l.id}">${esc(l.name)}</span>
-        ${count > 0 ? `<span class="list-count">${count}</span>` : ''}
-      </button>
-      <button class="list-item-edit" style="position:absolute;right:6px" onclick="event.stopPropagation();openEditIdeaSpaceModal('${l.id}')" title="Edit">✎</button>
-    </div>`;
+    return `<button class="list-item${ws().activeList === l.id ? ' active' : ''}" onclick="handleSidebarListClick(event,'${l.id}')">
+      <span class="list-dot" style="background:${l.color}"></span>
+      <span id="sidebar-list-name-${l.id}">${esc(l.name)}</span>
+      ${count > 0 ? `<span class="list-count">${count}</span>` : ''}
+    </button>`;
   }).join('');
 }
 
@@ -810,6 +804,7 @@ function renderListView() {
     <div class="list-header">
       <span class="list-title-dot" style="background:${list.color}"></span>
       <span class="list-title" id="list-title-display" onclick="handleTitleClick(event,'${list.id}')" title="Triple-click to rename">${esc(list.name)}</span>
+      <button class="btn btn-ghost btn-sm" onclick="openEditListModal('${list.id}')" title="Edit list" style="font-size:15px;padding:4px 7px">✎</button>
       <div class="spacer"></div>
       ${hasManualOrder ? `<button class="btn btn-ghost btn-sm" onclick="resetOrder('${list.id}')">↺ Auto-sort</button>` : ''}
       <button class="btn btn-ghost btn-sm" onclick="openGmailModal()" style="gap:5px;display:flex;align-items:center">
@@ -974,6 +969,7 @@ function renderIdeaView() {
     <div class="list-header">
       <span class="list-title-dot" style="background:${space.color}"></span>
       <span class="list-title" id="list-title-display" onclick="handleTitleClick(event,'${space.id}')">${esc(space.name)}</span>
+      <button class="btn btn-ghost btn-sm" onclick="openEditIdeaSpaceModal('${space.id}')" title="Edit idea space" style="font-size:15px;padding:4px 7px">✎</button>
       <div class="spacer"></div>
     </div>
     <div class="idea-add">
