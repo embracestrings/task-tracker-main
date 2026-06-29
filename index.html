@@ -1511,11 +1511,6 @@ document.addEventListener('click', e => {
   }
 });
 
-document.getElementById('content').addEventListener('scroll', () => {
-  const ia = document.getElementById('inline-add');
-  if (ia && ia.classList.contains('expanded')) collapseInlineAdd();
-}, { passive: true });
-
 // ── Calendar auto-sync helpers ────────────────────────────────────────
 async function autoSyncTask(task) {
   const wsId = state.activeWorkspace;
