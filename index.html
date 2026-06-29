@@ -272,11 +272,6 @@
     <div class="modal-body">
       <div class="field"><label>Task name</label><input id="tm-name" placeholder="What needs to be done?" /></div>
       <div class="field-row">
-        <div class="field"><label>Status</label><select id="tm-status"><option>To do</option><option>In progress</option><option>Done</option></select></div>
-        <div class="field"><label>Priority</label><select id="tm-priority"><option>High</option><option selected>Medium</option><option>Low</option></select></div>
-      </div>
-      <div class="field"><label>Category</label><input id="tm-category" placeholder="e.g. Design, Dev…" /></div>
-      <div class="field-row">
         <div class="field"><label>Deadline date</label><input type="date" id="tm-deadline-date" /></div>
         <div class="field"><label>Deadline time</label><input type="time" id="tm-deadline-time" /></div>
       </div>
@@ -387,8 +382,6 @@ let state = {
   ],
   tasks: [],
   activeList: 'tasks',
-  filterStatus: 'All',
-  filterPriority: 'All',
   manualOrders: {},
   completedCollapsed: {},
 };
@@ -523,12 +516,6 @@ function advanceDate(date, recurrence) {
   return d.toISOString().slice(0,10);
 }
 
-function earliestDate(t) {
-  const dates = [t.doDate, t.deadlineDate].filter(Boolean);
-  if (!dates.length) return null;
-  return dates.reduce((min, d) => d < min ? d : min);
-}
-
 function sortedTasks(tasks, listId) {
   const order = state.manualOrders[listId];
   if (order && order.length) {
@@ -540,10 +527,9 @@ function sortedTasks(tasks, listId) {
   return [...tasks].sort((a, b) => {
     if (a.status === 'Done' && b.status !== 'Done') return 1;
     if (b.status === 'Done' && a.status !== 'Done') return -1;
-    const da = earliestDate(a), db = earliestDate(b);
-    if (da && db) return new Date(da) - new Date(db);
-    if (da) return -1;
-    if (db) return 1;
+    if (a.doDate && b.doDate) return new Date(a.doDate) - new Date(b.doDate);
+    if (a.doDate) return -1;
+    if (b.doDate) return 1;
     return 0;
   });
 }
@@ -611,10 +597,7 @@ function renderListView() {
   const isThink = list.id === 'think';
   const hasManualOrder = !!(state.manualOrders[list.id] && state.manualOrders[list.id].length);
 
-  let tasks = getListTasks(state.activeList);
-  if (state.filterStatus !== 'All') tasks = tasks.filter(t => t.status === state.filterStatus);
-  if (state.filterPriority !== 'All') tasks = tasks.filter(t => t.priority === state.filterPriority);
-
+  const tasks = getListTasks(state.activeList);
   const allSorted = sortedTasks(tasks, list.id);
   const active = allSorted.filter(t => t.status !== 'Done');
   const done = allSorted.filter(t => t.status === 'Done');
@@ -631,15 +614,6 @@ function renderListView() {
       <button class="btn btn-ghost btn-sm" onclick="openGmailModal()" style="gap:5px;display:flex;align-items:center">
         <span style="font-size:14px">✉</span> Sync Gmail
       </button>
-    </div>
-    <div class="toolbar">
-      ${['All','To do','In progress','Done'].map(s =>
-        `<button class="filter-btn${state.filterStatus===s?' active':''}" onclick="setFilterStatus('${s}')">${s}</button>`
-      ).join('')}
-      <div class="toolbar-sep"></div>
-      ${['All','High','Medium','Low'].map(p =>
-        `<button class="filter-btn${state.filterPriority===p?' active':''}" onclick="setFilterPriority('${p}')">${p}</button>`
-      ).join('')}
     </div>
     ${renderInlineAdd()}
     <div id="task-sections">
@@ -970,11 +944,6 @@ function renderInlineAdd() {
     </div>
     <div class="inline-add-fields">
       <div class="inline-add-row">
-        <div class="inline-field"><label>Status</label><select id="ia-status"><option>To do</option><option>In progress</option><option>Done</option></select></div>
-        <div class="inline-field"><label>Priority</label><select id="ia-priority"><option>High</option><option selected>Medium</option><option>Low</option></select></div>
-      </div>
-      <div class="inline-field"><label>Category</label><input id="ia-category" placeholder="e.g. Design, Dev…" /></div>
-      <div class="inline-add-row">
         <div class="inline-field"><label>Deadline date</label><input type="date" id="ia-deadline-date" /></div>
         <div class="inline-field"><label>Deadline time</label><input type="time" id="ia-deadline-time" /></div>
       </div>
@@ -1013,9 +982,6 @@ function renderSingleTaskCard(t, isThink, listId, sourceList) {
         <div class="task-name${t.status==='Done'?' done':''}">${esc(t.name)}</div>
         ${t.notes ? `<div class="task-note">${esc(t.notes)}</div>` : ''}
         <div class="task-meta" style="margin-top:5px">
-          <span class="badge badge-${t.priority.toLowerCase()}">${t.priority}</span>
-          ${t.status !== 'To do' ? `<span class="badge badge-status${t.status==='In progress'?' inprog':''}">${t.status}</span>` : ''}
-          ${t.category ? `<span class="badge badge-cat">${esc(t.category)}</span>` : ''}
           ${t.deadlineDate ? `<span class="badge badge-due${over?' overdue':''}">⏰ ${fmtDateTime(t.deadlineDate, t.deadlineTime)}${over?' · overdue':''}</span>` : ''}
           ${t.doDate ? `<span class="badge badge-dodate">🗓 ${fmtDateTime(t.doDate, t.doTime)}</span>` : ''}
           ${t.recurrence ? `<span class="badge badge-recurring">↻ ${t.recurrence}</span>` : ''}
@@ -1084,14 +1050,11 @@ function resetOrder(listId) { delete state.manualOrders[listId]; save(); render(
 
 // ── Actions ──────────────────────────────────────────────────────────
 function setActiveList(id) {
-  state.activeList = id; state.filterStatus = 'All'; state.filterPriority = 'All';
+  state.activeList = id;
   searchQuery = ''; document.getElementById('global-search').value = '';
   closeSidebar();
   save(); render();
 }
-function setFilterStatus(s) { state.filterStatus = s; save(); render(); }
-function setFilterPriority(p) { state.filterPriority = p; save(); render(); }
-
 function toggleSidebar() {
   const sidebar = document.querySelector('.sidebar');
   const overlay = document.getElementById('sidebar-overlay');
@@ -1158,9 +1121,7 @@ function expandInlineAdd() {
 function collapseInlineAdd() {
   const el = document.getElementById('inline-add'); if (!el) return;
   el.classList.remove('expanded');
-  ['ia-name','ia-category','ia-deadline-date','ia-deadline-time','ia-do-date','ia-do-time','ia-notes'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
-  const s = document.getElementById('ia-status'); if (s) s.value = 'To do';
-  const p = document.getElementById('ia-priority'); if (p) p.value = 'Medium';
+  ['ia-name','ia-deadline-date','ia-deadline-time','ia-do-date','ia-do-time','ia-notes'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
   const r = document.getElementById('ia-recurrence'); if (r) r.value = '';
 }
 function submitInlineAdd() {
@@ -1169,9 +1130,9 @@ function submitInlineAdd() {
   state.tasks.push({
     id: uid(), name,
     listId: state.activeList === '__today__' ? state.lists[0]?.id : state.activeList,
-    status: document.getElementById('ia-status').value,
-    priority: document.getElementById('ia-priority').value,
-    category: document.getElementById('ia-category').value.trim(),
+    status: 'To do',
+    priority: 'Medium',
+    category: '',
     deadlineDate: document.getElementById('ia-deadline-date').value,
     deadlineTime: document.getElementById('ia-deadline-time').value,
     doDate: document.getElementById('ia-do-date').value,
@@ -1188,9 +1149,6 @@ function openTaskModal(id) {
   editingTaskId = id;
   const t = state.tasks.find(x => x.id === id); if (!t) return;
   document.getElementById('tm-name').value = t.name;
-  document.getElementById('tm-status').value = t.status;
-  document.getElementById('tm-priority').value = t.priority;
-  document.getElementById('tm-category').value = t.category || '';
   document.getElementById('tm-deadline-date').value = t.deadlineDate || '';
   document.getElementById('tm-deadline-time').value = t.deadlineTime || '';
   document.getElementById('tm-do-date').value = t.doDate || '';
@@ -1206,9 +1164,6 @@ function saveTask() {
   const name = document.getElementById('tm-name').value.trim(); if (!name) return;
   const i = state.tasks.findIndex(t => t.id === editingTaskId); if (i < 0) return;
   state.tasks[i] = { ...state.tasks[i], name,
-    status: document.getElementById('tm-status').value,
-    priority: document.getElementById('tm-priority').value,
-    category: document.getElementById('tm-category').value.trim(),
     deadlineDate: document.getElementById('tm-deadline-date').value,
     deadlineTime: document.getElementById('tm-deadline-time').value,
     doDate: document.getElementById('tm-do-date').value,
@@ -1321,6 +1276,14 @@ document.addEventListener('keydown', e => {
 document.addEventListener('click', e => {
   const ctx = document.getElementById('ctx-menu');
   if (ctx) ctx.style.display = 'none';
+  const inlineAdd = document.getElementById('inline-add');
+  if (inlineAdd && inlineAdd.classList.contains('expanded') && !inlineAdd.contains(e.target)) {
+    collapseInlineAdd();
+  }
+});
+
+document.getElementById('content').addEventListener('scroll', () => {
+  collapseInlineAdd();
 });
 
 load();
