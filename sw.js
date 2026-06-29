@@ -26,7 +26,7 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
 
-  // Always go network-first for API calls; fall through on failure
+  // API: network-first, offline returns a clean error JSON
   if (url.pathname.startsWith('/api/')) {
     e.respondWith(
       fetch(e.request).catch(() =>
@@ -39,7 +39,22 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // Cache-first for everything else (app shell)
+  // HTML navigation: network-first so new Vercel deployments propagate
+  // automatically; fall back to cache when offline
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).then(resp => {
+        if (resp.ok) {
+          const clone = resp.clone();
+          caches.open(CACHE).then(c => c.put(e.request, clone));
+        }
+        return resp;
+      }).catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Static assets (icons, etc.): cache-first
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
