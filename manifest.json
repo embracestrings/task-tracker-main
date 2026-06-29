@@ -4,8 +4,8 @@
   "description": "Personal task tracker with workspaces",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f7f6f3",
-  "theme_color": "#2d6a4f",
+  "background_color": "#F2F2F3",
+  "theme_color": "#16335B",
   "orientation": "portrait-primary",
   "icons": [
     {

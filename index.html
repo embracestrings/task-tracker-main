@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Task Tracker</title>
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#2d6a4f">
+<meta name="theme-color" content="#16335B">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,90 +13,166 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <style>
   :root {
-    --bg: #f7f6f3; --surface: #ffffff; --surface2: #f0ede8;
-    --border: #e2ddd7; --border-strong: #c8c2ba;
-    --text: #1a1917; --text-muted: #7a746c; --text-faint: #b0aa9f;
-    --accent: #2d6a4f; --accent-light: #e8f5ee; --accent-text: #1b4332;
-    --sidebar-w: 220px; --header-h: 56px;
+    /* Brand palette */
+    --accent: #16335B;        /* Deep Blue — primary */
+    --accent-light: #E8EDF4;  /* Light blue tint for active backgrounds */
+    --accent-text: #0d2040;   /* Darker blue */
+    --gold: #BA9E78;          /* Gold — secondary accent */
+    --gold-bg: #F5EFE5;       /* Light gold for badge backgrounds */
+
+    /* Surface & text */
+    --bg: #F2F2F3;            /* Cream */
+    --surface: #ffffff;
+    --surface2: #E8E8E9;
+    --border: #DDDCDC;
+    --border-strong: #C0BCBA;
+    --text: #1a1917;
+    --text-muted: #6b6661;
+    --text-faint: #a8a39d;
+
+    /* Status colors */
     --red: #c0392b; --red-bg: #fdf0ee;
     --amber: #b7650a; --amber-bg: #fdf5e6;
-    --green: #2d6a4f; --green-bg: #e8f5ee;
+    --green: #2d7a55; --green-bg: #e8f5ee;
     --blue: #1a5fa8; --blue-bg: #eaf2fb;
     --purple: #5b3fa8; --purple-bg: #f0edfc;
-  }
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-size: 14px; }
 
+    --sidebar-w: 220px;
+    --header-h: 56px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text);
+    height: 100vh; height: 100dvh;
+    display: flex; flex-direction: column;
+    overflow: hidden; font-size: 14px;
+  }
+
+  /* ── Layout ─────────────────────────────── */
   .app { display: flex; flex: 1; overflow: hidden; }
-  .sidebar { width: var(--sidebar-w); background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
   .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-  header { height: var(--header-h); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 12px; flex-shrink: 0; }
-  .app-name { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
-  .app-name span { color: var(--accent); }
+  /* ── Header ─────────────────────────────── */
+  header {
+    background: var(--accent);
+    padding: calc(var(--safe-top) + 10px) 20px 10px;
+    min-height: calc(var(--header-h) + var(--safe-top));
+    display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+  }
+  .app-name {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 16px; font-weight: 700; letter-spacing: 0.01em;
+    color: white;
+  }
+  .app-name span { color: var(--gold); }
   header .spacer { flex: 1; }
-  .header-search { display: flex; align-items: center; gap: 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 5px 10px; width: 220px; transition: border-color 0.15s; }
-  .header-search:focus-within { border-color: var(--accent); background: var(--surface); }
-  .header-search input { border: none; outline: none; background: transparent; font-size: 13px; color: var(--text); width: 100%; }
-  .header-search input::placeholder { color: var(--text-faint); }
-  .header-stats { display: flex; gap: 16px; }
+  .header-search {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px; padding: 5px 10px; width: 200px; transition: all 0.15s;
+  }
+  .header-search:focus-within { background: rgba(255,255,255,0.22); border-color: var(--gold); }
+  .header-search input { border: none; outline: none; background: transparent; font-size: 13px; color: white; width: 100%; }
+  .header-search input::placeholder { color: rgba(255,255,255,0.45); }
+  .header-stats { display: flex; gap: 14px; }
   .hstat { text-align: center; }
-  .hstat-val { font-size: 17px; font-weight: 600; line-height: 1; }
-  .hstat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
+  .hstat-val { font-size: 16px; font-weight: 700; line-height: 1; color: white; }
+  .hstat-label { font-size: 9px; color: rgba(255,255,255,0.55); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; }
+  .menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 4px 6px; color: white; font-size: 22px; line-height: 1; flex-shrink: 0; }
+
+  /* ── Sidebar ─────────────────────────────── */
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--accent);
+    display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto;
+  }
 
   /* Workspace switcher */
-  .workspace-switcher { padding: 8px 0 4px; border-bottom: 1px solid var(--border); }
-  .workspace-switcher-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); padding: 0 14px 4px; }
-  .workspace-item { display: flex; align-items: center; gap: 8px; padding: 6px 14px; cursor: pointer; border: none; background: none; width: 100%; text-align: left; font-size: 13px; color: var(--text-muted); position: relative; transition: background 0.1s; }
-  .workspace-item:hover { background: var(--surface2); color: var(--text); }
-  .workspace-item.active { color: var(--text); font-weight: 600; }
-  .workspace-item.active::before { content: ''; position: absolute; left: 0; top: 3px; bottom: 3px; width: 3px; border-radius: 0 2px 2px 0; background: var(--ws-color, var(--accent)); }
+  .workspace-switcher { padding: 10px 0 6px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .workspace-switcher-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.4); padding: 0 14px 5px; }
+  .workspace-item-wrap { display: flex; align-items: center; position: relative; }
+  .workspace-item {
+    display: flex; align-items: center; gap: 8px; padding: 7px 14px;
+    cursor: pointer; border: none; background: none; width: 100%; text-align: left;
+    font-size: 13px; color: rgba(255,255,255,0.65); position: relative;
+    transition: background 0.1s; flex: 1; padding-right: 32px;
+  }
+  .workspace-item:hover { background: rgba(255,255,255,0.08); color: white; }
+  .workspace-item.active { color: white; font-weight: 600; background: rgba(255,255,255,0.12); }
+  .workspace-item.active::before { content: ''; position: absolute; left: 0; top: 3px; bottom: 3px; width: 3px; border-radius: 0 2px 2px 0; background: var(--gold); }
   .workspace-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+  .workspace-edit-btn {
+    position: absolute; right: 6px;
+    opacity: 0; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+    border-radius: 4px; border: none; background: none; color: rgba(255,255,255,0.6);
+    font-size: 12px; cursor: pointer; flex-shrink: 0; transition: opacity 0.1s, background 0.1s;
+  }
+  .workspace-item-wrap:hover .workspace-edit-btn { opacity: 1; }
+  .workspace-edit-btn:hover { background: rgba(255,255,255,0.15); color: white; }
+  .sidebar-add-workspace { display: flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 12px; color: rgba(255,255,255,0.4); cursor: pointer; border: none; background: none; width: 100%; }
+  .sidebar-add-workspace:hover { color: var(--gold); }
 
-  .sidebar-section { padding: 12px 0 4px; }
-  .sidebar-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); padding: 0 14px 6px; }
-  .list-item { display: flex; align-items: center; gap: 8px; padding: 7px 14px; cursor: pointer; border-radius: 0; transition: background 0.1s; border: none; background: none; width: 100%; text-align: left; font-size: 13px; color: var(--text-muted); position: relative; }
-  .list-item:hover { background: var(--surface2); color: var(--text); }
-  .list-item.active { background: var(--accent-light); color: var(--accent-text); font-weight: 500; }
-  .list-item.active::before { content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 3px; background: var(--accent); border-radius: 0 2px 2px 0; }
+  /* Sidebar sections */
+  .sidebar-section { padding: 10px 0 4px; }
+  .sidebar-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.38); padding: 0 14px 5px; }
+  .list-item {
+    display: flex; align-items: center; gap: 8px; padding: 7px 14px;
+    cursor: pointer; border: none; background: none; width: 100%; text-align: left;
+    font-size: 13px; color: rgba(255,255,255,0.65); position: relative; transition: background 0.1s;
+  }
+  .list-item:hover { background: rgba(255,255,255,0.08); color: white; }
+  .list-item.active { background: rgba(255,255,255,0.14); color: white; font-weight: 500; }
+  .list-item.active::before { content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 3px; background: var(--gold); border-radius: 0 2px 2px 0; }
   .list-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .list-count { margin-left: auto; font-size: 11px; color: var(--text-faint); background: var(--surface2); padding: 1px 6px; border-radius: 10px; }
-  .list-item.active .list-count { background: var(--accent); color: white; }
-  .sidebar-add-list { display: flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 12px; color: var(--text-faint); cursor: pointer; border: none; background: none; width: 100%; }
-  .sidebar-add-list:hover { color: var(--accent); }
-  .list-item-edit { opacity: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 4px; border: none; background: none; color: var(--text-muted); font-size: 12px; cursor: pointer; flex-shrink: 0; transition: opacity 0.1s, background 0.1s; }
+  .list-count { margin-left: auto; font-size: 11px; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.12); padding: 1px 6px; border-radius: 10px; }
+  .list-item.active .list-count { background: var(--gold); color: white; }
+  .sidebar-add-list { display: flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 12px; color: rgba(255,255,255,0.4); cursor: pointer; border: none; background: none; width: 100%; }
+  .sidebar-add-list:hover { color: var(--gold); }
+  .list-item-edit {
+    opacity: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+    border-radius: 4px; border: none; background: none; color: rgba(255,255,255,0.55);
+    font-size: 12px; cursor: pointer; flex-shrink: 0; transition: opacity 0.1s, background 0.1s;
+  }
   .list-item-wrap:hover .list-item-edit { opacity: 1; }
-  .list-item-edit:hover { background: var(--border); }
-  .list-name-input { background: transparent; border: none; border-bottom: 1.5px solid var(--accent); outline: none; font-size: 13px; font-weight: 500; color: var(--text); font-family: inherit; width: 100%; padding: 0; }
-  .list-title-input { background: transparent; border: none; border-bottom: 1.5px solid var(--accent); outline: none; font-size: 20px; font-weight: 600; letter-spacing: -0.02em; color: var(--text); font-family: inherit; min-width: 80px; }
+  .list-item-edit:hover { background: rgba(255,255,255,0.15); }
+  .list-name-input { background: transparent; border: none; border-bottom: 1.5px solid var(--gold); outline: none; font-size: 13px; font-weight: 500; color: white; font-family: inherit; width: 100%; padding: 0; }
+  .list-title-input { background: transparent; border: none; border-bottom: 1.5px solid var(--accent); outline: none; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); font-family: Georgia, 'Times New Roman', serif; min-width: 80px; }
 
-  .content { flex: 1; overflow-y: auto; padding: 20px 24px; }
+  /* ── Content area ──────────────────────── */
+  .content { flex: 1; overflow-y: auto; padding: 20px 24px; padding-bottom: calc(20px + var(--safe-bottom)); }
   .list-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-  .list-title { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; cursor: default; }
+  .list-title { font-family: Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; cursor: default; color: var(--accent); }
   .list-title-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .list-header .spacer { flex: 1; }
 
+  /* ── Toolbar & filters ─────────────────── */
   .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
   .filter-btn { padding: 5px 12px; border-radius: 16px; font-size: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; transition: all 0.1s; }
-  .filter-btn:hover { border-color: var(--border-strong); color: var(--text); }
-  .filter-btn.active { background: var(--text); color: var(--surface); border-color: var(--text); }
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
   .toolbar-sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
 
+  /* ── Inline add ────────────────────────── */
   .inline-add { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; cursor: text; transition: border-color 0.15s; }
   .inline-add.expanded { border-color: var(--accent); cursor: default; }
   .inline-add-collapsed { display: flex; align-items: center; gap: 8px; }
   .inline-add-fields { display: none; flex-direction: column; gap: 10px; margin-top: 10px; }
   .inline-add.expanded .inline-add-fields { display: flex; }
-  .inline-add-name { width: 100%; border: none; outline: none; font-size: 14px; background: transparent; color: var(--text); font-family: inherit; }
+  .inline-add-name { width: 100%; border: none; outline: none; font-size: 16px; background: transparent; color: var(--text); font-family: inherit; }
   .inline-add-name::placeholder { color: var(--text-faint); }
   .inline-add-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .inline-field { display: flex; flex-direction: column; gap: 3px; }
   .inline-field label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-faint); }
-  .inline-field input, .inline-field select, .inline-field textarea { border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 13px; color: var(--text); background: var(--surface); outline: none; font-family: inherit; transition: border-color 0.15s; width: 100%; }
+  .inline-field input, .inline-field select, .inline-field textarea { border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 16px; color: var(--text); background: var(--surface); outline: none; font-family: inherit; transition: border-color 0.15s; width: 100%; }
   .inline-field input:focus, .inline-field select:focus, .inline-field textarea:focus { border-color: var(--accent); }
   .inline-field textarea { resize: vertical; min-height: 52px; }
   .inline-add-footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 2px; }
 
+  /* ── Buttons ───────────────────────────── */
   .btn { padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all 0.1s; }
   .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
   .btn-primary:hover { background: var(--accent-text); }
@@ -106,6 +182,7 @@
   .btn-danger:hover { background: var(--red-bg); }
   .btn-sm { padding: 4px 10px; font-size: 12px; }
 
+  /* ── Task cards ────────────────────────── */
   .tasks-section { margin-bottom: 24px; }
   .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
   .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
@@ -132,10 +209,10 @@
   .badge-low { background: var(--green-bg); color: var(--green); }
   .badge-status { background: var(--surface2); color: var(--text-muted); }
   .badge-status.inprog { background: var(--blue-bg); color: var(--blue); }
-  .badge-cat { background: var(--purple-bg); color: var(--purple); }
+  .badge-cat { background: var(--gold-bg); color: #7a6040; }
   .badge-due { background: var(--surface2); color: var(--text-muted); }
   .badge-due.overdue { background: var(--red-bg); color: var(--red); }
-  .badge-dodate { background: var(--blue-bg); color: var(--blue); }
+  .badge-dodate { background: var(--accent-light); color: var(--accent); }
   .badge-recurring { background: var(--green-bg); color: var(--green); }
   .badge-list { background: var(--surface2); color: var(--text-muted); }
   .task-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
@@ -148,7 +225,7 @@
   .subtask-name { font-size: 13px; flex: 1; color: var(--text); }
   .subtask-name.done { text-decoration: line-through; color: var(--text-muted); }
   .subtask-add-wrap { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; flex: 1; margin-top: 4px; }
-  .subtask-add-wrap input { flex: 1; font-size: 13px; border: none; outline: none; background: transparent; color: var(--text); }
+  .subtask-add-wrap input { flex: 1; font-size: 16px; border: none; outline: none; background: transparent; color: var(--text); }
   .subtask-add-wrap input::placeholder { color: var(--text-faint); }
   .progress-bar { height: 3px; background: var(--surface2); border-radius: 2px; margin: 4px 0 0; overflow: hidden; }
   .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
@@ -162,15 +239,15 @@
   .search-group-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
   .search-group-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
-  /* Modal */
-  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .modal { background: var(--surface); border-radius: 14px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+  /* ── Modals ────────────────────────────── */
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .modal { background: var(--surface); border-radius: 14px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
   .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 0; }
-  .modal-title { font-size: 16px; font-weight: 600; }
+  .modal-title { font-family: Georgia, 'Times New Roman', serif; font-size: 17px; font-weight: 700; color: var(--accent); }
   .modal-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
   .modal-footer { padding: 0 20px 18px; display: flex; gap: 8px; justify-content: flex-end; }
   .field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
-  .field input, .field select, .field textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 14px; color: var(--text); background: var(--surface); outline: none; font-family: inherit; transition: border-color 0.15s; }
+  .field input, .field select, .field textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 16px; color: var(--text); background: var(--surface); outline: none; font-family: inherit; transition: border-color 0.15s; }
   .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
   .field textarea { resize: vertical; min-height: 70px; }
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -179,51 +256,57 @@
   .color-dot:hover { transform: scale(1.15); }
   .color-dot.selected { border-color: var(--text); }
 
-  /* Gmail sync modal */
+  /* Gmail */
   .gmail-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
   .gmail-item input[type=checkbox] { margin-top: 3px; flex-shrink: 0; accent-color: var(--accent); width: 15px; height: 15px; }
   .gmail-item-body { flex: 1; }
   .gmail-item-subject { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
   .gmail-item-preview { font-size: 12px; color: var(--text-muted); }
   .gmail-status { font-size: 13px; color: var(--text-muted); text-align: center; padding: 16px; }
+
   /* Ideas */
   .idea-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; transition: border-color 0.15s; }
   .idea-card:hover { border-color: var(--border-strong); }
   .idea-text { flex: 1; font-size: 14px; line-height: 1.5; word-break: break-word; }
   .idea-date { font-size: 11px; color: var(--text-faint); margin-top: 4px; }
   .idea-add { display: flex; gap: 8px; margin-bottom: 16px; }
-  .idea-add textarea { flex: 1; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 14px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; resize: none; min-height: 60px; transition: border-color 0.15s; }
+  .idea-add textarea { flex: 1; border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 16px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; resize: none; min-height: 60px; transition: border-color 0.15s; }
   .idea-add textarea:focus { border-color: var(--accent); }
   .idea-add-btn { align-self: flex-end; }
-  .idea-modal-text { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 14px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; resize: vertical; min-height: 100px; transition: border-color 0.15s; }
+  .idea-modal-text { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 16px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; resize: vertical; min-height: 100px; transition: border-color 0.15s; }
   .idea-modal-text:focus { border-color: var(--accent); }
 
-  /* Mobile */
-  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99; }
+  /* Sidebar overlay */
+  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 99; }
   .sidebar-overlay.visible { display: block; }
-  .menu-btn { display: none; background: none; border: none; cursor: pointer; padding: 4px 6px; color: var(--text); font-size: 22px; line-height: 1; flex-shrink: 0; }
 
+  /* ── Mobile ────────────────────────────── */
   @media (max-width: 640px) {
-    header { padding: 0 12px; gap: 8px; }
+    header { padding: calc(var(--safe-top) + 8px) 12px 8px; gap: 8px; }
     .menu-btn { display: flex; align-items: center; }
-    .app-name { font-size: 14px; }
+    .app-name { font-size: 15px; }
     .header-search { flex: 1; min-width: 0; width: auto; }
     .header-stats { gap: 10px; }
     .hstat-val { font-size: 14px; }
     .hstat-label { font-size: 9px; }
 
-    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 100; transform: translateX(-100%); transition: transform 0.25s ease; width: 260px; box-shadow: 4px 0 20px rgba(0,0,0,0.15); }
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0; z-index: 100;
+      transform: translateX(-100%); transition: transform 0.25s ease;
+      width: 270px; box-shadow: 4px 0 24px rgba(0,0,0,0.3);
+      padding-top: var(--safe-top);
+    }
     .sidebar.open { transform: translateX(0); }
 
-    .content { padding: 14px; }
+    .content { padding: 14px 14px calc(14px + var(--safe-bottom)); }
     .list-header { margin-bottom: 12px; }
-    .list-title { font-size: 17px; }
+    .list-title { font-size: 19px; }
     .toolbar { gap: 6px; margin-bottom: 12px; }
     .filter-btn { padding: 4px 10px; font-size: 11px; }
 
     .task-row { padding: 10px; gap: 8px; }
     .drag-handle { display: none; }
-    .task-name { font-size: 13px; word-break: break-word; }
+    .task-name { font-size: 13px; }
     .badge { font-size: 10px; padding: 2px 6px; }
     .task-right { gap: 2px; }
     .icon-btn { width: 30px; height: 30px; font-size: 15px; }
@@ -232,11 +315,11 @@
     .inline-add-row { grid-template-columns: 1fr; }
 
     .list-item-edit { opacity: 1; }
+    .workspace-edit-btn { opacity: 1; }
 
     .modal-bg { padding: 0; align-items: flex-end; }
     .modal { border-radius: 16px 16px 0 0; max-height: 90vh; max-width: 100%; }
   }
-
 </style>
 </head>
 <body>
@@ -246,7 +329,7 @@
   <span class="app-name">My <span>Tracker</span></span>
   <div class="spacer"></div>
   <div class="header-search">
-    <span style="color:var(--text-faint);font-size:13px">⌕</span>
+    <span style="color:rgba(255,255,255,0.45);font-size:13px">⌕</span>
     <input id="global-search" placeholder="Search tasks…" oninput="handleSearch(this.value)" />
   </div>
   <div class="header-stats" id="header-stats"></div>
@@ -258,7 +341,7 @@
     <div class="sidebar-section">
       <div class="sidebar-section-label">Views</div>
       <button class="list-item" id="today-btn" onclick="setActiveList('__today__')">
-        <span style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;display:inline-block"></span>
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block"></span>
         <span>Today</span>
         <span class="list-count" id="today-count" style="display:none"></span>
       </button>
@@ -331,6 +414,25 @@
   </div>
 </div>
 
+<!-- Workspace Modal -->
+<div class="modal-bg" id="workspace-modal" style="display:none" onclick="if(event.target===this)closeWorkspaceModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="workspace-modal-title">New workspace</span>
+      <button class="icon-btn" onclick="closeWorkspaceModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Workspace name</label><input id="wm-name" placeholder="e.g. Client, Side project…" /></div>
+      <div class="field"><label>Color</label><div class="color-picker" id="wm-colors"></div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="wm-delete-btn" onclick="deleteWorkspaceFromModal()" style="margin-right:auto;display:none">Delete workspace</button>
+      <button class="btn btn-ghost" onclick="closeWorkspaceModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWorkspace()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- Gmail Sync Modal -->
 <div class="modal-bg" id="gmail-modal" style="display:none" onclick="if(event.target===this)closeGmailModal()">
   <div class="modal" style="max-width:560px">
@@ -368,7 +470,7 @@
   </div>
 </div>
 
-<!-- Idea Space Modal (new/edit space) -->
+<!-- Idea Space Modal -->
 <div class="modal-bg" id="idea-space-modal" style="display:none" onclick="if(event.target===this)closeIdeaSpaceModal()">
   <div class="modal">
     <div class="modal-header">
@@ -387,27 +489,28 @@
   </div>
 </div>
 
-
-
 <script>
 const STORE_KEY = 'tracker_v4';
-const LIST_COLORS = ['#2d6a4f','#1a5fa8','#b7650a','#c0392b','#5b3fa8','#7a746c','#0077b6','#e76f51'];
+const LIST_COLORS = ['#16335B','#BA9E78','#1a5fa8','#c0392b','#5b3fa8','#7a746c','#2d7a55','#e76f51'];
 const TODAY = new Date().toISOString().slice(0,10);
 
 const WORKSPACE_DEFS = [
-  { id: 'velocitytx',  name: 'VelocityTX',       color: '#2d6a4f' },
-  { id: 'embrace',     name: 'Embrace',            color: '#1a5fa8' },
-  { id: 'personal',    name: 'Personal',           color: '#b7650a' },
+  { id: 'velocitytx',  name: 'VelocityTX',       color: '#16335B' },
+  { id: 'embrace',     name: 'Embrace',            color: '#BA9E78' },
+  { id: 'personal',    name: 'Personal',           color: '#7a746c' },
   { id: 'acu',         name: 'ACU Angel Network',  color: '#5b3fa8' },
 ];
 
 function makeDefaultWorkspace(wid) {
+  const def = WORKSPACE_DEFS.find(w => w.id === wid) || { name: wid, color: LIST_COLORS[0] };
   const isMain = wid === 'velocitytx';
   return {
-    lists: [{ id: 'tasks', name: 'Active tasks', color: '#2d6a4f' }],
+    name: def.name,
+    color: def.color,
+    lists: [{ id: 'tasks', name: 'Active tasks', color: def.color }],
     ideas: isMain
       ? [{ id: 'goals', name: 'Long-term goals', color: '#1a5fa8' },
-         { id: 'think', name: 'Things to think about', color: '#b7650a' }]
+         { id: 'think', name: 'Things to think about', color: '#7a746c' }]
       : [],
     tasks: [],
     notes: [],
@@ -419,6 +522,7 @@ function makeDefaultWorkspace(wid) {
 
 let state = {
   activeWorkspace: 'velocitytx',
+  workspaceOrder: ['velocitytx', 'embrace', 'personal', 'acu'],
   filterStatus: 'All',
   filterPriority: 'All',
   workspaces: {
@@ -429,15 +533,14 @@ let state = {
   },
 };
 
-// Returns the current workspace's data object
-function ws() {
-  return state.workspaces[state.activeWorkspace];
-}
+function ws() { return state.workspaces[state.activeWorkspace]; }
 
 let editingTaskId = null;
 let editingListId = null;
+let editingWorkspaceId = null;
 let expandedTasks = new Set();
 let pickedColor = LIST_COLORS[0];
+let pickedWorkspaceColor = LIST_COLORS[0];
 let searchQuery = '';
 let dragSrcId = null;
 let pendingEmails = [];
@@ -446,24 +549,17 @@ let pendingEmails = [];
 let saveTimer = null;
 
 async function load() {
-  // Load from localStorage immediately so app is instant
   try {
     const raw = localStorage.getItem(STORE_KEY);
     if (raw) {
-      const saved = JSON.parse(raw);
-      mergeLoaded(saved);
+      mergeLoaded(JSON.parse(raw));
     } else {
-      // Try old key for migration
       const oldRaw = localStorage.getItem('tracker_v3');
-      if (oldRaw) {
-        const saved = JSON.parse(oldRaw);
-        mergeLoaded(saved);
-      }
+      if (oldRaw) mergeLoaded(JSON.parse(oldRaw));
     }
   } catch(e) {}
   render();
 
-  // Then load from cloud and merge (cloud wins)
   try {
     const res = await fetch('/api/sync', {
       method: 'POST',
@@ -486,27 +582,21 @@ function serialize() {
 }
 
 function mergeLoaded(saved) {
-  // Detect old flat format (pre-workspace)
+  // Old flat format migration
   if (saved.lists && !saved.workspaces) {
-    const oldActiveList = saved.activeList || (saved.lists?.[0]?.id || 'tasks');
-
-    // Apply the old goals/think migration from v3
     const ideas = saved.ideas || [];
     let lists = saved.lists || [];
-    const ideaIds = ['goals', 'think'];
-    ideaIds.forEach(id => {
+    ['goals','think'].forEach(id => {
       const inLists = lists.find(l => l.id === id);
       const inIdeas = ideas.find(l => l.id === id);
       if (inLists && !inIdeas) { ideas.push(inLists); lists = lists.filter(l => l.id !== id); }
     });
-    if (lists.length === 0) lists.push({ id: 'tasks', name: 'Active tasks', color: '#2d6a4f' });
-
+    if (lists.length === 0) lists.push({ id: 'tasks', name: 'Active tasks', color: '#16335B' });
     const allIds = [...lists.map(l=>l.id), ...ideas.map(l=>l.id), '__today__'];
-    const activeList = allIds.includes(oldActiveList) ? oldActiveList : lists[0]?.id || 'tasks';
-
+    const activeList = allIds.includes(saved.activeList) ? saved.activeList : lists[0]?.id || 'tasks';
     state.workspaces.velocitytx = {
-      lists,
-      ideas,
+      name: 'VelocityTX', color: '#16335B',
+      lists, ideas,
       tasks: saved.tasks || [],
       notes: saved.notes || [],
       manualOrders: saved.manualOrders || {},
@@ -517,19 +607,17 @@ function mergeLoaded(saved) {
     state.filterStatus = saved.filterStatus || 'All';
     state.filterPriority = saved.filterPriority || 'All';
     expandedTasks = new Set(saved._expanded || []);
+    ensureWorkspaces();
     return;
   }
 
-  // New workspace format
   if (saved.workspaces) {
     state.activeWorkspace = saved.activeWorkspace || 'velocitytx';
     state.filterStatus = saved.filterStatus || 'All';
     state.filterPriority = saved.filterPriority || 'All';
-    // Merge each workspace, keeping defaults for missing ones
-    WORKSPACE_DEFS.forEach(w => {
-      if (saved.workspaces[w.id]) {
-        state.workspaces[w.id] = saved.workspaces[w.id];
-      }
+    state.workspaceOrder = saved.workspaceOrder || Object.keys(saved.workspaces);
+    Object.keys(saved.workspaces).forEach(id => {
+      state.workspaces[id] = saved.workspaces[id];
     });
     expandedTasks = new Set(saved._expanded || []);
   }
@@ -538,25 +626,37 @@ function mergeLoaded(saved) {
 }
 
 function ensureWorkspaces() {
+  // Seed any missing predefined workspaces
   WORKSPACE_DEFS.forEach(w => {
-    const workspace = state.workspaces[w.id];
-    if (!workspace) { state.workspaces[w.id] = makeDefaultWorkspace(w.id); return; }
-    if (!workspace.lists) workspace.lists = [];
-    if (!workspace.ideas) workspace.ideas = [];
-    if (!workspace.tasks) workspace.tasks = [];
-    if (!workspace.notes) workspace.notes = [];
-    if (!workspace.manualOrders) workspace.manualOrders = {};
-    if (!workspace.completedCollapsed) workspace.completedCollapsed = {};
-    if (workspace.lists.length === 0) workspace.lists.push({ id: 'tasks', name: 'Active tasks', color: '#2d6a4f' });
-    const allIds = [...workspace.lists.map(l=>l.id), ...workspace.ideas.map(l=>l.id), '__today__'];
-    if (!allIds.includes(workspace.activeList)) workspace.activeList = workspace.lists[0]?.id || '';
+    if (!state.workspaces[w.id]) state.workspaces[w.id] = makeDefaultWorkspace(w.id);
   });
+  // Ensure workspaceOrder exists and covers all workspaces
+  if (!state.workspaceOrder) state.workspaceOrder = Object.keys(state.workspaces);
+  WORKSPACE_DEFS.forEach(w => {
+    if (!state.workspaceOrder.includes(w.id)) state.workspaceOrder.push(w.id);
+  });
+
+  Object.keys(state.workspaces).forEach(id => {
+    const w = state.workspaces[id];
+    if (!w.name) { const def = WORKSPACE_DEFS.find(d => d.id === id); w.name = def?.name || id; }
+    if (!w.color) { const def = WORKSPACE_DEFS.find(d => d.id === id); w.color = def?.color || LIST_COLORS[0]; }
+    if (!w.lists) w.lists = [];
+    if (!w.ideas) w.ideas = [];
+    if (!w.tasks) w.tasks = [];
+    if (!w.notes) w.notes = [];
+    if (!w.manualOrders) w.manualOrders = {};
+    if (!w.completedCollapsed) w.completedCollapsed = {};
+    if (w.lists.length === 0) w.lists.push({ id: 'tasks', name: 'Active tasks', color: w.color });
+    const allIds = [...w.lists.map(l=>l.id), ...w.ideas.map(l=>l.id), '__today__'];
+    if (!allIds.includes(w.activeList)) w.activeList = w.lists[0]?.id || '';
+  });
+
+  if (!state.workspaces[state.activeWorkspace]) state.activeWorkspace = state.workspaceOrder[0];
 }
 
 function save() {
   const payload = serialize();
   localStorage.setItem(STORE_KEY, JSON.stringify(payload));
-
   clearTimeout(saveTimer);
   saveTimer = setTimeout(async () => {
     try {
@@ -565,15 +665,11 @@ function save() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'save', state: payload })
       });
-    } catch(e) {
-      console.warn('Cloud save failed:', e);
-    }
+    } catch(e) { console.warn('Cloud save failed:', e); }
   }, 1500);
 }
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
-
-// ── Helpers ──────────────────────────────────────────────────────────
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function fmtDateTime(date, time) {
@@ -627,8 +723,7 @@ function sortedTasks(tasks, listId) {
     if (b.status === 'Done' && a.status !== 'Done') return -1;
     const da = earliestDate(a), db = earliestDate(b);
     if (da && db) return new Date(da) - new Date(db);
-    if (da) return -1;
-    if (db) return 1;
+    if (da) return -1; if (db) return 1;
     return 0;
   });
 }
@@ -643,15 +738,22 @@ function render() {
 
 function renderWorkspaceSwitcher() {
   const el = document.getElementById('workspace-switcher');
+  const order = state.workspaceOrder || Object.keys(state.workspaces);
   el.innerHTML = `
     <div class="workspace-switcher-label">Workspace</div>
-    ${WORKSPACE_DEFS.map(w => `
-      <button class="workspace-item${state.activeWorkspace === w.id ? ' active' : ''}"
-        style="--ws-color:${w.color}"
-        onclick="switchWorkspace('${w.id}')">
-        <span class="workspace-dot" style="background:${w.color}"></span>
-        <span>${esc(w.name)}</span>
-      </button>`).join('')}
+    ${order.map(id => {
+      const w = state.workspaces[id]; if (!w) return '';
+      const isActive = state.activeWorkspace === id;
+      return `<div class="workspace-item-wrap">
+        <button class="workspace-item${isActive ? ' active' : ''}"
+          onclick="switchWorkspace('${id}')">
+          <span class="workspace-dot" style="background:${w.color}"></span>
+          <span>${esc(w.name)}</span>
+        </button>
+        <button class="workspace-edit-btn" onclick="event.stopPropagation();openEditWorkspaceModal('${id}')" title="Edit workspace">✎</button>
+      </div>`;
+    }).join('')}
+    <button class="sidebar-add-workspace" onclick="openNewWorkspaceModal()">＋ New workspace</button>
   `;
 }
 
@@ -662,7 +764,7 @@ function renderHeaderStats() {
   document.getElementById('header-stats').innerHTML = `
     <div class="hstat"><div class="hstat-val">${total}</div><div class="hstat-label">Total</div></div>
     <div class="hstat"><div class="hstat-val">${done}</div><div class="hstat-label">Done</div></div>
-    <div class="hstat"><div class="hstat-val" style="color:${overdue>0?'var(--red)':'inherit'}">${overdue}</div><div class="hstat-label">Overdue</div></div>
+    <div class="hstat"><div class="hstat-val" style="color:${overdue>0?'#ffb3a7':'white'}">${overdue}</div><div class="hstat-label">Overdue</div></div>
   `;
   const todayCount = ws().tasks.filter(t => !t.parentId && isToday(t.doDate) && t.status !== 'Done').length;
   const tc = document.getElementById('today-count');
@@ -708,7 +810,6 @@ function renderContent() {
 function renderListView() {
   const list = getList(ws().activeList);
   if (!list) return;
-  const isThink = list.id === 'think';
   const hasManualOrder = !!(ws().manualOrders[list.id] && ws().manualOrders[list.id].length);
 
   let tasks = getListTasks(ws().activeList);
@@ -743,14 +844,14 @@ function renderListView() {
     </div>
     ${renderInlineAdd()}
     <div id="task-sections">
-      ${active.length === 0 && visibleDone.length === 0 ? renderEmpty(isThink) : ''}
-      ${active.length > 0 ? `<div class="tasks-section">${renderTaskCards(active, isThink, list.id)}</div>` : ''}
+      ${active.length === 0 && visibleDone.length === 0 ? renderEmpty() : ''}
+      ${active.length > 0 ? `<div class="tasks-section">${renderTaskCards(active, list.id)}</div>` : ''}
       ${visibleDone.length > 0 ? `
         <div class="tasks-section">
           <div class="section-label" onclick="toggleDoneCollapsed('${list.id}')">
             ${doneCollapsed ? '▶' : '▼'} Completed (${visibleDone.length})
           </div>
-          ${doneCollapsed ? '' : renderTaskCards(visibleDone, isThink, list.id)}
+          ${doneCollapsed ? '' : renderTaskCards(visibleDone, list.id)}
         </div>` : ''}
     </div>
   `;
@@ -770,16 +871,15 @@ function renderTodayView() {
     </div>
     <div id="task-sections">
       ${todayTasks.length === 0 ? `<div class="empty"><div class="empty-icon">🎉</div><div class="empty-title">Nothing scheduled for today</div><div class="empty-sub">Tasks with today's Do Date appear here</div></div>` : ''}
-      ${active.length > 0 ? `<div class="tasks-section">${active.map(t => renderSingleTaskCard(t, false, null, getList(t.listId))).join('')}</div>` : ''}
+      ${active.length > 0 ? `<div class="tasks-section">${active.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}</div>` : ''}
       ${done.length > 0 ? `
         <div class="tasks-section">
           <div class="section-label" onclick="toggleDoneCollapsed('__today__')">${doneCollapsed?'▶':'▼'} Completed (${done.length})</div>
-          ${doneCollapsed ? '' : done.map(t => renderSingleTaskCard(t, false, null, getList(t.listId))).join('')}
+          ${doneCollapsed ? '' : done.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
         </div>` : ''}
     </div>
   `;
 }
-
 
 // ── Gmail Sync ────────────────────────────────────────────────────────
 async function openGmailModal() {
@@ -791,11 +891,9 @@ async function openGmailModal() {
 
   try {
     const response = await fetch('/api/outlook', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'fetch' })
     });
-
     if (response.status === 401) {
       const data = await response.json();
       if (data.error === 'NOT_AUTHED') {
@@ -807,16 +905,13 @@ async function openGmailModal() {
         return;
       }
     }
-
     const data = await response.json();
     if (data.error) throw new Error(data.error);
-    let emails = data.emails || [];
-
-    if (!emails || emails.length === 0) {
+    const emails = data.emails || [];
+    if (!emails.length) {
       document.getElementById('gmail-list').innerHTML = '<div class="gmail-status">No emails found with [task] in the subject.</div>';
       return;
     }
-
     pendingEmails = emails;
     document.getElementById('gmail-list').innerHTML = emails.map((e, i) => `
       <div class="gmail-item">
@@ -830,7 +925,7 @@ async function openGmailModal() {
     document.getElementById('gmail-import-btn').style.display = '';
     updateImportCount();
   } catch(err) {
-    document.getElementById('gmail-list').innerHTML = `<div class="gmail-status">Error: ${esc(String(err))}.<br>Make sure Gmail is connected in Claude settings.</div>`;
+    document.getElementById('gmail-list').innerHTML = `<div class="gmail-status">Error: ${esc(String(err))}.</div>`;
   }
 }
 
@@ -842,50 +937,31 @@ function updateImportCount() {
 async function importSelectedEmails() {
   const selected = pendingEmails.filter((_,i) => document.getElementById('email-'+i)?.checked);
   if (!selected.length) return;
-
   document.getElementById('gmail-import-btn').textContent = 'Importing…';
   document.getElementById('gmail-import-btn').disabled = true;
-
   for (const email of selected) {
     try {
       const parseRes = await fetch('/api/outlook', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'parse', email, listIds: ws().lists.map(l => l.id) })
       });
       const parseData = await parseRes.json();
       if (parseData.error) throw new Error(parseData.error);
       const parsed = parseData.task;
-      ws().tasks.push({
-          id: uid(),
-          name: parsed.name || email.subject.replace(/\[task\]/gi,'').trim(),
-          listId: ws().lists.find(l => l.id === parsed.listId) ? parsed.listId : ws().lists[0].id,
-          status: 'To do',
-          priority: ['High','Medium','Low'].includes(parsed.priority) ? parsed.priority : 'Medium',
-          category: parsed.category || '',
-          deadlineDate: parsed.deadlineDate || '',
-          deadlineTime: '',
-          doDate: parsed.doDate || '',
-          doTime: '',
-          recurrence: '',
-          notes: parsed.notes || '',
-          parentId: null,
-          importedFromEmail: email.id,
-        });
+      ws().tasks.push({ id: uid(), name: parsed.name || email.subject.replace(/\[task\]/gi,'').trim(),
+        listId: ws().lists.find(l => l.id === parsed.listId) ? parsed.listId : ws().lists[0].id,
+        status: 'To do', priority: ['High','Medium','Low'].includes(parsed.priority) ? parsed.priority : 'Medium',
+        category: parsed.category || '', deadlineDate: parsed.deadlineDate || '', deadlineTime: '',
+        doDate: parsed.doDate || '', doTime: '', recurrence: '', notes: parsed.notes || '',
+        parentId: null, importedFromEmail: email.id });
     } catch(e) {
-      console.error('Failed to parse email:', e);
-      ws().tasks.push({
-        id: uid(), name: email.subject.replace(/\[task\]/gi,'').trim(),
+      ws().tasks.push({ id: uid(), name: email.subject.replace(/\[task\]/gi,'').trim(),
         listId: ws().lists[0].id, status: 'To do', priority: 'Medium',
         category: '', deadlineDate: '', deadlineTime: '', doDate: '', doTime: '',
-        recurrence: '', notes: email.body || '', parentId: null
-      });
+        recurrence: '', notes: email.body || '', parentId: null });
     }
   }
-
-  save();
-  closeGmailModal();
-  render();
+  save(); closeGmailModal(); render();
 }
 
 async function connectGmail() {
@@ -899,7 +975,7 @@ async function connectGmail() {
   window.addEventListener('message', async (e) => {
     if (e.data === 'outlook_authed') {
       popup && popup.close();
-      document.getElementById('gmail-list').innerHTML = '<div class="gmail-status">Outlook connected! Loading emails…</div>';
+      document.getElementById('gmail-list').innerHTML = '<div class="gmail-status">Connected! Loading emails…</div>';
       await openGmailModal();
     }
   }, { once: true });
@@ -916,7 +992,6 @@ function renderIdeaView() {
   const space = getIdea(ws().activeList);
   if (!space) return;
   const notes = getIdeaNotes(ws().activeList).sort((a,b) => b.createdAt - a.createdAt);
-
   document.getElementById('content').innerHTML = `
     <div class="list-header">
       <span class="list-title-dot" style="background:${space.color}"></span>
@@ -945,7 +1020,6 @@ function renderIdeaView() {
 function handleIdeaEnter(e) {
   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submitIdea(); }
 }
-
 function submitIdea() {
   const text = document.getElementById('idea-input')?.value.trim();
   if (!text) return;
@@ -954,12 +1028,10 @@ function submitIdea() {
   save(); renderIdeaView();
 }
 
-// Idea edit modal
 let editingNoteId = null;
 function openIdeaModal(id) {
   editingNoteId = id;
-  const note = (ws().notes||[]).find(n => n.id === id);
-  if (!note) return;
+  const note = (ws().notes||[]).find(n => n.id === id); if (!note) return;
   document.getElementById('idea-modal-title').textContent = 'Edit idea';
   document.getElementById('im-text').value = note.text;
   document.getElementById('idea-modal').style.display = 'flex';
@@ -967,23 +1039,20 @@ function openIdeaModal(id) {
 }
 function closeIdeaModal() { document.getElementById('idea-modal').style.display = 'none'; }
 function saveIdea() {
-  const text = document.getElementById('im-text').value.trim();
-  if (!text) return;
+  const text = document.getElementById('im-text').value.trim(); if (!text) return;
   const note = (ws().notes||[]).find(n => n.id === editingNoteId);
   if (note) note.text = text;
   closeIdeaModal(); save(); renderIdeaView();
 }
 function deleteIdeaFromModal() {
   if (!confirm('Delete this idea?')) return;
-  deleteNote(editingNoteId);
-  closeIdeaModal();
+  deleteNote(editingNoteId); closeIdeaModal();
 }
 function deleteNote(id) {
   ws().notes = (ws().notes||[]).filter(n => n.id !== id);
   save(); renderIdeaView();
 }
 
-// Idea space modal
 let editingIdeaSpaceId = null;
 let pickedIdeaColor = LIST_COLORS[2];
 
@@ -1016,11 +1085,8 @@ function closeIdeaSpaceModal() { document.getElementById('idea-space-modal').sty
 function saveIdeaSpace() {
   const name = document.getElementById('ism-name').value.trim(); if (!name) return;
   if (!ws().ideas) ws().ideas = [];
-  if (editingIdeaSpaceId) {
-    const s = getIdea(editingIdeaSpaceId); s.name = name; s.color = pickedIdeaColor;
-  } else {
-    ws().ideas.push({ id: uid(), name, color: pickedIdeaColor });
-  }
+  if (editingIdeaSpaceId) { const s = getIdea(editingIdeaSpaceId); s.name = name; s.color = pickedIdeaColor; }
+  else { ws().ideas.push({ id: uid(), name, color: pickedIdeaColor }); }
   closeIdeaSpaceModal(); save(); render();
 }
 function deleteIdeaSpaceFromModal() {
@@ -1033,13 +1099,62 @@ function deleteIdeaSpaceFromModal() {
   closeIdeaSpaceModal(); save(); render();
 }
 
+// ── Workspace Modal ───────────────────────────────────────────────────
+function renderWorkspaceColorPicker() {
+  document.getElementById('wm-colors').innerHTML = LIST_COLORS.map(c =>
+    `<div class="color-dot${pickedWorkspaceColor===c?' selected':''}" style="background:${c}" onclick="pickWorkspaceColor('${c}')"></div>`).join('');
+}
+function pickWorkspaceColor(c) { pickedWorkspaceColor = c; renderWorkspaceColorPicker(); }
+
+function openNewWorkspaceModal() {
+  editingWorkspaceId = null; pickedWorkspaceColor = LIST_COLORS[0];
+  document.getElementById('workspace-modal-title').textContent = 'New workspace';
+  document.getElementById('wm-name').value = '';
+  document.getElementById('wm-delete-btn').style.display = 'none';
+  renderWorkspaceColorPicker();
+  document.getElementById('workspace-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('wm-name').focus(), 50);
+}
+function openEditWorkspaceModal(id) {
+  editingWorkspaceId = id;
+  const w = state.workspaces[id]; pickedWorkspaceColor = w.color;
+  document.getElementById('workspace-modal-title').textContent = 'Edit workspace';
+  document.getElementById('wm-name').value = w.name;
+  document.getElementById('wm-delete-btn').style.display = Object.keys(state.workspaces).length > 1 ? 'block' : 'none';
+  renderWorkspaceColorPicker();
+  document.getElementById('workspace-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('wm-name').focus(), 50);
+}
+function closeWorkspaceModal() { document.getElementById('workspace-modal').style.display = 'none'; }
+function saveWorkspace() {
+  const name = document.getElementById('wm-name').value.trim(); if (!name) return;
+  if (editingWorkspaceId) {
+    state.workspaces[editingWorkspaceId].name = name;
+    state.workspaces[editingWorkspaceId].color = pickedWorkspaceColor;
+  } else {
+    const id = uid();
+    state.workspaces[id] = { ...makeDefaultWorkspace(id), name, color: pickedWorkspaceColor };
+    state.workspaceOrder.push(id);
+  }
+  closeWorkspaceModal(); save(); render();
+}
+function deleteWorkspaceFromModal() {
+  const w = state.workspaces[editingWorkspaceId];
+  const taskCount = w.tasks?.length || 0;
+  const msg = taskCount > 0
+    ? `Delete "${w.name}"? This will permanently delete ${taskCount} task${taskCount>1?'s':''} and all associated data.`
+    : `Delete workspace "${w.name}"?`;
+  if (!confirm(msg)) return;
+  delete state.workspaces[editingWorkspaceId];
+  state.workspaceOrder = state.workspaceOrder.filter(id => id !== editingWorkspaceId);
+  if (state.activeWorkspace === editingWorkspaceId) state.activeWorkspace = state.workspaceOrder[0];
+  closeWorkspaceModal(); save(); render();
+}
 
 function renderSearch() {
   const q = searchQuery.toLowerCase();
   const matches = ws().tasks.filter(t => !t.parentId && (
-    t.name.toLowerCase().includes(q) ||
-    (t.category||'').toLowerCase().includes(q) ||
-    (t.notes||'').toLowerCase().includes(q)
+    t.name.toLowerCase().includes(q) || (t.category||'').toLowerCase().includes(q) || (t.notes||'').toLowerCase().includes(q)
   ));
   const byList = {};
   matches.forEach(t => { if (!byList[t.listId]) byList[t.listId] = []; byList[t.listId].push(t); });
@@ -1054,7 +1169,7 @@ function renderSearch() {
         const list = getList(listId);
         return `<div class="search-group">
           <div class="search-group-label"><span class="list-dot" style="background:${list?.color||'#999'}"></span>${esc(list?.name||listId)}</div>
-          ${tasks.map(t => renderSingleTaskCard(t, list?.id==='think', null, null)).join('')}
+          ${tasks.map(t => renderSingleTaskCard(t, null, null)).join('')}
         </div>`;
       }).join('')}
   `;
@@ -1090,11 +1205,11 @@ function renderInlineAdd() {
   </div>`;
 }
 
-function renderTaskCards(tasks, isThink, listId) {
-  return tasks.map(t => renderSingleTaskCard(t, isThink, listId, null)).join('');
+function renderTaskCards(tasks, listId) {
+  return tasks.map(t => renderSingleTaskCard(t, listId, null)).join('');
 }
 
-function renderSingleTaskCard(t, isThink, listId, sourceList) {
+function renderSingleTaskCard(t, listId, sourceList) {
   const subs = getSubtasks(t.id);
   const doneSubs = subs.filter(s => s.status === 'Done').length;
   const expanded = expandedTasks.has(t.id);
@@ -1102,7 +1217,7 @@ function renderSingleTaskCard(t, isThink, listId, sourceList) {
   const progressPct = subs.length > 0 ? Math.round((doneSubs / subs.length) * 100) : 0;
   const list = sourceList || getList(t.listId);
 
-  return `<div class="task-card${t.status==='Done'?' done':''}${isThink?' think-card':''}" id="tc-${t.id}"
+  return `<div class="task-card${t.status==='Done'?' done':''}" id="tc-${t.id}"
     draggable="true" ondragstart="dragStart(event,'${t.id}')" ondragover="dragOver(event,'${t.id}')" ondrop="dragDrop(event,'${t.id}','${listId||t.listId}')" ondragleave="dragLeave(event)" ondragend="dragEnd(event)">
     <div class="task-row" onclick="openTaskModal('${t.id}')" style="cursor:pointer">
       <span class="drag-handle" title="Drag to reorder">⠿</span>
@@ -1146,8 +1261,7 @@ function renderSubtasks(parentId, subs) {
   </div>`;
 }
 
-function renderEmpty(isThink) {
-  if (isThink) return `<div class="empty"><div class="empty-icon">💭</div><div class="empty-title">Nothing to think about yet</div><div class="empty-sub">Add ideas, questions, or things to revisit later</div></div>`;
+function renderEmpty() {
   return `<div class="empty"><div class="empty-icon">✓</div><div class="empty-title">All clear</div><div class="empty-sub">Click the + above to add a task</div></div>`;
 }
 
@@ -1184,13 +1298,10 @@ function resetOrder(listId) { delete ws().manualOrders[listId]; save(); render()
 function switchWorkspace(id) {
   if (state.activeWorkspace === id) return;
   state.activeWorkspace = id;
-  state.filterStatus = 'All';
-  state.filterPriority = 'All';
+  state.filterStatus = 'All'; state.filterPriority = 'All';
   searchQuery = '';
-  const searchEl = document.getElementById('global-search');
-  if (searchEl) searchEl.value = '';
-  closeSidebar();
-  save(); render();
+  const searchEl = document.getElementById('global-search'); if (searchEl) searchEl.value = '';
+  closeSidebar(); save(); render();
 }
 
 // ── Actions ──────────────────────────────────────────────────────────
@@ -1198,23 +1309,19 @@ function setActiveList(id) {
   ws().activeList = id;
   state.filterStatus = 'All'; state.filterPriority = 'All';
   searchQuery = ''; document.getElementById('global-search').value = '';
-  closeSidebar();
-  save(); render();
+  closeSidebar(); save(); render();
 }
 function setFilterStatus(s) { state.filterStatus = s; save(); render(); }
 function setFilterPriority(p) { state.filterPriority = p; save(); render(); }
 
 function toggleSidebar() {
-  const sidebar = document.querySelector('.sidebar');
-  const overlay = document.getElementById('sidebar-overlay');
-  sidebar.classList.toggle('open');
-  overlay.classList.toggle('visible');
+  document.querySelector('.sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('visible');
 }
 function closeSidebar() {
   document.querySelector('.sidebar').classList.remove('open');
   document.getElementById('sidebar-overlay').classList.remove('visible');
 }
-
 
 function toggleDoneCollapsed(listId) {
   const cur = ws().completedCollapsed[listId];
@@ -1223,8 +1330,7 @@ function toggleDoneCollapsed(listId) {
 }
 
 function toggleDone(id) {
-  const t = ws().tasks.find(x => x.id === id);
-  if (!t) return;
+  const t = ws().tasks.find(x => x.id === id); if (!t) return;
   const wasDone = t.status === 'Done';
   t.status = wasDone ? 'To do' : 'Done';
   if (!wasDone) {
@@ -1255,7 +1361,8 @@ function handleSubtaskAdd(e, parentId) {
   if (e.key !== 'Enter') return;
   const val = e.target.value.trim(); if (!val) return;
   const parent = ws().tasks.find(t => t.id === parentId);
-  ws().tasks.push({ id: uid(), name: val, listId: parent.listId, status: 'To do', priority: 'Medium', category: '', deadlineDate: '', deadlineTime: '', doDate: '', doTime: '', recurrence: '', notes: '', parentId });
+  ws().tasks.push({ id: uid(), name: val, listId: parent.listId, status: 'To do', priority: 'Medium',
+    category: '', deadlineDate: '', deadlineTime: '', doDate: '', doTime: '', recurrence: '', notes: '', parentId });
   expandedTasks.add(parentId); save(); render();
 }
 
@@ -1394,8 +1501,7 @@ function handleSidebarListClick(e, listId) {
   }, 300);
 }
 function startInlineTitleEdit(id) {
-  const item = getList(id) || getIdea(id);
-  if (!item) return;
+  const item = getList(id) || getIdea(id); if (!item) return;
   const display = document.getElementById('list-title-display'); if (!display) return;
   const input = document.createElement('input'); input.className = 'list-title-input'; input.value = item.name;
   display.replaceWith(input); input.focus(); input.select();
@@ -1418,12 +1524,13 @@ function startInlineSidebarEdit(listId) {
 
 // ── Keyboard shortcuts ───────────────────────────────────────────────
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeTaskModal(); closeListModal(); closeGmailModal(); collapseInlineAdd(); closeIdeaModal(); closeIdeaSpaceModal(); }
+  if (e.key === 'Escape') { closeTaskModal(); closeListModal(); closeGmailModal(); collapseInlineAdd(); closeIdeaModal(); closeIdeaSpaceModal(); closeWorkspaceModal(); }
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); expandInlineAdd(); }
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
     e.preventDefault();
     if (document.getElementById('task-modal').style.display !== 'none') { saveTask(); return; }
     if (document.getElementById('list-modal').style.display !== 'none') { saveList(); return; }
+    if (document.getElementById('workspace-modal').style.display !== 'none') { saveWorkspace(); return; }
     if (document.getElementById('idea-modal').style.display !== 'none') { saveIdea(); return; }
     if (document.getElementById('idea-space-modal').style.display !== 'none') { saveIdeaSpace(); return; }
     const el = document.getElementById('inline-add');
