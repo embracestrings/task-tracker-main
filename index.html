@@ -1365,6 +1365,8 @@ function toggleExpand(id) {
 }
 
 function deleteTask(id) {
+  const task = ws().tasks.find(t => t.id === id);
+  if (task?.calendarEventId) autoRemoveTask(task);
   ws().tasks = ws().tasks.filter(t => t.id !== id && t.parentId !== id);
   Object.keys(ws().manualOrders).forEach(listId => {
     ws().manualOrders[listId] = ws().manualOrders[listId].filter(tid => tid !== id);
@@ -1400,7 +1402,7 @@ function collapseInlineAdd() {
 function submitInlineAdd() {
   const name = document.getElementById('ia-name').value.trim();
   if (!name) { document.getElementById('ia-name').focus(); return; }
-  ws().tasks.push({
+  const newTask = {
     id: uid(), name,
     listId: ws().activeList === '__today__' ? ws().lists[0]?.id : ws().activeList,
     status: document.getElementById('ia-status').value,
@@ -1413,9 +1415,11 @@ function submitInlineAdd() {
     recurrence: document.getElementById('ia-recurrence').value,
     notes: document.getElementById('ia-notes').value.trim(),
     parentId: null,
-  });
+  };
+  ws().tasks.push(newTask);
   collapseInlineAdd(); save(); render();
   setTimeout(expandInlineAdd, 50);
+  autoSyncTask(newTask);
 }
 
 // ── Task Modal ───────────────────────────────────────────────────────
@@ -1440,7 +1444,7 @@ function closeTaskModal() { document.getElementById('task-modal').style.display 
 function saveTask() {
   const name = document.getElementById('tm-name').value.trim(); if (!name) return;
   const i = ws().tasks.findIndex(t => t.id === editingTaskId); if (i < 0) return;
-  ws().tasks[i] = { ...ws().tasks[i], name,
+  const updatedTask = { ...ws().tasks[i], name,
     status: document.getElementById('tm-status').value,
     priority: document.getElementById('tm-priority').value,
     category: document.getElementById('tm-category').value.trim(),
@@ -1452,7 +1456,9 @@ function saveTask() {
     notes: document.getElementById('tm-notes').value.trim(),
     listId: document.getElementById('tm-list').value,
   };
+  ws().tasks[i] = updatedTask;
   closeTaskModal(); save(); render();
+  autoSyncTask(updatedTask);
 }
 
 // ── List Modal ───────────────────────────────────────────────────────
@@ -1557,6 +1563,41 @@ document.addEventListener('click', e => {
   const ctx = document.getElementById('ctx-menu');
   if (ctx) ctx.style.display = 'none';
 });
+
+// ── Calendar auto-sync helpers ────────────────────────────────────────
+async function autoSyncTask(task) {
+  const wsId = state.activeWorkspace;
+  if (!SYNC_WORKSPACES.includes(wsId)) return;
+  if (!calendarConnected[wsId]) return;
+  if (!task.doDate && !task.deadlineDate) return;
+  if (task.status === 'Done') return;
+  try {
+    const res = await fetch('/api/calendar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'sync', workspaceId: wsId, tasks: [task] })
+    });
+    const data = await res.json();
+    if (data.tasks && data.tasks[0]) {
+      const updated = data.tasks[0];
+      const idx = ws().tasks.findIndex(t => t.id === updated.id);
+      if (idx >= 0) { ws().tasks[idx] = updated; save(); }
+    }
+  } catch(e) { /* silent — calendar sync is best-effort */ }
+}
+
+async function autoRemoveTask(task) {
+  if (!task.calendarEventId) return;
+  const wsId = state.activeWorkspace;
+  if (!calendarConnected[wsId]) return;
+  try {
+    await fetch('/api/calendar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete', workspaceId: wsId, eventId: task.calendarEventId })
+    });
+  } catch(e) {}
+}
 
 // ── Google Calendar Sync ─────────────────────────────────────────────
 async function handleCalendarSync() {
