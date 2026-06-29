@@ -44,13 +44,12 @@
   }
 
   html { background: #F2F2F3; }
-  /* Cover the iOS safe-area bottom zone with the app background */
-  body::after { content: ''; position: fixed; bottom: 0; left: 0; right: 0; height: env(safe-area-inset-bottom, 0px); background: #F2F2F3; z-index: 9999; pointer-events: none; }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: var(--bg); color: var(--text);
-    height: 100vh; height: 100dvh;
+    height: 100vh;
+    height: calc(100dvh + env(safe-area-inset-bottom, 0px));
     display: flex; flex-direction: column;
     overflow: hidden; font-size: 14px;
   }
