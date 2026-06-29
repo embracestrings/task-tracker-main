@@ -544,7 +544,7 @@ let pickedWorkspaceColor = LIST_COLORS[0];
 let searchQuery = '';
 let dragSrcId = null;
 let pendingEmails = [];
-let calendarConnected = false;
+let calendarConnected = {};  // { workspaceId: true/false }
 const SYNC_WORKSPACES = ['embrace', 'personal', 'acu'];
 
 // ── Persist ──────────────────────────────────────────────────────────
@@ -578,13 +578,13 @@ async function load() {
     console.warn('Cloud load failed, using local data:', e);
   }
 
-  // Check Google Calendar connection status (non-blocking)
+  // Check Google Calendar connection status for all sync workspaces (non-blocking)
   fetch('/api/calendar', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'status' })
+    body: JSON.stringify({ action: 'status_all', workspaceIds: SYNC_WORKSPACES })
   }).then(r => r.json()).then(d => {
-    calendarConnected = !!d.connected;
+    if (d.connected) calendarConnected = d.connected;
   }).catch(() => {});
 }
 
@@ -845,7 +845,7 @@ function renderListView() {
       </button>
       ${SYNC_WORKSPACES.includes(state.activeWorkspace) ? `
       <button class="btn btn-ghost btn-sm" id="cal-sync-btn" onclick="handleCalendarSync()" style="gap:5px;display:flex;align-items:center">
-        <span style="font-size:14px">📅</span> ${calendarConnected ? 'Sync Calendar' : 'Connect Calendar'}
+        <span style="font-size:14px">📅</span> ${calendarConnected[state.activeWorkspace] ? 'Sync Calendar' : 'Connect Calendar'}
       </button>` : ''}
     </div>
     <div class="toolbar">
@@ -1560,14 +1560,15 @@ document.addEventListener('click', e => {
 
 // ── Google Calendar Sync ─────────────────────────────────────────────
 async function handleCalendarSync() {
-  if (!calendarConnected) {
-    await connectGoogleCalendar();
+  const wsId = state.activeWorkspace;
+  if (!calendarConnected[wsId]) {
+    await connectGoogleCalendar(wsId);
   } else {
-    await runCalendarSync();
+    await runCalendarSync(wsId);
   }
 }
 
-async function connectGoogleCalendar() {
+async function connectGoogleCalendar(wsId) {
   const btn = document.getElementById('cal-sync-btn');
   if (btn) { btn.textContent = 'Connecting…'; btn.disabled = true; }
 
@@ -1575,17 +1576,18 @@ async function connectGoogleCalendar() {
     const res = await fetch('/api/calendar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'auth_url', origin: window.location.origin })
+      body: JSON.stringify({ action: 'auth_url', workspaceId: wsId, origin: window.location.origin })
     });
     const { url } = await res.json();
     const popup = window.open(url, 'google_calendar_auth', 'width=500,height=620');
     if (!popup) { alert('Please allow popups for this site, then try again.'); return; }
 
     window.addEventListener('message', async (e) => {
-      if (e.data === 'calendar_authed') {
+      if (typeof e.data === 'string' && e.data.startsWith('calendar_authed:')) {
+        const connectedWsId = e.data.split(':')[1];
         popup && popup.close();
-        calendarConnected = true;
-        await runCalendarSync();
+        calendarConnected[connectedWsId] = true;
+        await runCalendarSync(connectedWsId);
       } else if (e.data === 'calendar_auth_error') {
         popup && popup.close();
         alert('Google Calendar connection failed. Please try again.');
@@ -1598,15 +1600,12 @@ async function connectGoogleCalendar() {
   }
 }
 
-async function runCalendarSync() {
+async function runCalendarSync(wsId) {
   const btn = document.getElementById('cal-sync-btn');
   if (btn) { btn.textContent = '📅 Syncing…'; btn.disabled = true; }
 
-  // Collect all tasks in this workspace with a doDate or deadlineDate that aren't Done
-  const tasks = ws().tasks.filter(t =>
-    !t.parentId &&
-    t.status !== 'Done' &&
-    (t.doDate || t.deadlineDate)
+  const tasks = state.workspaces[wsId].tasks.filter(t =>
+    !t.parentId && t.status !== 'Done' && (t.doDate || t.deadlineDate)
   );
 
   if (tasks.length === 0) {
@@ -1619,11 +1618,11 @@ async function runCalendarSync() {
     const res = await fetch('/api/calendar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'sync', tasks })
+      body: JSON.stringify({ action: 'sync', workspaceId: wsId, tasks })
     });
 
     if (res.status === 401) {
-      calendarConnected = false;
+      calendarConnected[wsId] = false;
       if (btn) { btn.textContent = '📅 Connect Calendar'; btn.disabled = false; }
       alert('Calendar session expired. Please reconnect.');
       return;
@@ -1631,11 +1630,10 @@ async function runCalendarSync() {
 
     const data = await res.json();
 
-    // Write back event IDs to tasks in state
     if (data.tasks) {
       data.tasks.forEach(updated => {
-        const idx = ws().tasks.findIndex(t => t.id === updated.id);
-        if (idx >= 0) ws().tasks[idx] = updated;
+        const idx = state.workspaces[wsId].tasks.findIndex(t => t.id === updated.id);
+        if (idx >= 0) state.workspaces[wsId].tasks[idx] = updated;
       });
       save();
     }

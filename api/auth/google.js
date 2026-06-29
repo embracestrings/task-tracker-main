@@ -1,7 +1,11 @@
 import { kv } from '@vercel/kv';
 
+function tokenKey(workspaceId) {
+  return `google_calendar_tokens_${workspaceId}`;
+}
+
 export default async function handler(req, res) {
-  const { code, error } = req.query;
+  const { code, error, state: workspaceId } = req.query;
   const origin = `https://${req.headers.host}`;
 
   const close = (msg) =>
@@ -10,7 +14,7 @@ export default async function handler(req, res) {
       window.close();
     </script></body></html>`);
 
-  if (error || !code) return close('calendar_auth_error');
+  if (error || !code || !workspaceId) return close('calendar_auth_error');
 
   try {
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -28,13 +32,14 @@ export default async function handler(req, res) {
     const tokens = await tokenRes.json();
     if (tokens.error) return close('calendar_auth_error');
 
-    await kv.set('google_calendar_tokens', {
+    await kv.set(tokenKey(workspaceId), {
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
       expires_at: Date.now() + tokens.expires_in * 1000,
     });
 
-    return close('calendar_authed');
+    // Echo workspace ID back so the frontend knows which workspace was connected
+    return close(`calendar_authed:${workspaceId}`);
   } catch (e) {
     return close('calendar_auth_error');
   }
