@@ -43,7 +43,9 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
-  html { background: var(--bg); }
+  html { background: #F2F2F3; }
+  /* Cover the iOS safe-area bottom zone with the app background */
+  body::after { content: ''; position: fixed; bottom: 0; left: 0; right: 0; height: env(safe-area-inset-bottom, 0px); background: #F2F2F3; z-index: 9999; pointer-events: none; }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -155,7 +157,7 @@
   .toolbar-sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
 
   /* ── Inline add ────────────────────────── */
-  .inline-add { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; cursor: text; transition: border-color 0.15s; overflow: hidden; }
+  .inline-add { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; cursor: text; transition: border-color 0.15s; }
   .inline-add.expanded { border-color: var(--accent); cursor: default; }
   .inline-add-collapsed { display: flex; align-items: center; gap: 8px; }
   .inline-add-fields { display: none; flex-direction: column; gap: 10px; margin-top: 10px; }
@@ -163,7 +165,7 @@
   .inline-add-name { width: 100%; border: none; outline: none; font-size: 16px; background: transparent; color: var(--text); font-family: inherit; }
   .inline-add-name::placeholder { color: var(--text-faint); }
   .inline-add-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .inline-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .inline-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; overflow: hidden; }
   .inline-field label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-faint); }
   .inline-field input, .inline-field select, .inline-field textarea { border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 16px; color: var(--text); background: var(--surface); outline: none; font-family: inherit; transition: border-color 0.15s; width: 100%; min-width: 0; }
   .inline-field input:focus, .inline-field select:focus, .inline-field textarea:focus { border-color: var(--accent); }
