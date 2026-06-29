@@ -1372,6 +1372,7 @@ function submitInlineAdd() {
 
 // ── Task Modal ───────────────────────────────────────────────────────
 function openTaskModal(id) {
+  collapseInlineAdd();
   editingTaskId = id;
   const t = ws().tasks.find(x => x.id === id); if (!t) return;
   document.getElementById('tm-name').value = t.name;
@@ -1646,6 +1647,16 @@ function showCalendarToast(msg) {
   toast.style.opacity = '1';
   clearTimeout(toast._timer);
   toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 3500);
+}
+
+// Scroll focused input above keyboard on iOS PWA
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', () => {
+    const el = document.activeElement;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA')) {
+      setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 50);
+    }
+  });
 }
 
 load();
