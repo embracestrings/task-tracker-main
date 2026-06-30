@@ -2145,7 +2145,7 @@ function renderDashboardView() {
   const reflections = state.reflections||[];
   const CADENCE_ORDER = ['daily','weekly','monthly','annually'];
   const windowOpts = [{label:'Last 7 days',val:7},{label:'Last 30 days',val:30},{label:'This year',val:'year'}];
-  const tabs = windowOpts.map(o=>`<button class="dash-tab${dashWindow===o.val?' active':''}" onclick="setDashWindow(${JSON.stringify(o.val)})">${o.label}</button>`).join('');
+  const tabs = windowOpts.map(o=>`<button class="dash-tab${dashWindow===o.val?' active':''}" onclick="setDashWindow(${typeof o.val==='string'?`'${o.val}'`:o.val})">${o.label}</button>`).join('');
   const categories = [...new Set(items.map(r=>r.category||'Other'))].sort();
 
   const ruleSections = categories.length===0
