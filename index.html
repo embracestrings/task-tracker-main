@@ -467,7 +467,7 @@
         </button>
         <button class="list-item" id="reflection-btn" onclick="setActiveList('__reflection__')">
           <span style="width:8px;height:8px;border-radius:50%;background:var(--purple);flex-shrink:0;display:inline-block"></span>
-          <span>Reflection</span>
+          <span>Daily Reflection</span>
         </button>
         <button class="list-item" id="dashboard-btn" onclick="setActiveList('__dashboard__')">
           <span style="width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0;display:inline-block"></span>
@@ -2162,7 +2162,7 @@ function renderReflectionView() {
 
   document.getElementById('content').innerHTML = `
     <div class="list-header">
-      <span class="list-title">Reflection</span>
+      <span class="list-title">Daily Reflection</span>
       <div class="spacer"></div>
       ${!todayEntry?`<button class="btn btn-primary btn-sm" onclick="openNewReflectionModal()">+ Today</button>`:''}
       <button class="btn btn-ghost btn-sm" onclick="openNewReflectionModal()" style="margin-left:6px">+ Entry</button>
