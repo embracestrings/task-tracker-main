@@ -338,6 +338,11 @@
         <span>Today</span>
         <span class="list-count" id="today-count" style="display:none"></span>
       </button>
+      <button class="list-item" id="thisweek-btn" onclick="setActiveList('__thisweek__')">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block"></span>
+        <span>This Week</span>
+        <span class="list-count" id="thisweek-count" style="display:none"></span>
+      </button>
     </div>
     <div class="sidebar-section">
       <div class="sidebar-section-label">Lists</div>
@@ -640,7 +645,7 @@ function ensureWorkspaces() {
     if (!w.manualOrders) w.manualOrders = {};
     if (!w.completedCollapsed) w.completedCollapsed = {};
     if (w.lists.length === 0) w.lists.push({ id: 'tasks', name: 'Active tasks', color: w.color });
-    const allIds = [...w.lists.map(l=>l.id), ...w.ideas.map(l=>l.id), '__today__'];
+    const allIds = [...w.lists.map(l=>l.id), ...w.ideas.map(l=>l.id), '__today__', '__thisweek__'];
     if (!allIds.includes(w.activeList)) w.activeList = w.lists[0]?.id || '';
   });
 
@@ -681,6 +686,26 @@ function isOverdue(deadlineDate, status) {
 }
 
 function isToday(date) { return date === TODAY; }
+
+function getThisWeekDates() {
+  const today = new Date(TODAY + 'T00:00:00');
+  const day = today.getDay(); // 0=Sun,1=Mon,...,6=Sat
+  // Find the Saturday of this week
+  const daysUntilSat = day === 0 ? 6 : 6 - day;
+  const dates = [];
+  for (let i = 0; i <= daysUntilSat; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    dates.push(d.toISOString().slice(0, 10));
+  }
+  return dates; // [today, ..., Saturday]
+}
+
+function isThisWeek(date) {
+  if (!date) return false;
+  const dates = getThisWeekDates();
+  return dates.includes(date);
+}
 function getList(id) { return ws().lists.find(l => l.id === id); }
 function getIdea(id) { return (ws().ideas||[]).find(l => l.id === id); }
 function isIdeaSpace(id) { return !!(ws().ideas||[]).find(l => l.id === id); }
@@ -755,6 +780,12 @@ function renderHeaderStats() {
   const tc = document.getElementById('today-count');
   if (tc) { tc.textContent = todayCount; tc.style.display = todayCount > 0 ? '' : 'none'; }
   document.getElementById('today-btn').className = 'list-item' + (ws().activeList === '__today__' ? ' active' : '');
+
+  const weekCount = ws().tasks.filter(t => !t.parentId && isThisWeek(t.doDate) && t.status !== 'Done').length;
+  const wc = document.getElementById('thisweek-count');
+  if (wc) { wc.textContent = weekCount; wc.style.display = weekCount > 0 ? '' : 'none'; }
+  const wb = document.getElementById('thisweek-btn');
+  if (wb) wb.className = 'list-item' + (ws().activeList === '__thisweek__' ? ' active' : '');
 }
 
 function renderSidebar() {
@@ -782,6 +813,7 @@ function renderSidebar() {
 function renderContent() {
   if (searchQuery.trim()) { renderSearch(); return; }
   if (ws().activeList === '__today__') { renderTodayView(); return; }
+  if (ws().activeList === '__thisweek__') { renderThisWeekView(); return; }
   if (isIdeaSpace(ws().activeList)) { renderIdeaView(); return; }
   renderListView();
 }
@@ -850,6 +882,59 @@ function renderTodayView() {
           <div class="section-label" onclick="toggleDoneCollapsed('__today__')">${doneCollapsed?'▶':'▼'} Completed (${done.length})</div>
           ${doneCollapsed ? '' : done.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
         </div>` : ''}
+    </div>
+  `;
+}
+
+function renderThisWeekView() {
+  const dates = getThisWeekDates();
+  const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  function fmtDay(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const label = dateStr === TODAY ? 'Today' : DAY_NAMES[d.getDay()];
+    return `${label} · ${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`;
+  }
+
+  const sections = dates.map(dateStr => {
+    const dayTasks = ws().tasks.filter(t => !t.parentId && t.doDate === dateStr);
+    const active = dayTasks.filter(t => t.status !== 'Done');
+    const done = dayTasks.filter(t => t.status === 'Done');
+    const doneCollapsed = ws().completedCollapsed['__thisweek__' + dateStr] !== false;
+
+    if (dayTasks.length === 0) return `
+      <div class="tasks-section">
+        <div class="section-label" style="cursor:default">${fmtDay(dateStr)}</div>
+        <div style="font-size:13px;color:var(--text-faint);padding:6px 0 10px">Nothing scheduled</div>
+      </div>`;
+
+    return `
+      <div class="tasks-section">
+        <div class="section-label" style="cursor:default">${fmtDay(dateStr)}</div>
+        ${active.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
+        ${done.length > 0 ? `
+          <div class="section-label" style="font-size:10px;margin-top:4px" onclick="toggleDoneCollapsed('__thisweek__${dateStr}')">
+            ${doneCollapsed ? '▶' : '▼'} Completed (${done.length})
+          </div>
+          ${doneCollapsed ? '' : done.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
+        ` : ''}
+      </div>`;
+  }).join('');
+
+  const totalActive = dates.reduce((n, d) =>
+    n + ws().tasks.filter(t => !t.parentId && t.doDate === d && t.status !== 'Done').length, 0);
+
+  document.getElementById('content').innerHTML = `
+    <div class="list-header">
+      <span class="list-title">This Week</span>
+      <div class="spacer"></div>
+      ${totalActive > 0 ? `<span style="font-size:13px;color:var(--text-muted)">${totalActive} task${totalActive !== 1 ? 's' : ''}</span>` : ''}
+    </div>
+    <div id="task-sections">
+      ${totalActive === 0 && dates.every(d => ws().tasks.filter(t => !t.parentId && t.doDate === d).length === 0)
+        ? `<div class="empty"><div class="empty-icon">🗓</div><div class="empty-title">Nothing scheduled this week</div><div class="empty-sub">Tasks with a Do Date this week appear here</div></div>`
+        : sections}
     </div>
   `;
 }
