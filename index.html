@@ -335,6 +335,7 @@
   .rule-cadence.daily { background: var(--accent-light); color: var(--accent); }
   .rule-cadence.weekly { background: var(--gold-bg); color: #7a6040; }
   .rule-cadence.monthly { background: var(--green-bg); color: var(--green); }
+  .rule-cadence.quarterly { background: var(--blue-bg); color: var(--blue); }
   .rule-cadence.annually { background: var(--purple-bg); color: var(--purple); }
   .rule-text { flex: 1; font-size: 14px; line-height: 1.4; }
   .rule-edit-btn { opacity: 0; transition: opacity 0.1s; flex-shrink: 0; }
@@ -587,7 +588,7 @@
       <div class="field"><label>Commitment</label><textarea id="rm-text" placeholder="e.g. Morning prayer and Scripture reading" style="min-height:60px"></textarea></div>
       <div class="field-row">
         <div class="field"><label>Category</label><input id="rm-category" placeholder="e.g. Abiding, Mind, Body…" /></div>
-        <div class="field"><label>Cadence</label><select id="rm-cadence"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="annually">Annually</option></select></div>
+        <div class="field"><label>Cadence</label><select id="rm-cadence"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="annually">Annually</option></select></div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1828,6 +1829,12 @@ function getWeekMonday(dateStr) {
   return d.toISOString().slice(0, 10);
 }
 
+function getQuarterStart(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const qs = new Date(d.getFullYear(), Math.floor(d.getMonth() / 3) * 3, 1);
+  return qs.toISOString().slice(0, 10);
+}
+
 function isRuleChecked(ruleId, cadence) {
   const checks = state.ruleChecks || [];
   const relevant = checks.filter(c => {
@@ -1835,6 +1842,7 @@ function isRuleChecked(ruleId, cadence) {
     if (cadence === 'daily') return c.date === TODAY;
     if (cadence === 'weekly') { const mon = getWeekMonday(TODAY); return c.date >= mon && c.date <= TODAY; }
     if (cadence === 'monthly') return c.date.startsWith(TODAY.slice(0, 7));
+    if (cadence === 'quarterly') return c.date >= getQuarterStart(TODAY) && c.date <= TODAY;
     if (cadence === 'annually') return c.date.startsWith(TODAY.slice(0, 4));
     return false;
   });
@@ -1886,6 +1894,16 @@ function getRuleStats(ruleId, cadence) {
   } else if (cadence === 'monthly') {
     const d = new Date(windowStart.slice(0,7)+'-01T00:00:00'), end = new Date(TODAY.slice(0,7)+'-01T00:00:00');
     while (d <= end) { const m = d.toISOString().slice(0,7); applicable++; if (allChecked.some(c=>c.date.startsWith(m))) completed++; d.setMonth(d.getMonth()+1); }
+  } else if (cadence === 'quarterly') {
+    let d = new Date(getQuarterStart(windowStart)+'T00:00:00');
+    const end = new Date(TODAY+'T00:00:00');
+    while (d <= end) {
+      const qStart = d.toISOString().slice(0,10);
+      const qEnd = new Date(d); qEnd.setMonth(qEnd.getMonth()+3); qEnd.setDate(qEnd.getDate()-1);
+      const qEndStr = qEnd.toISOString().slice(0,10);
+      if (qEndStr >= windowStart) { applicable++; if (allChecked.some(c=>c.date>=qStart&&c.date<=qEndStr)) completed++; }
+      d.setMonth(d.getMonth()+3);
+    }
   } else if (cadence === 'annually') {
     const sy = parseInt(windowStart.slice(0,4)), ey = parseInt(TODAY.slice(0,4));
     for (let y = sy; y <= ey; y++) { applicable++; if (allChecked.some(c=>c.date.startsWith(String(y)))) completed++; }
@@ -1912,6 +1930,14 @@ function calcCurrentStreak(ruleId, cadence) {
   } else if (cadence === 'monthly') {
     let d = new Date(TODAY.slice(0,7)+'-01T00:00:00');
     while (allChecked.some(c=>c.date.startsWith(d.toISOString().slice(0,7)))) { streak++; d.setMonth(d.getMonth()-1); }
+  } else if (cadence === 'quarterly') {
+    let d = new Date(getQuarterStart(TODAY)+'T00:00:00');
+    while (true) {
+      const qStart = d.toISOString().slice(0,10);
+      const qEnd = new Date(d); qEnd.setMonth(qEnd.getMonth()+3); qEnd.setDate(qEnd.getDate()-1);
+      if (!allChecked.some(c=>c.date>=qStart&&c.date<=qEnd.toISOString().slice(0,10))) break;
+      streak++; d.setMonth(d.getMonth()-3);
+    }
   } else if (cadence === 'annually') {
     let y = parseInt(TODAY.slice(0,4));
     while (allChecked.some(c=>c.date.startsWith(String(y)))) { streak++; y--; }
@@ -1944,6 +1970,7 @@ function renderHeatmapHtml(ruleId, cadence) {
     if (cadence==='daily') done=allChecked.some(c=>c.date===ds);
     else if (cadence==='weekly') { const mon=getWeekMonday(ds); const sat=new Date(mon+'T00:00:00'); sat.setDate(sat.getDate()+6); done=allChecked.some(c=>c.date>=mon&&c.date<=sat.toISOString().slice(0,10)); }
     else if (cadence==='monthly') done=allChecked.some(c=>c.date.startsWith(ds.slice(0,7)));
+    else if (cadence==='quarterly') { const qs=getQuarterStart(ds); const qe=new Date(qs+'T00:00:00'); qe.setMonth(qe.getMonth()+3); qe.setDate(qe.getDate()-1); done=allChecked.some(c=>c.date>=qs&&c.date<=qe.toISOString().slice(0,10)); }
     else if (cadence==='annually') done=allChecked.some(c=>c.date.startsWith(ds.slice(0,4)));
     return `<div class="hm-cell${done?' done':''}" title="${ds}"></div>`;
   }).join('')+'</div>';
