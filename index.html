@@ -368,13 +368,9 @@
   .dash-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
   .dash-category-block { margin-bottom: 28px; }
   .dash-category-header { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
-  .dash-category-avg { font-size: 12px; font-weight: 600; color: var(--text-muted); background: var(--surface2); padding: 2px 8px; border-radius: 10px; }
-  .dash-rule-row { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-  .dash-rule-name { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
-  .dash-stats-row { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; }
-  .dash-stat { display: flex; flex-direction: column; gap: 2px; min-width: 48px; }
-  .dash-stat-val { font-size: 18px; font-weight: 700; color: var(--accent); line-height: 1; }
-  .dash-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-faint); }
+  .dash-category-avg { display: flex; align-items: center; }
+  .dash-rule-row { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .dash-rule-name { font-size: 13px; font-weight: 500; line-height: 1.4; }
   .heatmap { display: flex; gap: 2px; flex-wrap: wrap; }
   .hm-cell { width: 11px; height: 11px; border-radius: 2px; background: #e5ddd6; }
   .hm-cell.done { background: #16335B; opacity: 0.82; }
@@ -1958,7 +1954,7 @@ function toggleRuleCheck(ruleId) {
 }
 
 // ── Dashboard helpers ─────────────────────────────────────────────────
-let dashWindow = 30;
+let dashWindow = 'year';
 
 function getDashWindowStart() {
   if (dashWindow === 'year') {
@@ -2210,14 +2206,30 @@ function renderPromptsManagement() {
   </div>`;
 }
 
+// ── Render: Progress ring ─────────────────────────────────────────────
+function renderRingHtml(pct, size) {
+  size = size || 72;
+  const sw = 7, r = (size - sw) / 2;
+  const circ = +(2 * Math.PI * r).toFixed(1);
+  const offset = +((1 - Math.min(pct, 100) / 100) * circ).toFixed(1);
+  const c = size / 2;
+  const fs = size >= 80 ? 18 : 14;
+  return `<div style="position:relative;width:${size}px;height:${size}px;flex-shrink:0">
+    <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)">
+      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#e5ddd6" stroke-width="${sw}"/>
+      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#16335B" stroke-width="${sw}"
+        stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
+    </svg>
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Lora',Georgia,serif;font-weight:700;font-size:${fs}px;color:var(--accent);line-height:1">${pct}%</div>
+  </div>`;
+}
+
 // ── Render: Dashboard ─────────────────────────────────────────────────
 function renderDashboardView() {
   const items = state.ruleItems||[];
   const goals = state.goals||{personal:[],professional:[]};
   const reflections = state.reflections||[];
   const CADENCE_ORDER = ['daily','weekly','monthly','annually'];
-  const windowOpts = [{label:'Last 7 days',val:7},{label:'Last 30 days',val:30},{label:'This year',val:'year'}];
-  const tabs = windowOpts.map(o=>`<button class="dash-tab${dashWindow===o.val?' active':''}" onclick="setDashWindow(${typeof o.val==='string'?`'${o.val}'`:o.val})">${o.label}</button>`).join('');
   const categories = [...new Set(items.map(r=>r.category||'Other'))].sort();
 
   const ruleSections = categories.length===0
@@ -2227,18 +2239,26 @@ function renderDashboardView() {
         const catStats = catItems.map(r=>getRuleStats(r.id,r.cadence));
         const catAvg = catStats.length?Math.round(catStats.reduce((s,x)=>s+x.pct,0)/catStats.length):0;
         return `<div class="dash-category-block">
-          <div class="dash-category-header">${esc(cat)} <span class="dash-category-avg">${catAvg}%</span></div>
+          <div class="dash-category-header">
+            ${esc(cat)}
+            <span class="dash-category-avg" style="display:inline-flex;align-items:center;gap:6px">
+              ${renderRingHtml(catAvg, 36)}
+            </span>
+          </div>
           ${catItems.map((r,i)=>{
             const s=catStats[i];
             return `<div class="dash-rule-row">
-              <div class="dash-rule-name">${esc(r.text)} <span style="font-size:11px;color:var(--text-faint)">(${r.cadence})</span></div>
-              <div class="dash-stats-row">
-                <div class="dash-stat"><div class="dash-stat-val">${s.pct}%</div><div class="dash-stat-label">Completion</div></div>
-                <div class="dash-stat"><div class="dash-stat-val">${s.completed}/${s.applicable}</div><div class="dash-stat-label">Periods</div></div>
-                <div class="dash-stat"><div class="dash-stat-val">${s.currentStreak}</div><div class="dash-stat-label">Streak</div></div>
-                <div class="dash-stat"><div class="dash-stat-val">${s.longestStreak}</div><div class="dash-stat-label">Best</div></div>
+              <div style="display:flex;align-items:center;gap:14px">
+                ${renderRingHtml(s.pct)}
+                <div style="flex:1;min-width:0">
+                  <div class="dash-rule-name" style="margin-bottom:5px">${esc(r.text)}</div>
+                  <span class="rule-cadence ${r.cadence}">${r.cadence}</span>
+                  <div style="margin-top:8px;font-size:12px;color:var(--text-muted);display:flex;gap:14px">
+                    <span>Streak&ensp;<strong style="color:var(--accent);font-size:13px">${s.currentStreak}</strong></span>
+                    <span>Best&ensp;<strong style="color:var(--text-muted);font-size:13px">${s.longestStreak}</strong></span>
+                  </div>
+                </div>
               </div>
-              ${renderHeatmapHtml(r.id,r.cadence)}
             </div>`;
           }).join('')}
         </div>`;
@@ -2265,13 +2285,10 @@ function renderDashboardView() {
 
   document.getElementById('content').innerHTML = `
     <div class="list-header"><span class="list-title">Dashboard</span><div class="spacer"></div></div>
-    <div class="dash-window-tabs">${tabs}</div>
     ${ruleSections}
     ${goalsSec}
   `;
 }
-
-function setDashWindow(val) { dashWindow = val; renderDashboardView(); }
 
 // ── Goal CRUD ─────────────────────────────────────────────────────────
 let editingGoalId = null, editingGoalGroup = null;
