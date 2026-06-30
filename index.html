@@ -590,6 +590,7 @@
         <div class="field"><label>Category</label><input id="rm-category" placeholder="e.g. Abiding, Mind, Body…" /></div>
         <div class="field"><label>Cadence</label><select id="rm-cadence"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="annually">Annually</option></select></div>
       </div>
+      <div class="field"><label>Period label override (optional)</label><input id="rm-period" placeholder="e.g. Mon–Fri — leave blank to use the default date label" /></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-danger" id="rm-delete-btn" onclick="deleteRuleFromModal()" style="margin-right:auto;display:none">Delete</button>
@@ -1829,6 +1830,32 @@ function getWeekMonday(dateStr) {
   return d.toISOString().slice(0, 10);
 }
 
+function getRulePeriodLabel(cadence) {
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const today = new Date(TODAY + 'T00:00:00');
+  if (cadence === 'daily') {
+    return `${DAYS[today.getDay()]} ${MONTHS[today.getMonth()]} ${today.getDate()}`;
+  }
+  if (cadence === 'weekly') {
+    const mon = new Date(getWeekMonday(TODAY) + 'T00:00:00');
+    const sat = new Date(mon); sat.setDate(mon.getDate() + 5);
+    const fmt = d => `${MONTHS[d.getMonth()]} ${d.getDate()}`;
+    return `${fmt(mon)} – ${fmt(sat)}`;
+  }
+  if (cadence === 'monthly') {
+    return `${MONTHS[today.getMonth()]} ${today.getFullYear()}`;
+  }
+  if (cadence === 'quarterly') {
+    const q = Math.floor(today.getMonth() / 3);
+    const qStart = new Date(today.getFullYear(), q * 3, 1);
+    const qEnd = new Date(today.getFullYear(), q * 3 + 3, 0);
+    return `${MONTHS[qStart.getMonth()]} – ${MONTHS[qEnd.getMonth()]}`;
+  }
+  if (cadence === 'annually') return String(today.getFullYear());
+  return '';
+}
+
 function getQuarterStart(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
   const qs = new Date(d.getFullYear(), Math.floor(d.getMonth() / 3) * 3, 1);
@@ -2024,9 +2051,11 @@ function renderRuleOfLifeView() {
       <div class="rule-category-header">${esc(cat)}</div>
       ${catItems.map(r => {
         const checked = isRuleChecked(r.id, r.cadence);
+        const periodLabel = r.customPeriod || getRulePeriodLabel(r.cadence);
         return `<div class="rule-item">
           <div class="check${checked?' checked':''}" onclick="toggleRuleCheck('${r.id}')" style="flex-shrink:0"></div>
           <span class="rule-cadence ${r.cadence}">${r.cadence}</span>
+          <span style="font-size:11px;color:var(--text-faint);white-space:nowrap;flex-shrink:0">${esc(periodLabel)}</span>
           <span class="rule-text" style="${checked?'text-decoration:line-through;color:var(--text-muted)':''}">${esc(r.text)}</span>
           <button class="icon-btn rule-edit-btn" onclick="openEditRuleModal('${r.id}')">✎</button>
         </div>`;
@@ -2232,6 +2261,7 @@ function openNewRuleModal() {
   document.getElementById('rm-text').value = '';
   document.getElementById('rm-category').value = '';
   document.getElementById('rm-cadence').value = 'daily';
+  document.getElementById('rm-period').value = '';
   document.getElementById('rm-delete-btn').style.display = 'none';
   document.getElementById('rule-modal').style.display = 'flex';
   setTimeout(()=>document.getElementById('rm-text').focus(),50);
@@ -2244,6 +2274,7 @@ function openEditRuleModal(id) {
   document.getElementById('rm-text').value = r.text;
   document.getElementById('rm-category').value = r.category||'';
   document.getElementById('rm-cadence').value = r.cadence;
+  document.getElementById('rm-period').value = r.customPeriod||'';
   document.getElementById('rm-delete-btn').style.display = 'block';
   document.getElementById('rule-modal').style.display = 'flex';
   setTimeout(()=>document.getElementById('rm-text').focus(),50);
@@ -2255,12 +2286,13 @@ function saveRule() {
   const text = document.getElementById('rm-text').value.trim(); if (!text) return;
   const category = document.getElementById('rm-category').value.trim();
   const cadence = document.getElementById('rm-cadence').value;
+  const customPeriod = document.getElementById('rm-period').value.trim() || null;
   if (!state.ruleItems) state.ruleItems = [];
   if (editingRuleId) {
     const r = state.ruleItems.find(x=>x.id===editingRuleId);
-    if (r) { r.text=text; r.category=category; r.cadence=cadence; }
+    if (r) { r.text=text; r.category=category; r.cadence=cadence; r.customPeriod=customPeriod; }
   } else {
-    state.ruleItems.push({id:uid(), category, cadence, text});
+    state.ruleItems.push({id:uid(), category, cadence, text, customPeriod});
   }
   closeRuleModal(); save(); renderRuleOfLifeView();
 }
