@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tracker">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;700&display=swap" rel="stylesheet">
 <style>
   :root {
     /* Brand palette */
@@ -64,9 +65,11 @@
     padding: calc(var(--safe-top) + 10px) 20px 10px;
     min-height: calc(var(--header-h) + var(--safe-top));
     display: flex; align-items: center; gap: 12px; flex-shrink: 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.22);
+    position: relative; z-index: 10;
   }
   .app-name {
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: 'Lora', Georgia, serif;
     font-size: 16px; font-weight: 700; letter-spacing: 0.01em;
     color: white;
   }
@@ -116,7 +119,7 @@
   .sidebar-add-workspace:hover { color: var(--gold); }
 
   /* Sidebar sections */
-  .sidebar-section { padding: 10px 0 4px; }
+  .sidebar-section { padding: 10px 0 4px; border-top: 1px solid rgba(255,255,255,0.07); }
   .sidebar-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.38); padding: 0 14px 5px; }
   .list-item {
     display: flex; align-items: center; gap: 8px; padding: 7px 14px;
@@ -139,12 +142,12 @@
   .list-item-wrap:hover .list-item-edit { opacity: 1; }
   .list-item-edit:hover { background: rgba(255,255,255,0.15); }
   .list-name-input { background: transparent; border: none; border-bottom: 1.5px solid var(--gold); outline: none; font-size: 13px; font-weight: 500; color: white; font-family: inherit; width: 100%; padding: 0; }
-  .list-title-input { background: transparent; border: none; border-bottom: 1.5px solid var(--accent); outline: none; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); font-family: Georgia, 'Times New Roman', serif; min-width: 80px; }
+  .list-title-input { background: transparent; border: none; border-bottom: 1.5px solid var(--accent); outline: none; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); font-family: 'Lora', Georgia, serif; min-width: 80px; }
 
   /* ── Content area ──────────────────────── */
   .content { flex: 1; overflow-y: auto; padding: 20px 24px; padding-bottom: calc(20px + var(--safe-bottom)); background: var(--bg); }
   .list-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-  .list-title { font-family: Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; cursor: default; color: var(--accent); }
+  .list-title { font-family: 'Lora', Georgia, serif; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; cursor: default; color: var(--accent); }
   .list-title-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .list-header .spacer { flex: 1; }
 
@@ -185,8 +188,8 @@
   .tasks-section { margin-bottom: 24px; }
   .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
   .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-  .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; transition: border-color 0.15s; }
-  .task-card:hover { border-color: var(--border-strong); }
+  .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .task-card:hover { border-color: var(--border-strong); box-shadow: 0 2px 8px rgba(0,0,0,0.09); }
   .task-card.done { opacity: 0.5; }
   .task-card.drag-over { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
   .task-card.dragging { opacity: 0.4; }
@@ -209,9 +212,9 @@
   .badge-status { background: var(--surface2); color: var(--text-muted); }
   .badge-status.inprog { background: var(--blue-bg); color: var(--blue); }
   .badge-cat { background: var(--gold-bg); color: #7a6040; }
-  .badge-due { background: var(--surface2); color: var(--text-muted); }
+  .badge-due { background: #ede9e4; color: var(--text-muted); }
   .badge-due.overdue { background: var(--red-bg); color: var(--red); }
-  .badge-dodate { background: var(--accent-light); color: var(--accent); }
+  .badge-dodate { background: #f5efe5; color: #7a5e30; }
   .badge-recurring { background: var(--green-bg); color: var(--green); }
   .badge-list { background: var(--surface2); color: var(--text-muted); }
   .task-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
@@ -231,7 +234,7 @@
   .task-note { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; font-style: italic; }
 
   .empty { text-align: center; padding: 60px 20px; color: var(--text-faint); }
-  .empty-icon { font-size: 36px; margin-bottom: 12px; }
+  .empty-icon { font-size: 36px; margin-bottom: 12px; display: flex; justify-content: center; }
   .empty-title { font-size: 15px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; }
   .empty-sub { font-size: 13px; }
   .search-group { margin-bottom: 20px; }
@@ -242,7 +245,7 @@
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
   .modal { background: var(--surface); border-radius: 14px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
   .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 0; }
-  .modal-title { font-family: Georgia, 'Times New Roman', serif; font-size: 17px; font-weight: 700; color: var(--accent); }
+  .modal-title { font-family: 'Lora', Georgia, serif; font-size: 17px; font-weight: 700; color: var(--accent); }
   .modal-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
   .modal-footer { padding: 0 20px 18px; display: flex; gap: 8px; justify-content: flex-end; }
   .field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -264,8 +267,8 @@
   .gmail-status { font-size: 13px; color: var(--text-muted); text-align: center; padding: 16px; }
 
   /* Ideas */
-  .idea-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; transition: border-color 0.15s; }
-  .idea-card:hover { border-color: var(--border-strong); }
+  .idea-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .idea-card:hover { border-color: var(--border-strong); box-shadow: 0 2px 8px rgba(0,0,0,0.09); }
   .idea-text { flex: 1; font-size: 14px; line-height: 1.5; word-break: break-word; }
   .idea-date { font-size: 11px; color: var(--text-faint); margin-top: 4px; }
   .idea-add { display: flex; gap: 8px; margin-bottom: 16px; }
@@ -318,8 +321,8 @@
   /* ── Goals ────────────────────────────────── */
   .goals-group-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
   .goals-group-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-  .goal-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; transition: border-color 0.15s; }
-  .goal-item:hover { border-color: var(--border-strong); }
+  .goal-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .goal-item:hover { border-color: var(--border-strong); box-shadow: 0 2px 8px rgba(0,0,0,0.09); }
   .goal-num { font-size: 13px; font-weight: 700; color: var(--gold); min-width: 20px; padding-top: 1px; flex-shrink: 0; }
   .goal-text { flex: 1; font-size: 14px; line-height: 1.5; }
   .goal-edit-btn { opacity: 0; transition: opacity 0.1s; flex-shrink: 0; }
@@ -329,14 +332,14 @@
   .rule-category { margin-bottom: 20px; }
   .rule-category-header { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
   .rule-category-header::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-  .rule-item { display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 5px; transition: border-color 0.15s; }
-  .rule-item:hover { border-color: var(--border-strong); }
+  .rule-item { display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 5px; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .rule-item:hover { border-color: var(--border-strong); box-shadow: 0 2px 8px rgba(0,0,0,0.09); }
   .rule-cadence { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 8px; background: var(--surface2); color: var(--text-faint); flex-shrink: 0; }
-  .rule-cadence.daily { background: var(--accent-light); color: var(--accent); }
-  .rule-cadence.weekly { background: var(--gold-bg); color: #7a6040; }
-  .rule-cadence.monthly { background: var(--green-bg); color: var(--green); }
-  .rule-cadence.quarterly { background: var(--blue-bg); color: var(--blue); }
-  .rule-cadence.annually { background: var(--purple-bg); color: var(--purple); }
+  .rule-cadence.daily    { background: #16335B; color: #ffffff; }
+  .rule-cadence.weekly   { background: #3a6186; color: #ffffff; }
+  .rule-cadence.monthly  { background: #BA9E78; color: #ffffff; }
+  .rule-cadence.quarterly{ background: #d4bfa0; color: #3d2e1a; }
+  .rule-cadence.annually { background: #e8ddd4; color: #4a3828; }
   .rule-text { flex: 1; font-size: 14px; line-height: 1.4; }
   .rule-edit-btn { opacity: 0; transition: opacity 0.1s; flex-shrink: 0; }
   .rule-item:hover .rule-edit-btn { opacity: 1; }
@@ -348,24 +351,24 @@
   .dash-category-block { margin-bottom: 28px; }
   .dash-category-header { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
   .dash-category-avg { font-size: 12px; font-weight: 600; color: var(--text-muted); background: var(--surface2); padding: 2px 8px; border-radius: 10px; }
-  .dash-rule-row { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+  .dash-rule-row { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
   .dash-rule-name { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
   .dash-stats-row { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; }
   .dash-stat { display: flex; flex-direction: column; gap: 2px; min-width: 48px; }
   .dash-stat-val { font-size: 18px; font-weight: 700; color: var(--accent); line-height: 1; }
   .dash-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-faint); }
   .heatmap { display: flex; gap: 2px; flex-wrap: wrap; }
-  .hm-cell { width: 11px; height: 11px; border-radius: 2px; background: var(--surface2); }
-  .hm-cell.done { background: var(--accent); opacity: 0.85; }
-  .dash-goal-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 8px; }
+  .hm-cell { width: 11px; height: 11px; border-radius: 2px; background: #e5ddd6; }
+  .hm-cell.done { background: #16335B; opacity: 0.82; }
+  .dash-goal-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
   .dash-goal-text { font-size: 14px; font-weight: 500; color: var(--accent-text); margin-bottom: 8px; line-height: 1.4; }
   .dash-refl-entry { padding: 8px 0; border-top: 1px solid var(--border); }
   .dash-refl-text { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
   .dash-refl-date { font-size: 11px; color: var(--text-faint); margin-top: 3px; }
 
   /* ── Reflection ───────────────────────────── */
-  .reflection-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s; }
-  .reflection-card:hover { border-color: var(--border-strong); }
+  .reflection-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+  .reflection-card:hover { border-color: var(--border-strong); box-shadow: 0 2px 8px rgba(0,0,0,0.09); }
   .reflection-card-date { font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
   .energy-dots { display: flex; gap: 3px; align-items: center; }
   .energy-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--surface2); }
@@ -395,11 +398,11 @@
 <body>
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 <header>
-  <button class="menu-btn" onclick="toggleSidebar()">☰</button>
+  <button class="menu-btn" onclick="toggleSidebar()"><svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="2" y1="4.5" x2="16" y2="4.5"/><line x1="2" y1="9" x2="16" y2="9"/><line x1="2" y1="13.5" x2="16" y2="13.5"/></svg></button>
   <span class="app-name">My <span>Tracker</span></span>
   <div class="spacer"></div>
   <div class="header-search" style="flex:1;max-width:360px">
-    <span style="color:rgba(255,255,255,0.45);font-size:13px">⌕</span>
+    <span style="color:rgba(255,255,255,0.5);display:flex;align-items:center"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="5.5" cy="5.5" r="4"/><line x1="8.5" y1="8.5" x2="12" y2="12"/></svg></span>
     <input id="global-search" placeholder="Search tasks…" oninput="handleSearch(this.value)" />
   </div>
 </header>
@@ -460,7 +463,7 @@
   <div class="modal">
     <div class="modal-header">
       <span class="modal-title">Edit task</span>
-      <button class="icon-btn" onclick="closeTaskModal()">✕</button>
+      <button class="icon-btn" onclick="closeTaskModal()"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="field"><label>Task name</label><input id="tm-name" placeholder="What needs to be done?" /></div>
@@ -488,7 +491,7 @@
   <div class="modal">
     <div class="modal-header">
       <span class="modal-title" id="list-modal-title">New list</span>
-      <button class="icon-btn" onclick="closeListModal()">✕</button>
+      <button class="icon-btn" onclick="closeListModal()"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="field"><label>List name</label><input id="lm-name" placeholder="e.g. Work, Personal, Q3 Goals…" /></div>
@@ -507,7 +510,7 @@
   <div class="modal">
     <div class="modal-header">
       <span class="modal-title" id="workspace-modal-title">New workspace</span>
-      <button class="icon-btn" onclick="closeWorkspaceModal()">✕</button>
+      <button class="icon-btn" onclick="closeWorkspaceModal()"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="field"><label>Workspace name</label><input id="wm-name" placeholder="e.g. Client, Side project…" /></div>
@@ -526,7 +529,7 @@
   <div class="modal" style="max-width:560px">
     <div class="modal-header">
       <span class="modal-title">Sync from Gmail</span>
-      <button class="icon-btn" onclick="closeGmailModal()">✕</button>
+      <button class="icon-btn" onclick="closeGmailModal()"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
     </div>
     <div class="modal-body">
       <p style="font-size:13px;color:var(--text-muted)">Emails with <strong>[task]</strong> in the subject will be parsed into tasks. Select which ones to import.</p>
@@ -545,7 +548,7 @@
   <div class="modal">
     <div class="modal-header">
       <span class="modal-title" id="idea-modal-title">Edit idea</span>
-      <button class="icon-btn" onclick="closeIdeaModal()">✕</button>
+      <button class="icon-btn" onclick="closeIdeaModal()"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
     </div>
     <div class="modal-body">
       <textarea class="idea-modal-text" id="im-text" placeholder="Your idea…"></textarea>
@@ -563,7 +566,7 @@
   <div class="modal">
     <div class="modal-header">
       <span class="modal-title" id="goal-modal-title">New goal</span>
-      <button class="icon-btn" onclick="closeGoalModal()">✕</button>
+      <button class="icon-btn" onclick="closeGoalModal()"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="field"><label>Group</label><select id="gm-group"><option value="personal">Personal</option><option value="professional">Professional</option></select></div>
@@ -582,7 +585,7 @@
   <div class="modal">
     <div class="modal-header">
       <span class="modal-title" id="rule-modal-title">New commitment</span>
-      <button class="icon-btn" onclick="closeRuleModal()">✕</button>
+      <button class="icon-btn" onclick="closeRuleModal()"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="field"><label>Commitment</label><textarea id="rm-text" placeholder="e.g. Morning prayer and Scripture reading" style="min-height:60px"></textarea></div>
@@ -605,7 +608,7 @@
   <div class="modal" style="max-width:540px">
     <div class="modal-header">
       <span class="modal-title" id="rfm-title">Today's reflection</span>
-      <button class="icon-btn" onclick="closeReflectionModal()">✕</button>
+      <button class="icon-btn" onclick="closeReflectionModal()"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
     </div>
     <div class="modal-body">
       <div id="rfm-prompt-banner" style="display:none"></div>
@@ -637,7 +640,7 @@
   <div class="modal">
     <div class="modal-header">
       <span class="modal-title" id="pm-title">New prompt</span>
-      <button class="icon-btn" onclick="closePromptModal()">✕</button>
+      <button class="icon-btn" onclick="closePromptModal()"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="field"><label>Question</label><textarea id="pm-text" placeholder="e.g. What did you learn about whether your main goal is on track?" style="min-height:80px"></textarea></div>
@@ -656,7 +659,7 @@
   <div class="modal">
     <div class="modal-header">
       <span class="modal-title" id="idea-space-modal-title">New idea space</span>
-      <button class="icon-btn" onclick="closeIdeaSpaceModal()">✕</button>
+      <button class="icon-btn" onclick="closeIdeaSpaceModal()"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
     </div>
     <div class="modal-body">
       <div class="field"><label>Name</label><input id="ism-name" placeholder="e.g. Book ideas, Travel, Side projects…" /></div>
@@ -684,6 +687,29 @@ const DEFAULT_PROMPTS = [
   {id:'dp6',text:"Where did you see God at work today — in your work, relationships, or circumstances?",goalId:null},
   {id:'dp7',text:"What would you do differently if you could replay today?",goalId:null},
 ];
+
+const ICONS = {
+  edit:     `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5,1.5l3,3L4,12H1V9Z"/><line x1="6.5" y1="3.5" x2="9.5" y2="6.5"/></svg>`,
+  trash:    `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="3" x2="12" y2="3"/><path d="M4,3V2a1,1,0,0,1,1-1H8a1,1,0,0,1,1,1V3"/><path d="M2,3l.9,8a1,1,0,0,0,1,.9h5.2a1,1,0,0,0,1-.9L11,3"/><line x1="5" y1="6" x2="5" y2="10"/><line x1="8" y1="6" x2="8" y2="10"/></svg>`,
+  mail:     `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="11" height="8" rx="1.5"/><polyline points="1,3 6.5,8 12,3"/></svg>`,
+  calendar: `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="2" width="11" height="10" rx="2"/><line x1="1" y1="6" x2="12" y2="6"/><line x1="4" y1="0.5" x2="4" y2="3.5"/><line x1="9" y1="0.5" x2="9" y2="3.5"/></svg>`,
+  drag:     `<svg width="9" height="13" viewBox="0 0 9 13" fill="currentColor"><circle cx="2.5" cy="2.5" r="1.1" opacity="0.4"/><circle cx="6.5" cy="2.5" r="1.1" opacity="0.4"/><circle cx="2.5" cy="6.5" r="1.1" opacity="0.4"/><circle cx="6.5" cy="6.5" r="1.1" opacity="0.4"/><circle cx="2.5" cy="10.5" r="1.1" opacity="0.4"/><circle cx="6.5" cy="10.5" r="1.1" opacity="0.4"/></svg>`,
+  chevDown: `<svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,3.5 5.5,7 9,3.5"/></svg>`,
+  chevUp:   `<svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7.5 5.5,4 9,7.5"/></svg>`,
+  chevRight:`<svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3.5,2 7,5.5 3.5,9"/></svg>`,
+  clock:    `<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="5" cy="5" r="4"/><polyline points="5,2.5 5,5 6.5,6.5"/></svg>`,
+  calSmall: `<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="0.7" y="1.5" width="8.6" height="7.8" rx="1.5"/><line x1="0.7" y1="4" x2="9.3" y2="4"/><line x1="3" y1="0" x2="3" y2="2.8"/><line x1="7" y1="0" x2="7" y2="2.8"/></svg>`,
+  repeat:   `<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="0.5,3 2,1.5 3.5,3"/><path d="M2,1.5v3.5a2.5,2.5,0,0,0,5,0V4.5"/><polyline points="9.5,7 8,8.5 6.5,7"/></svg>`,
+  // Empty state illustrations
+  emptyCheck:    `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="24" r="17" opacity="0.2"/><polyline points="15,24 21,30 33,18"/></svg>`,
+  emptyCelebrate:`<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="24,8 27.5,18 39,18 29.5,25 33,36 24,29 15,36 18.5,25 9,18 20.5,18"/></svg>`,
+  emptyCalendar: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="10" width="36" height="30" rx="4"/><line x1="6" y1="20" x2="42" y2="20"/><line x1="16" y1="6" x2="16" y2="14"/><line x1="32" y1="6" x2="32" y2="14"/><line x1="14" y1="29" x2="18" y2="29"/><line x1="22" y1="29" x2="26" y2="29"/><line x1="30" y1="29" x2="34" y2="29"/></svg>`,
+  emptyIdea:     `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M24,8C17,8,12,13,12,20c0,5.5,3,9,6,11.5V34h12v-2.5c3-2.5,6-6,6-11.5C36,13,31,8,24,8Z"/><line x1="18" y1="38" x2="30" y2="38"/><line x1="20" y1="42" x2="28" y2="42"/></svg>`,
+  emptyBook:     `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M24,14C22,11,14,10,8,12L8,38C14,36,22,37,24,40C26,37,34,36,40,38L40,12C34,10,26,11,24,14Z"/><line x1="24" y1="14" x2="24" y2="40"/><line x1="12" y1="20" x2="20" y2="20" opacity="0.45"/><line x1="12" y1="26" x2="20" y2="26" opacity="0.45"/><line x1="28" y1="20" x2="36" y2="20" opacity="0.45"/><line x1="28" y1="26" x2="36" y2="26" opacity="0.45"/></svg>`,
+  emptyChart:    `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="28" width="8" height="12" rx="2"/><rect x="20" y="20" width="8" height="20" rx="2"/><rect x="33" y="14" width="8" height="26" rx="2"/><line x1="4" y1="40" x2="44" y2="40"/></svg>`,
+  emptyCross:    `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="24" y1="10" x2="24" y2="38"/><line x1="13" y1="18" x2="35" y2="18"/></svg>`,
+  emptySearch:   `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="21" cy="21" r="13"/><line x1="30" y1="30" x2="42" y2="42"/></svg>`,
+};
 
 const WORKSPACE_DEFS = [
   { id: 'velocitytx',  name: 'VelocityTX',       color: '#16335B' },
@@ -978,7 +1004,7 @@ function renderWorkspaceSwitcher() {
           <span class="workspace-dot" style="background:${w.color}"></span>
           <span>${esc(w.name)}</span>
         </button>
-        <button class="workspace-edit-btn" onclick="event.stopPropagation();openEditWorkspaceModal('${id}')" title="Edit workspace">✎</button>
+        <button class="workspace-edit-btn" onclick="event.stopPropagation();openEditWorkspaceModal('${id}')" title="Edit workspace">${ICONS.edit}</button>
       </div>`;
     }).join('')}
     <button class="sidebar-add-workspace" onclick="openNewWorkspaceModal()">＋ New workspace</button>
@@ -1055,15 +1081,15 @@ function renderListView() {
     <div class="list-header">
       <span class="list-title-dot" style="background:${list.color}"></span>
       <span class="list-title" id="list-title-display" onclick="handleTitleClick(event,'${list.id}')" title="Triple-click to rename">${esc(list.name)}</span>
-      <button class="btn btn-ghost btn-sm" onclick="openEditListModal('${list.id}')" title="Edit list" style="font-size:15px;padding:4px 7px">✎</button>
+      <button class="btn btn-ghost btn-sm" onclick="openEditListModal('${list.id}')" title="Edit list" style="padding:4px 7px;display:flex;align-items:center">${ICONS.edit}</button>
       <div class="spacer"></div>
       ${hasManualOrder ? `<button class="btn btn-ghost btn-sm" onclick="resetOrder('${list.id}')">↺ Auto-sort</button>` : ''}
-      <button class="btn btn-ghost btn-sm" onclick="openGmailModal()" style="gap:5px;display:flex;align-items:center">
-        <span style="font-size:14px">✉</span> Sync Gmail
+      <button class="btn btn-ghost btn-sm" onclick="openGmailModal()" style="gap:6px;display:flex;align-items:center">
+        ${ICONS.mail} Sync Gmail
       </button>
       ${SYNC_WORKSPACES.includes(state.activeWorkspace) ? `
       <button class="btn btn-ghost btn-sm" id="cal-sync-btn" onclick="handleCalendarSync()" style="gap:5px;display:flex;align-items:center">
-        <span style="font-size:14px">📅</span> ${calendarConnected[state.activeWorkspace] ? 'Sync Calendar' : 'Connect Calendar'}
+        ${ICONS.calendar} ${calendarConnected[state.activeWorkspace] ? 'Sync Calendar' : 'Connect Calendar'}
       </button>` : ''}
     </div>
     ${renderInlineAdd()}
@@ -1073,7 +1099,7 @@ function renderListView() {
       ${visibleDone.length > 0 ? `
         <div class="tasks-section">
           <div class="section-label" onclick="toggleDoneCollapsed('${list.id}')">
-            ${doneCollapsed ? '▶' : '▼'} Completed (${visibleDone.length})
+            ${doneCollapsed ? ICONS.chevRight : ICONS.chevDown} Completed (${visibleDone.length})
           </div>
           ${doneCollapsed ? '' : renderTaskCards(visibleDone, list.id)}
         </div>` : ''}
@@ -1094,11 +1120,11 @@ function renderTodayView() {
       <div class="spacer"></div>
     </div>
     <div id="task-sections">
-      ${todayTasks.length === 0 ? `<div class="empty"><div class="empty-icon">🎉</div><div class="empty-title">Nothing scheduled for today</div><div class="empty-sub">Tasks with today's Do Date appear here</div></div>` : ''}
+      ${todayTasks.length === 0 ? `<div class="empty"><div class="empty-icon" style="color:var(--gold)">${ICONS.emptyCelebrate}</div><div class="empty-title">Nothing scheduled for today</div><div class="empty-sub">Tasks with today's Do Date appear here</div></div>` : ''}
       ${active.length > 0 ? `<div class="tasks-section">${active.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}</div>` : ''}
       ${done.length > 0 ? `
         <div class="tasks-section">
-          <div class="section-label" onclick="toggleDoneCollapsed('__today__')">${doneCollapsed?'▶':'▼'} Completed (${done.length})</div>
+          <div class="section-label" onclick="toggleDoneCollapsed('__today__')">${doneCollapsed?ICONS.chevRight:ICONS.chevDown} Completed (${done.length})</div>
           ${doneCollapsed ? '' : done.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
         </div>` : ''}
     </div>
@@ -1134,7 +1160,7 @@ function renderThisWeekView() {
         ${active.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
         ${done.length > 0 ? `
           <div class="section-label" style="font-size:10px;margin-top:4px" onclick="toggleDoneCollapsed('__thisweek__${dateStr}')">
-            ${doneCollapsed ? '▶' : '▼'} Completed (${done.length})
+            ${doneCollapsed ? ICONS.chevRight : ICONS.chevDown} Completed (${done.length})
           </div>
           ${doneCollapsed ? '' : done.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
         ` : ''}
@@ -1152,7 +1178,7 @@ function renderThisWeekView() {
     </div>
     <div id="task-sections">
       ${totalActive === 0 && dates.every(d => ws().tasks.filter(t => !t.parentId && t.doDate === d).length === 0)
-        ? `<div class="empty"><div class="empty-icon">🗓</div><div class="empty-title">Nothing scheduled this week</div><div class="empty-sub">Tasks with a Do Date this week appear here</div></div>`
+        ? `<div class="empty"><div class="empty-icon" style="color:var(--text-faint)">${ICONS.emptyCalendar}</div><div class="empty-title">Nothing scheduled this week</div><div class="empty-sub">Tasks with a Do Date this week appear here</div></div>`
         : sections}
     </div>
   `;
@@ -1273,7 +1299,7 @@ function renderIdeaView() {
     <div class="list-header">
       <span class="list-title-dot" style="background:${space.color}"></span>
       <span class="list-title" id="list-title-display" onclick="handleTitleClick(event,'${space.id}')">${esc(space.name)}</span>
-      <button class="btn btn-ghost btn-sm" onclick="openEditIdeaSpaceModal('${space.id}')" title="Edit idea space" style="font-size:15px;padding:4px 7px">✎</button>
+      <button class="btn btn-ghost btn-sm" onclick="openEditIdeaSpaceModal('${space.id}')" title="Edit idea space" style="padding:4px 7px;display:flex;align-items:center">${ICONS.edit}</button>
       <div class="spacer"></div>
     </div>
     <div class="idea-add">
@@ -1281,14 +1307,14 @@ function renderIdeaView() {
       <button class="btn btn-primary idea-add-btn" onclick="submitIdea()">Add</button>
     </div>
     <div id="idea-list">
-      ${notes.length === 0 ? `<div class="empty"><div class="empty-icon">💡</div><div class="empty-title">No ideas yet</div><div class="empty-sub">Start capturing your thoughts above</div></div>` :
+      ${notes.length === 0 ? `<div class="empty"><div class="empty-icon" style="color:var(--gold)">${ICONS.emptyIdea}</div><div class="empty-title">No ideas yet</div><div class="empty-sub">Start capturing your thoughts above</div></div>` :
         notes.map(n => `
           <div class="idea-card" onclick="openIdeaModal('${n.id}')">
             <div style="flex:1">
               <div class="idea-text">${esc(n.text)}</div>
               <div class="idea-date">${new Date(n.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
             </div>
-            <button class="icon-btn danger" onclick="event.stopPropagation();deleteNote('${n.id}')" style="flex-shrink:0">🗑</button>
+            <button class="icon-btn danger" onclick="event.stopPropagation();deleteNote('${n.id}')" style="flex-shrink:0">${ICONS.trash}</button>
           </div>`).join('')}
     </div>
   `;
@@ -1442,7 +1468,7 @@ function renderSearch() {
       <div class="spacer"></div>
       <span style="font-size:13px;color:var(--text-muted)">${matches.length} result${matches.length!==1?'s':''}</span>
     </div>
-    ${matches.length === 0 ? `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No results</div></div>` :
+    ${matches.length === 0 ? `<div class="empty"><div class="empty-icon" style="color:var(--text-faint)">${ICONS.emptySearch}</div><div class="empty-title">No results</div></div>` :
       Object.entries(byList).map(([listId, tasks]) => {
         const list = getList(listId);
         return `<div class="search-group">
@@ -1493,24 +1519,24 @@ function renderSingleTaskCard(t, listId, sourceList) {
   return `<div class="task-card${t.status==='Done'?' done':''}" id="tc-${t.id}"
     draggable="true" ondragstart="dragStart(event,'${t.id}')" ondragover="dragOver(event,'${t.id}')" ondrop="dragDrop(event,'${t.id}','${listId||t.listId}')" ondragleave="dragLeave(event)" ondragend="dragEnd(event)">
     <div class="task-row" onclick="openTaskModal('${t.id}')" style="cursor:pointer">
-      <span class="drag-handle" title="Drag to reorder">⠿</span>
+      <span class="drag-handle" title="Drag to reorder">${ICONS.drag}</span>
       <div class="check-wrap" onclick="event.stopPropagation()"><div class="check${t.status==='Done'?' checked':''}" onclick="toggleDone('${t.id}')"></div></div>
       <div class="task-body">
         <div class="task-name${t.status==='Done'?' done':''}">${esc(t.name)}</div>
         ${t.notes ? `<div class="task-note">${esc(t.notes)}</div>` : ''}
         <div class="task-meta" style="margin-top:5px">
-          ${t.deadlineDate ? `<span class="badge badge-due${over?' overdue':''}">⏰ ${fmtDateTime(t.deadlineDate, t.deadlineTime)}${over?' · overdue':''}</span>` : ''}
-          ${t.doDate ? `<span class="badge badge-dodate">🗓 ${fmtDateTime(t.doDate, t.doTime)}</span>` : ''}
-          ${t.recurrence ? `<span class="badge badge-recurring">↻ ${t.recurrence}</span>` : ''}
+          ${t.deadlineDate ? `<span class="badge badge-due${over?' overdue':''}" style="display:inline-flex;align-items:center;gap:3px">${ICONS.clock} ${fmtDateTime(t.deadlineDate, t.deadlineTime)}${over?' · overdue':''}</span>` : ''}
+          ${t.doDate ? `<span class="badge badge-dodate" style="display:inline-flex;align-items:center;gap:3px">${ICONS.calSmall} ${fmtDateTime(t.doDate, t.doTime)}</span>` : ''}
+          ${t.recurrence ? `<span class="badge badge-recurring" style="display:inline-flex;align-items:center;gap:3px">${ICONS.repeat} ${t.recurrence}</span>` : ''}
           ${(ws().activeList === '__today__' || searchQuery) && list ? `<span class="badge badge-list">${esc(list.name)}</span>` : ''}
           ${subs.length > 0 ? `<span class="badge badge-status">${doneSubs}/${subs.length} subtasks</span>` : ''}
         </div>
         ${subs.length > 0 ? `<div class="progress-bar"><div class="progress-fill" style="width:${progressPct}%"></div></div>` : ''}
       </div>
       <div class="task-right" onclick="event.stopPropagation()">
-        <button class="icon-btn" onclick="toggleExpand('${t.id}')">${expanded ? '▲' : '▼'}</button>
-        <button class="icon-btn" onclick="openTaskModal('${t.id}')">✎</button>
-        <button class="icon-btn danger" onclick="deleteTask('${t.id}')">🗑</button>
+        <button class="icon-btn" onclick="toggleExpand('${t.id}')">${expanded ? ICONS.chevUp : ICONS.chevDown}</button>
+        <button class="icon-btn" onclick="openTaskModal('${t.id}')">${ICONS.edit}</button>
+        <button class="icon-btn danger" onclick="deleteTask('${t.id}')">${ICONS.trash}</button>
       </div>
     </div>
     ${expanded ? renderSubtasks(t.id, subs) : ''}
@@ -1522,7 +1548,7 @@ function renderSubtasks(parentId, subs) {
     ${subs.map(s => `<div class="subtask-row">
       <div class="check${s.status==='Done'?' checked':''}" onclick="toggleDone('${s.id}')" style="width:15px;height:15px;border-radius:4px;flex-shrink:0"></div>
       <span class="subtask-name${s.status==='Done'?' done':''}">${esc(s.name)}</span>
-      <button class="icon-btn danger" style="width:22px;height:22px;font-size:12px" onclick="deleteTask('${s.id}')">✕</button>
+      <button class="icon-btn danger" style="width:22px;height:22px;font-size:12px" onclick="deleteTask('${s.id}')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
     </div>`).join('')}
     <div class="subtask-add-wrap">
       <div style="color:var(--text-faint);font-size:13px">+</div>
@@ -1532,7 +1558,7 @@ function renderSubtasks(parentId, subs) {
 }
 
 function renderEmpty() {
-  return `<div class="empty"><div class="empty-icon">✓</div><div class="empty-title">All clear</div><div class="empty-sub">Click the + above to add a task</div></div>`;
+  return `<div class="empty"><div class="empty-icon" style="color:var(--accent)">${ICONS.emptyCheck}</div><div class="empty-title">All clear</div><div class="empty-sub">Click the + above to add a task</div></div>`;
 }
 
 // ── Drag & Drop ──────────────────────────────────────────────────────
@@ -2022,7 +2048,7 @@ function renderGoalsView() {
         items.map((g,i)=>`<div class="goal-item">
           <span class="goal-num">${i+1}</span>
           <span class="goal-text">${esc(g.text)}</span>
-          <button class="icon-btn goal-edit-btn" onclick="openEditGoalModal('${group}','${g.id}')">✎</button>
+          <button class="icon-btn goal-edit-btn" onclick="openEditGoalModal('${group}','${g.id}')">${ICONS.edit}</button>
         </div>`).join('')}
       <button class="btn btn-ghost btn-sm" onclick="openNewGoalModal('${group}')" style="margin-top:4px">＋ Add ${label.toLowerCase()} goal</button>
     </div>`;
@@ -2059,7 +2085,7 @@ function renderRuleOfLifeView() {
             <span style="font-size:10px;color:var(--text-faint);white-space:nowrap;padding:0 2px">${esc(periodLabel)}</span>
           </div>
           <span class="rule-text" style="${checked?'text-decoration:line-through;color:var(--text-muted)':''}">${esc(r.text)}</span>
-          <button class="icon-btn rule-edit-btn" onclick="openEditRuleModal('${r.id}')">✎</button>
+          <button class="icon-btn rule-edit-btn" onclick="openEditRuleModal('${r.id}')">${ICONS.edit}</button>
         </div>`;
       }).join('')}
     </div>`;
@@ -2072,7 +2098,7 @@ function renderRuleOfLifeView() {
       <button class="btn btn-ghost btn-sm" onclick="toggleRuleShowAll()" style="margin-right:6px">${ruleShowAll?'Due only':'Show all'}</button>
       <button class="btn btn-ghost btn-sm" onclick="openNewRuleModal()">＋ Add</button>
     </div>
-    ${items.length===0?`<div class="empty"><div class="empty-icon">✝</div><div class="empty-title">No commitments yet</div><div class="empty-sub">Add your first Rule of Life item</div></div>`:
+    ${items.length===0?`<div class="empty"><div class="empty-icon" style="color:var(--accent)">${ICONS.emptyCross}</div><div class="empty-title">No commitments yet</div><div class="empty-sub">Add your first Rule of Life item</div></div>`:
       (sections||`<div style="font-size:13px;color:var(--text-faint);text-align:center;padding:32px 0">All done for now 🎉</div>`)}
   `;
 }
@@ -2101,7 +2127,7 @@ function renderReflectionView() {
       ${!todayEntry?`<button class="btn btn-primary btn-sm" onclick="openNewReflectionModal()">+ Today</button>`:''}
       <button class="btn btn-ghost btn-sm" onclick="openNewReflectionModal()" style="margin-left:6px">+ Entry</button>
     </div>
-    ${reflections.length===0?`<div class="empty"><div class="empty-icon">📓</div><div class="empty-title">No reflections yet</div><div class="empty-sub">Record your first daily reflection above</div></div>`:
+    ${reflections.length===0?`<div class="empty"><div class="empty-icon" style="color:var(--gold)">${ICONS.emptyBook}</div><div class="empty-title">No reflections yet</div><div class="empty-sub">Record your first daily reflection above</div></div>`:
       reflections.map(r=>{
         const dots=r.energy?Array.from({length:5},(_,i)=>`<div class="energy-dot${i<r.energy?' lit':''}"></div>`).join(''):'';
         const excerpt=r.wentWell||r.freeText||'';
@@ -2115,7 +2141,7 @@ function renderReflectionView() {
         </div>`;
       }).join('')}
     <div class="prompts-toggle" onclick="togglePromptsSection()">
-      ${showPromptsSection?'▼':'▶'} Reflection prompts (${(state.prompts||[]).length})
+      ${showPromptsSection?ICONS.chevDown:ICONS.chevRight} Reflection prompts (${(state.prompts||[]).length})
     </div>
     ${showPromptsSection?renderPromptsManagement():''}
   `;
@@ -2134,7 +2160,7 @@ function renderPromptsManagement() {
         <div class="prompt-item-text">${esc(p.text)}</div>
         ${p.goalId&&goalMap[p.goalId]?`<div class="prompt-item-goal">→ ${esc(goalMap[p.goalId].text.slice(0,60))}</div>`:''}
       </div>
-      <button class="icon-btn prompt-edit-btn" onclick="openEditPromptModal('${p.id}')">✎</button>
+      <button class="icon-btn prompt-edit-btn" onclick="openEditPromptModal('${p.id}')">${ICONS.edit}</button>
     </div>`).join('')}
     <button class="btn btn-ghost btn-sm" onclick="openNewPromptModal()" style="margin-top:6px">＋ Add prompt</button>
   </div>`;
@@ -2151,7 +2177,7 @@ function renderDashboardView() {
   const categories = [...new Set(items.map(r=>r.category||'Other'))].sort();
 
   const ruleSections = categories.length===0
-    ? `<div class="empty" style="padding:40px 20px"><div class="empty-icon">📊</div><div class="empty-title">No Rule of Life items yet</div><div class="empty-sub">Add items in the Rule of Life view</div></div>`
+    ? `<div class="empty" style="padding:40px 20px"><div class="empty-icon" style="color:var(--accent)">${ICONS.emptyChart}</div><div class="empty-title">No Rule of Life items yet</div><div class="empty-sub">Add items in the Rule of Life view</div></div>`
     : categories.map(cat=>{
         const catItems = items.filter(r=>(r.category||'Other')===cat).sort((a,b)=>CADENCE_ORDER.indexOf(a.cadence)-CADENCE_ORDER.indexOf(b.cadence));
         const catStats = catItems.map(r=>getRuleStats(r.id,r.cadence));
@@ -2493,7 +2519,7 @@ async function connectGoogleCalendar(wsId) {
       } else if (e.data === 'calendar_auth_error') {
         popup && popup.close();
         alert('Google Calendar connection failed. Please try again.');
-        if (btn) { btn.textContent = '📅 Connect Calendar'; btn.disabled = false; }
+        if (btn) { btn.innerHTML = ICONS.calendar + ' Connect Calendar'; btn.disabled = false; }
       }
     }, { once: true });
   } catch(e) {
@@ -2504,7 +2530,7 @@ async function connectGoogleCalendar(wsId) {
 
 async function runCalendarSync(wsId) {
   const btn = document.getElementById('cal-sync-btn');
-  if (btn) { btn.textContent = '📅 Syncing…'; btn.disabled = true; }
+  if (btn) { btn.innerHTML = ICONS.calendar + ' Syncing…'; btn.disabled = true; }
 
   const tasks = state.workspaces[wsId].tasks.filter(t =>
     !t.parentId && t.status !== 'Done' && (t.doDate || t.deadlineDate)
@@ -2512,7 +2538,7 @@ async function runCalendarSync(wsId) {
 
   if (tasks.length === 0) {
     showCalendarToast('No tasks with dates to sync.');
-    if (btn) { btn.textContent = '📅 Sync Calendar'; btn.disabled = false; }
+    if (btn) { btn.innerHTML = ICONS.calendar + ' Sync Calendar'; btn.disabled = false; }
     return;
   }
 
@@ -2525,7 +2551,7 @@ async function runCalendarSync(wsId) {
 
     if (res.status === 401) {
       calendarConnected[wsId] = false;
-      if (btn) { btn.textContent = '📅 Connect Calendar'; btn.disabled = false; }
+      if (btn) { btn.innerHTML = ICONS.calendar + ' Connect Calendar'; btn.disabled = false; }
       alert('Calendar session expired. Please reconnect.');
       return;
     }
@@ -2549,7 +2575,7 @@ async function runCalendarSync(wsId) {
   } catch(e) {
     showCalendarToast('Sync failed — check your connection.');
   } finally {
-    if (btn) { btn.textContent = '📅 Sync Calendar'; btn.disabled = false; }
+    if (btn) { btn.innerHTML = ICONS.calendar + ' Sync Calendar'; btn.disabled = false; }
   }
 }
 
