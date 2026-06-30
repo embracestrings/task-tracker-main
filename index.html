@@ -2054,8 +2054,10 @@ function renderRuleOfLifeView() {
         const periodLabel = r.customPeriod || getRulePeriodLabel(r.cadence);
         return `<div class="rule-item">
           <div class="check${checked?' checked':''}" onclick="toggleRuleCheck('${r.id}')" style="flex-shrink:0"></div>
-          <span class="rule-cadence ${r.cadence}">${r.cadence}</span>
-          <span style="font-size:11px;color:var(--text-faint);white-space:nowrap;flex-shrink:0">${esc(periodLabel)}</span>
+          <div style="display:flex;flex-direction:column;gap:3px;flex-shrink:0;align-items:flex-start">
+            <span class="rule-cadence ${r.cadence}">${r.cadence}</span>
+            <span style="font-size:10px;color:var(--text-faint);white-space:nowrap;padding:0 2px">${esc(periodLabel)}</span>
+          </div>
           <span class="rule-text" style="${checked?'text-decoration:line-through;color:var(--text-muted)':''}">${esc(r.text)}</span>
           <button class="icon-btn rule-edit-btn" onclick="openEditRuleModal('${r.id}')">✎</button>
         </div>`;
