@@ -90,12 +90,30 @@
   .sidebar {
     width: var(--sidebar-w);
     background: var(--accent);
-    display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto;
+    display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden;
   }
 
-  /* Workspace switcher */
-  .workspace-switcher { padding: 10px 0 6px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-  .workspace-switcher-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.4); padding: 0 14px 5px; }
+  /* Zone 2 — scrollable middle */
+  .sidebar-scroll { flex: 1; overflow-y: auto; }
+
+  /* Zone 3 — pinned Reflect section */
+  .sidebar-bottom { flex-shrink: 0; border-top: 1px solid rgba(255,255,255,0.14); }
+  .sidebar-bottom .sidebar-section { border-top: none; padding-bottom: 8px; }
+
+  /* Zone 1 — collapsed workspace header */
+  .ws-header {
+    display: flex; align-items: center; gap: 9px; padding: 11px 14px;
+    cursor: pointer; user-select: none;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0,0,0,0.1);
+    flex-shrink: 0;
+  }
+  .ws-header:hover { background: rgba(255,255,255,0.06); }
+  .ws-header-name { font-size: 13px; font-weight: 600; color: white; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ws-header-chev { color: rgba(255,255,255,0.5); flex-shrink: 0; display: flex; align-items: center; }
+  .ws-dropdown { background: rgba(0,0,0,0.12); border-bottom: 1px solid rgba(255,255,255,0.09); }
+
+  /* Workspace switcher items */
   .workspace-item-wrap { display: flex; align-items: center; position: relative; }
   .workspace-item {
     display: flex; align-items: center; gap: 8px; padding: 7px 14px;
@@ -409,48 +427,57 @@
 
 <div class="app">
   <aside class="sidebar">
-    <div class="workspace-switcher" id="workspace-switcher"></div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-label">Views</div>
-      <button class="list-item" id="today-btn" onclick="setActiveList('__today__')">
-        <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block"></span>
-        <span>Today</span>
-        <span class="list-count" id="today-count" style="display:none"></span>
-      </button>
-      <button class="list-item" id="thisweek-btn" onclick="setActiveList('__thisweek__')">
-        <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block"></span>
-        <span>This Week</span>
-        <span class="list-count" id="thisweek-count" style="display:none"></span>
-      </button>
+    <!-- Zone 1: collapsible workspace dropdown -->
+    <div id="workspace-switcher"></div>
+
+    <!-- Zone 2: scrollable Views / Lists / Ideas -->
+    <div class="sidebar-scroll">
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Views</div>
+        <button class="list-item" id="today-btn" onclick="setActiveList('__today__')">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block"></span>
+          <span>Today</span>
+          <span class="list-count" id="today-count" style="display:none"></span>
+        </button>
+        <button class="list-item" id="thisweek-btn" onclick="setActiveList('__thisweek__')">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block"></span>
+          <span>This Week</span>
+          <span class="list-count" id="thisweek-count" style="display:none"></span>
+        </button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Lists</div>
+        <div id="list-nav"></div>
+        <button class="sidebar-add-list" onclick="openNewListModal()">＋ New list</button>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Ideas</div>
+        <div id="idea-nav"></div>
+        <button class="sidebar-add-list" onclick="openNewIdeaModal()">＋ New idea space</button>
+      </div>
     </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-label">Lists</div>
-      <div id="list-nav"></div>
-      <button class="sidebar-add-list" onclick="openNewListModal()">＋ New list</button>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-label">Ideas</div>
-      <div id="idea-nav"></div>
-      <button class="sidebar-add-list" onclick="openNewIdeaModal()">＋ New idea space</button>
-    </div>
-    <div class="sidebar-section">
-      <div class="sidebar-section-label">Reflect</div>
-      <button class="list-item" id="goals-btn" onclick="setActiveList('__goals__')">
-        <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block"></span>
-        <span>Goals</span>
-      </button>
-      <button class="list-item" id="ruleoflife-btn" onclick="setActiveList('__ruleoflife__')">
-        <span style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;display:inline-block"></span>
-        <span>Rule of Life</span>
-      </button>
-      <button class="list-item" id="reflection-btn" onclick="setActiveList('__reflection__')">
-        <span style="width:8px;height:8px;border-radius:50%;background:var(--purple);flex-shrink:0;display:inline-block"></span>
-        <span>Reflection</span>
-      </button>
-      <button class="list-item" id="dashboard-btn" onclick="setActiveList('__dashboard__')">
-        <span style="width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0;display:inline-block"></span>
-        <span>Dashboard</span>
-      </button>
+
+    <!-- Zone 3: pinned Reflect section -->
+    <div class="sidebar-bottom">
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Reflect</div>
+        <button class="list-item" id="goals-btn" onclick="setActiveList('__goals__')">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block"></span>
+          <span>Goals</span>
+        </button>
+        <button class="list-item" id="ruleoflife-btn" onclick="setActiveList('__ruleoflife__')">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;display:inline-block"></span>
+          <span>Rule of Life</span>
+        </button>
+        <button class="list-item" id="reflection-btn" onclick="setActiveList('__reflection__')">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--purple);flex-shrink:0;display:inline-block"></span>
+          <span>Reflection</span>
+        </button>
+        <button class="list-item" id="dashboard-btn" onclick="setActiveList('__dashboard__')">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0;display:inline-block"></span>
+          <span>Dashboard</span>
+        </button>
+      </div>
     </div>
   </aside>
   <main class="main">
@@ -676,7 +703,7 @@
 <script>
 const STORE_KEY = 'tracker_v4';
 const LIST_COLORS = ['#16335B','#BA9E78','#1a5fa8','#c0392b','#5b3fa8','#7a746c','#2d7a55','#e76f51'];
-const TODAY = new Date().toISOString().slice(0,10);
+const TODAY = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
 const FEATURE_START_DATE = '2026-06-29';
 const DEFAULT_PROMPTS = [
   {id:'dp1',text:"What did you learn today about whether your most important goal is moving in the right direction?",goalId:null},
@@ -755,6 +782,7 @@ let state = {
 
 function ws() { return state.workspaces[state.activeWorkspace]; }
 
+let workspaceSwitcherOpen = false;
 let editingTaskId = null;
 let editingListId = null;
 let editingWorkspaceId = null;
@@ -990,25 +1018,40 @@ function render() {
   renderHeaderStats();
 }
 
+function toggleWorkspaceSwitcher() {
+  workspaceSwitcherOpen = !workspaceSwitcherOpen;
+  renderWorkspaceSwitcher();
+}
+
 function renderWorkspaceSwitcher() {
   const el = document.getElementById('workspace-switcher');
   const order = state.workspaceOrder || Object.keys(state.workspaces);
-  el.innerHTML = `
-    <div class="workspace-switcher-label">Workspace</div>
-    ${order.map(id => {
-      const w = state.workspaces[id]; if (!w) return '';
-      const isActive = state.activeWorkspace === id;
-      return `<div class="workspace-item-wrap">
-        <button class="workspace-item${isActive ? ' active' : ''}"
-          onclick="switchWorkspace('${id}')">
-          <span class="workspace-dot" style="background:${w.color}"></span>
-          <span>${esc(w.name)}</span>
-        </button>
-        <button class="workspace-edit-btn" onclick="event.stopPropagation();openEditWorkspaceModal('${id}')" title="Edit workspace">${ICONS.edit}</button>
-      </div>`;
-    }).join('')}
-    <button class="sidebar-add-workspace" onclick="openNewWorkspaceModal()">＋ New workspace</button>
-  `;
+  const active = state.workspaces[state.activeWorkspace];
+
+  const header = `
+    <div class="ws-header" onclick="toggleWorkspaceSwitcher()">
+      <span class="workspace-dot" style="background:${active?.color || '#BA9E78'}"></span>
+      <span class="ws-header-name">${esc(active?.name || 'Workspace')}</span>
+      <span class="ws-header-chev">${workspaceSwitcherOpen ? ICONS.chevUp : ICONS.chevDown}</span>
+    </div>`;
+
+  const dropdown = workspaceSwitcherOpen ? `
+    <div class="ws-dropdown">
+      ${order.map(id => {
+        const w = state.workspaces[id]; if (!w) return '';
+        const isActive = state.activeWorkspace === id;
+        return `<div class="workspace-item-wrap">
+          <button class="workspace-item${isActive ? ' active' : ''}" onclick="switchWorkspace('${id}')">
+            <span class="workspace-dot" style="background:${w.color}"></span>
+            <span>${esc(w.name)}</span>
+          </button>
+          <button class="workspace-edit-btn" onclick="event.stopPropagation();openEditWorkspaceModal('${id}')" title="Edit workspace">${ICONS.edit}</button>
+        </div>`;
+      }).join('')}
+      <button class="sidebar-add-workspace" onclick="openNewWorkspaceModal()">＋ New workspace</button>
+    </div>` : '';
+
+  el.innerHTML = header + dropdown;
 }
 
 function renderHeaderStats() {
@@ -1592,7 +1635,8 @@ function resetOrder(listId) { delete ws().manualOrders[listId]; save(); render()
 
 // ── Workspace switching ──────────────────────────────────────────────
 function switchWorkspace(id) {
-  if (state.activeWorkspace === id) return;
+  workspaceSwitcherOpen = false;
+  if (state.activeWorkspace === id) { renderWorkspaceSwitcher(); return; }
   state.activeWorkspace = id;
   searchQuery = '';
   const searchEl = document.getElementById('global-search'); if (searchEl) searchEl.value = '';
