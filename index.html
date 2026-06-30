@@ -314,6 +314,81 @@
     .modal-bg { padding: 0; align-items: flex-end; }
     .modal { border-radius: 16px 16px 0 0; max-height: 90vh; max-width: 100%; }
   }
+
+  /* ── Goals ────────────────────────────────── */
+  .goals-group-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .goals-group-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .goal-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; transition: border-color 0.15s; }
+  .goal-item:hover { border-color: var(--border-strong); }
+  .goal-num { font-size: 13px; font-weight: 700; color: var(--gold); min-width: 20px; padding-top: 1px; flex-shrink: 0; }
+  .goal-text { flex: 1; font-size: 14px; line-height: 1.5; }
+  .goal-edit-btn { opacity: 0; transition: opacity 0.1s; flex-shrink: 0; }
+  .goal-item:hover .goal-edit-btn { opacity: 1; }
+
+  /* ── Rule of Life ─────────────────────────── */
+  .rule-category { margin-bottom: 20px; }
+  .rule-category-header { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .rule-category-header::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .rule-item { display: flex; align-items: center; gap: 10px; padding: 9px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 5px; transition: border-color 0.15s; }
+  .rule-item:hover { border-color: var(--border-strong); }
+  .rule-cadence { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 8px; background: var(--surface2); color: var(--text-faint); flex-shrink: 0; }
+  .rule-cadence.daily { background: var(--accent-light); color: var(--accent); }
+  .rule-cadence.weekly { background: var(--gold-bg); color: #7a6040; }
+  .rule-cadence.monthly { background: var(--green-bg); color: var(--green); }
+  .rule-cadence.annually { background: var(--purple-bg); color: var(--purple); }
+  .rule-text { flex: 1; font-size: 14px; line-height: 1.4; }
+  .rule-edit-btn { opacity: 0; transition: opacity 0.1s; flex-shrink: 0; }
+  .rule-item:hover .rule-edit-btn { opacity: 1; }
+
+  /* ── Dashboard ────────────────────────────── */
+  .dash-window-tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+  .dash-tab { padding: 5px 14px; border-radius: 16px; font-size: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; transition: all 0.1s; }
+  .dash-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+  .dash-category-block { margin-bottom: 28px; }
+  .dash-category-header { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+  .dash-category-avg { font-size: 12px; font-weight: 600; color: var(--text-muted); background: var(--surface2); padding: 2px 8px; border-radius: 10px; }
+  .dash-rule-row { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; }
+  .dash-rule-name { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+  .dash-stats-row { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 8px; flex-wrap: wrap; }
+  .dash-stat { display: flex; flex-direction: column; gap: 2px; min-width: 48px; }
+  .dash-stat-val { font-size: 18px; font-weight: 700; color: var(--accent); line-height: 1; }
+  .dash-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-faint); }
+  .heatmap { display: flex; gap: 2px; flex-wrap: wrap; }
+  .hm-cell { width: 11px; height: 11px; border-radius: 2px; background: var(--surface2); }
+  .hm-cell.done { background: var(--accent); opacity: 0.85; }
+  .dash-goal-block { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 8px; }
+  .dash-goal-text { font-size: 14px; font-weight: 500; color: var(--accent-text); margin-bottom: 8px; line-height: 1.4; }
+  .dash-refl-entry { padding: 8px 0; border-top: 1px solid var(--border); }
+  .dash-refl-text { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+  .dash-refl-date { font-size: 11px; color: var(--text-faint); margin-top: 3px; }
+
+  /* ── Reflection ───────────────────────────── */
+  .reflection-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s; }
+  .reflection-card:hover { border-color: var(--border-strong); }
+  .reflection-card-date { font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
+  .energy-dots { display: flex; gap: 3px; align-items: center; }
+  .energy-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--surface2); }
+  .energy-dot.lit { background: var(--gold); }
+  .reflection-card-excerpt { font-size: 13px; color: var(--text-muted); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .energy-selector { display: flex; gap: 8px; }
+  .energy-btn { width: 40px; height: 36px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface); cursor: pointer; font-size: 14px; font-weight: 600; color: var(--text-muted); transition: all 0.1s; }
+  .energy-btn.selected { background: var(--gold); border-color: var(--gold); color: white; }
+  .prompt-banner { background: var(--accent-light); border: 1px solid rgba(22,51,91,0.15); border-radius: 10px; padding: 12px 14px; margin-bottom: 4px; }
+  .prompt-banner-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-bottom: 4px; }
+  .prompt-banner-text { font-size: 14px; color: var(--accent-text); line-height: 1.5; font-style: italic; }
+  .prompt-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; }
+  .prompt-item-text { flex: 1; font-size: 13px; line-height: 1.5; color: var(--text); }
+  .prompt-item-goal { font-size: 11px; color: var(--text-faint); margin-top: 3px; }
+  .prompt-edit-btn { opacity: 0; transition: opacity 0.1s; flex-shrink: 0; }
+  .prompt-item:hover .prompt-edit-btn { opacity: 1; }
+  .prompts-toggle { font-size: 12px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 12px 0 8px; border-top: 1px solid var(--border); margin-top: 20px; user-select: none; }
+  .prompts-toggle:hover { color: var(--text); }
+
+  @media (max-width: 640px) {
+    .goal-edit-btn { opacity: 1; }
+    .rule-edit-btn { opacity: 1; }
+    .prompt-edit-btn { opacity: 1; }
+  }
 </style>
 </head>
 <body>
@@ -353,6 +428,25 @@
       <div class="sidebar-section-label">Ideas</div>
       <div id="idea-nav"></div>
       <button class="sidebar-add-list" onclick="openNewIdeaModal()">＋ New idea space</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Reflect</div>
+      <button class="list-item" id="goals-btn" onclick="setActiveList('__goals__')">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block"></span>
+        <span>Goals</span>
+      </button>
+      <button class="list-item" id="ruleoflife-btn" onclick="setActiveList('__ruleoflife__')">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;display:inline-block"></span>
+        <span>Rule of Life</span>
+      </button>
+      <button class="list-item" id="reflection-btn" onclick="setActiveList('__reflection__')">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--purple);flex-shrink:0;display:inline-block"></span>
+        <span>Reflection</span>
+      </button>
+      <button class="list-item" id="dashboard-btn" onclick="setActiveList('__dashboard__')">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0;display:inline-block"></span>
+        <span>Dashboard</span>
+      </button>
     </div>
   </aside>
   <main class="main">
@@ -463,6 +557,98 @@
   </div>
 </div>
 
+<!-- Goal Modal -->
+<div class="modal-bg" id="goal-modal" style="display:none" onclick="if(event.target===this)closeGoalModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="goal-modal-title">New goal</span>
+      <button class="icon-btn" onclick="closeGoalModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Group</label><select id="gm-group"><option value="personal">Personal</option><option value="professional">Professional</option></select></div>
+      <div class="field"><label>Goal</label><textarea id="gm-text" placeholder="Describe this goal…" style="min-height:80px"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="gm-delete-btn" onclick="deleteGoalFromModal()" style="margin-right:auto;display:none">Delete</button>
+      <button class="btn btn-ghost" onclick="closeGoalModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveGoal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Rule of Life Modal -->
+<div class="modal-bg" id="rule-modal" style="display:none" onclick="if(event.target===this)closeRuleModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="rule-modal-title">New commitment</span>
+      <button class="icon-btn" onclick="closeRuleModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Commitment</label><textarea id="rm-text" placeholder="e.g. Morning prayer and Scripture reading" style="min-height:60px"></textarea></div>
+      <div class="field-row">
+        <div class="field"><label>Category</label><input id="rm-category" placeholder="e.g. Abiding, Mind, Body…" /></div>
+        <div class="field"><label>Cadence</label><select id="rm-cadence"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="annually">Annually</option></select></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="rm-delete-btn" onclick="deleteRuleFromModal()" style="margin-right:auto;display:none">Delete</button>
+      <button class="btn btn-ghost" onclick="closeRuleModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRule()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reflection Modal -->
+<div class="modal-bg" id="reflection-modal" style="display:none" onclick="if(event.target===this)closeReflectionModal()">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-header">
+      <span class="modal-title" id="rfm-title">Today's reflection</span>
+      <button class="icon-btn" onclick="closeReflectionModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="rfm-prompt-banner" style="display:none"></div>
+      <div class="field"><label>Date</label><input type="date" id="rfm-date" /></div>
+      <div class="field">
+        <label>Energy (1–5)</label>
+        <div class="energy-selector">
+          <button class="energy-btn" onclick="pickEnergy(1)">1</button>
+          <button class="energy-btn" onclick="pickEnergy(2)">2</button>
+          <button class="energy-btn" onclick="pickEnergy(3)">3</button>
+          <button class="energy-btn" onclick="pickEnergy(4)">4</button>
+          <button class="energy-btn" onclick="pickEnergy(5)">5</button>
+        </div>
+      </div>
+      <div class="field"><label>One thing I did well</label><textarea id="rfm-went-well" placeholder="…" style="min-height:52px"></textarea></div>
+      <div class="field"><label>What would make tomorrow better</label><textarea id="rfm-tomorrow" placeholder="…" style="min-height:52px"></textarea></div>
+      <div class="field"><label>Free reflection</label><textarea id="rfm-free" placeholder="…" style="min-height:90px"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="rfm-delete-btn" onclick="deleteReflectionFromModal()" style="margin-right:auto;display:none">Delete</button>
+      <button class="btn btn-ghost" onclick="closeReflectionModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveReflection()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Prompt Modal -->
+<div class="modal-bg" id="prompt-modal" style="display:none" onclick="if(event.target===this)closePromptModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="pm-title">New prompt</span>
+      <button class="icon-btn" onclick="closePromptModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Question</label><textarea id="pm-text" placeholder="e.g. What did you learn about whether your main goal is on track?" style="min-height:80px"></textarea></div>
+      <div class="field"><label>Linked goal (optional)</label><select id="pm-goal"><option value="">None</option></select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="pm-delete-btn" onclick="deletePromptFromModal()" style="margin-right:auto;display:none">Delete</button>
+      <button class="btn btn-ghost" onclick="closePromptModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="savePrompt()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- Idea Space Modal -->
 <div class="modal-bg" id="idea-space-modal" style="display:none" onclick="if(event.target===this)closeIdeaSpaceModal()">
   <div class="modal">
@@ -486,6 +672,16 @@
 const STORE_KEY = 'tracker_v4';
 const LIST_COLORS = ['#16335B','#BA9E78','#1a5fa8','#c0392b','#5b3fa8','#7a746c','#2d7a55','#e76f51'];
 const TODAY = new Date().toISOString().slice(0,10);
+const FEATURE_START_DATE = '2026-06-29';
+const DEFAULT_PROMPTS = [
+  {id:'dp1',text:"What did you learn today about whether your most important goal is moving in the right direction?",goalId:null},
+  {id:'dp2',text:"Who did you deepen a relationship with today — and who did you neglect?",goalId:null},
+  {id:'dp3',text:"Did your energy today match your effort, or were they mismatched? Why?",goalId:null},
+  {id:'dp4',text:"Did you feel rushed today? What caused it?",goalId:null},
+  {id:'dp5',text:"What is one thing you are grateful for that you almost missed noticing?",goalId:null},
+  {id:'dp6',text:"Where did you see God at work today — in your work, relationships, or circumstances?",goalId:null},
+  {id:'dp7',text:"What would you do differently if you could replay today?",goalId:null},
+];
 
 const WORKSPACE_DEFS = [
   { id: 'velocitytx',  name: 'VelocityTX',       color: '#16335B' },
@@ -522,6 +718,11 @@ let state = {
     personal:   makeDefaultWorkspace('personal'),
     acu:        makeDefaultWorkspace('acu'),
   },
+  goals: { personal: [], professional: [] },
+  ruleItems: [],
+  ruleChecks: [],
+  reflections: [],
+  prompts: DEFAULT_PROMPTS.map(p => ({...p})),
 };
 
 function ws() { return state.workspaces[state.activeWorkspace]; }
@@ -620,7 +821,14 @@ function mergeLoaded(saved) {
     expandedTasks = new Set(saved._expanded || []);
   }
 
+  if (saved.goals !== undefined) state.goals = saved.goals;
+  if (saved.ruleItems !== undefined) state.ruleItems = saved.ruleItems;
+  if (saved.ruleChecks !== undefined) state.ruleChecks = saved.ruleChecks;
+  if (saved.reflections !== undefined) state.reflections = saved.reflections;
+  if (saved.prompts !== undefined) state.prompts = saved.prompts;
+
   ensureWorkspaces();
+  ensureTopLevel();
 }
 
 function ensureWorkspaces() {
@@ -645,7 +853,7 @@ function ensureWorkspaces() {
     if (!w.manualOrders) w.manualOrders = {};
     if (!w.completedCollapsed) w.completedCollapsed = {};
     if (w.lists.length === 0) w.lists.push({ id: 'tasks', name: 'Active tasks', color: w.color });
-    const allIds = [...w.lists.map(l=>l.id), ...w.ideas.map(l=>l.id), '__today__', '__thisweek__'];
+    const allIds = [...w.lists.map(l=>l.id), ...w.ideas.map(l=>l.id), '__today__', '__thisweek__', '__goals__', '__ruleoflife__', '__reflection__', '__dashboard__'];
     if (!allIds.includes(w.activeList)) w.activeList = w.lists[0]?.id || '';
   });
 
@@ -786,6 +994,11 @@ function renderHeaderStats() {
   if (wc) { wc.textContent = weekCount; wc.style.display = weekCount > 0 ? '' : 'none'; }
   const wb = document.getElementById('thisweek-btn');
   if (wb) wb.className = 'list-item' + (ws().activeList === '__thisweek__' ? ' active' : '');
+
+  [['__goals__','goals-btn'],['__ruleoflife__','ruleoflife-btn'],['__reflection__','reflection-btn'],['__dashboard__','dashboard-btn']].forEach(([view, btnId]) => {
+    const btn = document.getElementById(btnId);
+    if (btn) btn.className = 'list-item' + (ws().activeList === view ? ' active' : '');
+  });
 }
 
 function renderSidebar() {
@@ -814,6 +1027,10 @@ function renderContent() {
   if (searchQuery.trim()) { renderSearch(); return; }
   if (ws().activeList === '__today__') { renderTodayView(); return; }
   if (ws().activeList === '__thisweek__') { renderThisWeekView(); return; }
+  if (ws().activeList === '__goals__') { renderGoalsView(); return; }
+  if (ws().activeList === '__ruleoflife__') { renderRuleOfLifeView(); return; }
+  if (ws().activeList === '__reflection__') { renderReflectionView(); return; }
+  if (ws().activeList === '__dashboard__') { renderDashboardView(); return; }
   if (isIdeaSpace(ws().activeList)) { renderIdeaView(); return; }
   renderListView();
 }
@@ -1568,7 +1785,7 @@ function startInlineSidebarEdit(listId) {
 
 // ── Keyboard shortcuts ───────────────────────────────────────────────
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeTaskModal(); closeListModal(); closeGmailModal(); collapseInlineAdd(); closeIdeaModal(); closeIdeaSpaceModal(); closeWorkspaceModal(); }
+  if (e.key === 'Escape') { closeTaskModal(); closeListModal(); closeGmailModal(); collapseInlineAdd(); closeIdeaModal(); closeIdeaSpaceModal(); closeWorkspaceModal(); closeGoalModal(); closeRuleModal(); closeReflectionModal(); closePromptModal(); }
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); expandInlineAdd(); }
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
     e.preventDefault();
@@ -1591,6 +1808,561 @@ document.addEventListener('click', e => {
     collapseInlineAdd();
   }
 });
+
+// ── Top-level state bootstrap ────────────────────────────────────────
+function ensureTopLevel() {
+  if (!state.goals) state.goals = { personal: [], professional: [] };
+  if (!state.goals.personal) state.goals.personal = [];
+  if (!state.goals.professional) state.goals.professional = [];
+  if (!state.ruleItems) state.ruleItems = [];
+  if (!state.ruleChecks) state.ruleChecks = [];
+  if (!state.reflections) state.reflections = [];
+  if (!state.prompts || !state.prompts.length) state.prompts = DEFAULT_PROMPTS.map(p => ({...p}));
+}
+
+// ── Rule of Life helpers ──────────────────────────────────────────────
+function getWeekMonday(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDay();
+  d.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+  return d.toISOString().slice(0, 10);
+}
+
+function isRuleChecked(ruleId, cadence) {
+  const checks = state.ruleChecks || [];
+  const relevant = checks.filter(c => {
+    if (c.ruleId !== ruleId) return false;
+    if (cadence === 'daily') return c.date === TODAY;
+    if (cadence === 'weekly') { const mon = getWeekMonday(TODAY); return c.date >= mon && c.date <= TODAY; }
+    if (cadence === 'monthly') return c.date.startsWith(TODAY.slice(0, 7));
+    if (cadence === 'annually') return c.date.startsWith(TODAY.slice(0, 4));
+    return false;
+  });
+  if (!relevant.length) return false;
+  relevant.sort((a, b) => b.date.localeCompare(a.date));
+  return relevant[0].completed !== false;
+}
+
+function toggleRuleCheck(ruleId) {
+  const rule = (state.ruleItems || []).find(r => r.id === ruleId);
+  if (!rule) return;
+  if (!state.ruleChecks) state.ruleChecks = [];
+  state.ruleChecks.push({ ruleId, date: TODAY, completed: !isRuleChecked(ruleId, rule.cadence) });
+  save();
+  renderRuleOfLifeView();
+}
+
+// ── Dashboard helpers ─────────────────────────────────────────────────
+let dashWindow = 30;
+
+function getDashWindowStart() {
+  if (dashWindow === 'year') {
+    const yearStart = new Date().getFullYear() + '-01-01';
+    return yearStart < FEATURE_START_DATE ? FEATURE_START_DATE : yearStart;
+  }
+  const d = new Date(TODAY + 'T00:00:00');
+  d.setDate(d.getDate() - dashWindow + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+function getRuleStats(ruleId, cadence) {
+  const windowStart = getDashWindowStart();
+  const allChecked = (state.ruleChecks || []).filter(c => c.ruleId === ruleId && c.completed && c.date >= windowStart && c.date <= TODAY);
+  let applicable = 0, completed = 0;
+
+  if (cadence === 'daily') {
+    const set = new Set(allChecked.map(c => c.date));
+    const d = new Date(windowStart + 'T00:00:00'), end = new Date(TODAY + 'T00:00:00');
+    while (d <= end) { applicable++; if (set.has(d.toISOString().slice(0,10))) completed++; d.setDate(d.getDate()+1); }
+  } else if (cadence === 'weekly') {
+    let mon = new Date(getWeekMonday(windowStart) + 'T00:00:00');
+    const end = new Date(TODAY + 'T00:00:00');
+    while (mon <= end) {
+      const sat = new Date(mon); sat.setDate(mon.getDate()+6);
+      const monS = mon.toISOString().slice(0,10), satS = sat.toISOString().slice(0,10);
+      if (satS >= windowStart) { applicable++; if (allChecked.some(c => c.date >= monS && c.date <= satS)) completed++; }
+      mon.setDate(mon.getDate()+7);
+    }
+  } else if (cadence === 'monthly') {
+    const d = new Date(windowStart.slice(0,7)+'-01T00:00:00'), end = new Date(TODAY.slice(0,7)+'-01T00:00:00');
+    while (d <= end) { const m = d.toISOString().slice(0,7); applicable++; if (allChecked.some(c=>c.date.startsWith(m))) completed++; d.setMonth(d.getMonth()+1); }
+  } else if (cadence === 'annually') {
+    const sy = parseInt(windowStart.slice(0,4)), ey = parseInt(TODAY.slice(0,4));
+    for (let y = sy; y <= ey; y++) { applicable++; if (allChecked.some(c=>c.date.startsWith(String(y)))) completed++; }
+  }
+
+  return { pct: applicable>0?Math.round(completed/applicable*100):0, completed, applicable, currentStreak: calcCurrentStreak(ruleId, cadence), longestStreak: calcLongestStreak(ruleId, cadence) };
+}
+
+function calcCurrentStreak(ruleId, cadence) {
+  const allChecked = (state.ruleChecks||[]).filter(c=>c.ruleId===ruleId&&c.completed);
+  if (!allChecked.length) return 0;
+  let streak = 0;
+  if (cadence === 'daily') {
+    const set = new Set(allChecked.map(c=>c.date));
+    const d = new Date(TODAY+'T00:00:00');
+    while (set.has(d.toISOString().slice(0,10))) { streak++; d.setDate(d.getDate()-1); }
+  } else if (cadence === 'weekly') {
+    let mon = new Date(getWeekMonday(TODAY)+'T00:00:00');
+    while (true) {
+      const sat = new Date(mon); sat.setDate(mon.getDate()+6);
+      if (!allChecked.some(c=>c.date>=mon.toISOString().slice(0,10)&&c.date<=sat.toISOString().slice(0,10))) break;
+      streak++; mon.setDate(mon.getDate()-7);
+    }
+  } else if (cadence === 'monthly') {
+    let d = new Date(TODAY.slice(0,7)+'-01T00:00:00');
+    while (allChecked.some(c=>c.date.startsWith(d.toISOString().slice(0,7)))) { streak++; d.setMonth(d.getMonth()-1); }
+  } else if (cadence === 'annually') {
+    let y = parseInt(TODAY.slice(0,4));
+    while (allChecked.some(c=>c.date.startsWith(String(y)))) { streak++; y--; }
+  }
+  return streak;
+}
+
+function calcLongestStreak(ruleId, cadence) {
+  const allChecked = (state.ruleChecks||[]).filter(c=>c.ruleId===ruleId&&c.completed);
+  if (!allChecked.length) return 0;
+  if (cadence !== 'daily') return calcCurrentStreak(ruleId, cadence);
+  const dates = [...new Set(allChecked.map(c=>c.date))].sort();
+  let best=0, cur=0, prev=null;
+  for (const d of dates) {
+    if (prev) { const p=new Date(prev+'T00:00:00'); p.setDate(p.getDate()+1); cur=p.toISOString().slice(0,10)===d?cur+1:1; }
+    else cur=1;
+    if (cur>best) best=cur;
+    prev=d;
+  }
+  return best;
+}
+
+function renderHeatmapHtml(ruleId, cadence) {
+  const windowStart = getDashWindowStart();
+  const allChecked = (state.ruleChecks||[]).filter(c=>c.ruleId===ruleId&&c.completed);
+  const days=[], d=new Date(windowStart+'T00:00:00'), end=new Date(TODAY+'T00:00:00');
+  while (d<=end) { days.push(d.toISOString().slice(0,10)); d.setDate(d.getDate()+1); }
+  return '<div class="heatmap">'+days.map(ds => {
+    let done=false;
+    if (cadence==='daily') done=allChecked.some(c=>c.date===ds);
+    else if (cadence==='weekly') { const mon=getWeekMonday(ds); const sat=new Date(mon+'T00:00:00'); sat.setDate(sat.getDate()+6); done=allChecked.some(c=>c.date>=mon&&c.date<=sat.toISOString().slice(0,10)); }
+    else if (cadence==='monthly') done=allChecked.some(c=>c.date.startsWith(ds.slice(0,7)));
+    else if (cadence==='annually') done=allChecked.some(c=>c.date.startsWith(ds.slice(0,4)));
+    return `<div class="hm-cell${done?' done':''}" title="${ds}"></div>`;
+  }).join('')+'</div>';
+}
+
+// ── Prompt helper ─────────────────────────────────────────────────────
+function getTodayPrompt() {
+  const prompts = state.prompts || [];
+  if (!prompts.length) return null;
+  const epoch = new Date('2026-01-01T00:00:00');
+  const days = Math.floor((new Date(TODAY+'T00:00:00') - epoch) / 86400000);
+  return prompts[((days % prompts.length) + prompts.length) % prompts.length];
+}
+
+// ── Render: Goals ─────────────────────────────────────────────────────
+function renderGoalsView() {
+  const goals = state.goals || { personal:[], professional:[] };
+  function renderGroup(label, items, group) {
+    return `<div style="margin-bottom:24px">
+      <div class="goals-group-label">${label}</div>
+      ${items.length===0?`<p style="font-size:13px;color:var(--text-faint);margin-bottom:10px">No ${label.toLowerCase()} goals yet.</p>`:
+        items.map((g,i)=>`<div class="goal-item">
+          <span class="goal-num">${i+1}</span>
+          <span class="goal-text">${esc(g.text)}</span>
+          <button class="icon-btn goal-edit-btn" onclick="openEditGoalModal('${group}','${g.id}')">✎</button>
+        </div>`).join('')}
+      <button class="btn btn-ghost btn-sm" onclick="openNewGoalModal('${group}')" style="margin-top:4px">＋ Add ${label.toLowerCase()} goal</button>
+    </div>`;
+  }
+  document.getElementById('content').innerHTML = `
+    <div class="list-header"><span class="list-title">Goals</span><div class="spacer"></div></div>
+    ${renderGroup('Personal', goals.personal||[], 'personal')}
+    ${renderGroup('Professional', goals.professional||[], 'professional')}
+  `;
+}
+
+// ── Render: Rule of Life ──────────────────────────────────────────────
+let ruleShowAll = true;
+
+function renderRuleOfLifeView() {
+  const items = state.ruleItems || [];
+  const CADENCE_ORDER = ['daily','weekly','monthly','annually'];
+  const displayed = ruleShowAll ? items : items.filter(r => !isRuleChecked(r.id, r.cadence));
+  const categories = [...new Set(items.map(r => r.category||'Other'))].sort();
+
+  const sections = categories.map(cat => {
+    const catItems = displayed.filter(r=>(r.category||'Other')===cat)
+      .sort((a,b)=>CADENCE_ORDER.indexOf(a.cadence)-CADENCE_ORDER.indexOf(b.cadence));
+    if (!catItems.length) return '';
+    return `<div class="rule-category">
+      <div class="rule-category-header">${esc(cat)}</div>
+      ${catItems.map(r => {
+        const checked = isRuleChecked(r.id, r.cadence);
+        return `<div class="rule-item">
+          <div class="check${checked?' checked':''}" onclick="toggleRuleCheck('${r.id}')" style="flex-shrink:0"></div>
+          <span class="rule-cadence ${r.cadence}">${r.cadence}</span>
+          <span class="rule-text" style="${checked?'text-decoration:line-through;color:var(--text-muted)':''}">${esc(r.text)}</span>
+          <button class="icon-btn rule-edit-btn" onclick="openEditRuleModal('${r.id}')">✎</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+
+  document.getElementById('content').innerHTML = `
+    <div class="list-header">
+      <span class="list-title">Rule of Life</span>
+      <div class="spacer"></div>
+      <button class="btn btn-ghost btn-sm" onclick="toggleRuleShowAll()" style="margin-right:6px">${ruleShowAll?'Due only':'Show all'}</button>
+      <button class="btn btn-ghost btn-sm" onclick="openNewRuleModal()">＋ Add</button>
+    </div>
+    ${items.length===0?`<div class="empty"><div class="empty-icon">✝</div><div class="empty-title">No commitments yet</div><div class="empty-sub">Add your first Rule of Life item</div></div>`:
+      (sections||`<div style="font-size:13px;color:var(--text-faint);text-align:center;padding:32px 0">All done for now 🎉</div>`)}
+  `;
+}
+
+function toggleRuleShowAll() { ruleShowAll = !ruleShowAll; renderRuleOfLifeView(); }
+
+// ── Render: Reflection ────────────────────────────────────────────────
+let showPromptsSection = false;
+const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAY_ABBR = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function renderReflectionView() {
+  const reflections = (state.reflections||[]).sort((a,b)=>b.date.localeCompare(a.date));
+  const todayEntry = reflections.find(r=>r.date===TODAY);
+
+  function fmtReflDate(d) {
+    const dt = new Date(d+'T00:00:00');
+    if (d===TODAY) return 'Today';
+    return `${DAY_ABBR[dt.getDay()]} ${MONTH_ABBR[dt.getMonth()]} ${dt.getDate()}, ${dt.getFullYear()}`;
+  }
+
+  document.getElementById('content').innerHTML = `
+    <div class="list-header">
+      <span class="list-title">Reflection</span>
+      <div class="spacer"></div>
+      ${!todayEntry?`<button class="btn btn-primary btn-sm" onclick="openNewReflectionModal()">+ Today</button>`:''}
+      <button class="btn btn-ghost btn-sm" onclick="openNewReflectionModal()" style="margin-left:6px">+ Entry</button>
+    </div>
+    ${reflections.length===0?`<div class="empty"><div class="empty-icon">📓</div><div class="empty-title">No reflections yet</div><div class="empty-sub">Record your first daily reflection above</div></div>`:
+      reflections.map(r=>{
+        const dots=r.energy?Array.from({length:5},(_,i)=>`<div class="energy-dot${i<r.energy?' lit':''}"></div>`).join(''):'';
+        const excerpt=r.wentWell||r.freeText||'';
+        return `<div class="reflection-card" onclick="openEditReflectionModal('${r.id}')">
+          <div class="reflection-card-date">
+            <span>${esc(fmtReflDate(r.date))}</span>
+            ${r.energy?`<div class="energy-dots">${dots}</div>`:''}
+          </div>
+          ${r.wentWell?`<div style="font-size:13px;font-weight:500;margin-bottom:3px">${esc(r.wentWell)}</div>`:''}
+          ${excerpt?`<div class="reflection-card-excerpt">${esc(excerpt)}</div>`:''}
+        </div>`;
+      }).join('')}
+    <div class="prompts-toggle" onclick="togglePromptsSection()">
+      ${showPromptsSection?'▼':'▶'} Reflection prompts (${(state.prompts||[]).length})
+    </div>
+    ${showPromptsSection?renderPromptsManagement():''}
+  `;
+}
+
+function togglePromptsSection() { showPromptsSection = !showPromptsSection; renderReflectionView(); }
+
+function renderPromptsManagement() {
+  const prompts = state.prompts||[];
+  const goals = state.goals||{};
+  const allGoals = [...(goals.personal||[]).map(g=>({...g,group:'Personal'})),...(goals.professional||[]).map(g=>({...g,group:'Professional'}))];
+  const goalMap = Object.fromEntries(allGoals.map(g=>[g.id,g]));
+  return `<div>
+    ${prompts.map(p=>`<div class="prompt-item">
+      <div style="flex:1">
+        <div class="prompt-item-text">${esc(p.text)}</div>
+        ${p.goalId&&goalMap[p.goalId]?`<div class="prompt-item-goal">→ ${esc(goalMap[p.goalId].text.slice(0,60))}</div>`:''}
+      </div>
+      <button class="icon-btn prompt-edit-btn" onclick="openEditPromptModal('${p.id}')">✎</button>
+    </div>`).join('')}
+    <button class="btn btn-ghost btn-sm" onclick="openNewPromptModal()" style="margin-top:6px">＋ Add prompt</button>
+  </div>`;
+}
+
+// ── Render: Dashboard ─────────────────────────────────────────────────
+function renderDashboardView() {
+  const items = state.ruleItems||[];
+  const goals = state.goals||{personal:[],professional:[]};
+  const reflections = state.reflections||[];
+  const CADENCE_ORDER = ['daily','weekly','monthly','annually'];
+  const windowOpts = [{label:'Last 7 days',val:7},{label:'Last 30 days',val:30},{label:'This year',val:'year'}];
+  const tabs = windowOpts.map(o=>`<button class="dash-tab${dashWindow===o.val?' active':''}" onclick="setDashWindow(${JSON.stringify(o.val)})">${o.label}</button>`).join('');
+  const categories = [...new Set(items.map(r=>r.category||'Other'))].sort();
+
+  const ruleSections = categories.length===0
+    ? `<div class="empty" style="padding:40px 20px"><div class="empty-icon">📊</div><div class="empty-title">No Rule of Life items yet</div><div class="empty-sub">Add items in the Rule of Life view</div></div>`
+    : categories.map(cat=>{
+        const catItems = items.filter(r=>(r.category||'Other')===cat).sort((a,b)=>CADENCE_ORDER.indexOf(a.cadence)-CADENCE_ORDER.indexOf(b.cadence));
+        const catStats = catItems.map(r=>getRuleStats(r.id,r.cadence));
+        const catAvg = catStats.length?Math.round(catStats.reduce((s,x)=>s+x.pct,0)/catStats.length):0;
+        return `<div class="dash-category-block">
+          <div class="dash-category-header">${esc(cat)} <span class="dash-category-avg">${catAvg}%</span></div>
+          ${catItems.map((r,i)=>{
+            const s=catStats[i];
+            return `<div class="dash-rule-row">
+              <div class="dash-rule-name">${esc(r.text)} <span style="font-size:11px;color:var(--text-faint)">(${r.cadence})</span></div>
+              <div class="dash-stats-row">
+                <div class="dash-stat"><div class="dash-stat-val">${s.pct}%</div><div class="dash-stat-label">Completion</div></div>
+                <div class="dash-stat"><div class="dash-stat-val">${s.completed}/${s.applicable}</div><div class="dash-stat-label">Periods</div></div>
+                <div class="dash-stat"><div class="dash-stat-val">${s.currentStreak}</div><div class="dash-stat-label">Streak</div></div>
+                <div class="dash-stat"><div class="dash-stat-val">${s.longestStreak}</div><div class="dash-stat-label">Best</div></div>
+              </div>
+              ${renderHeatmapHtml(r.id,r.cadence)}
+            </div>`;
+          }).join('')}
+        </div>`;
+      }).join('');
+
+  const allGoals = [...(goals.personal||[]).map(g=>({...g,group:'Personal'})),...(goals.professional||[]).map(g=>({...g,group:'Professional'}))];
+  const goalsSec = allGoals.length===0?'':
+    `<div style="margin-top:32px">
+      <div class="goals-group-label" style="color:var(--accent);font-size:12px">Goals &amp; Reflections</div>
+      ${allGoals.map(g=>{
+        const linked = reflections.filter(r=>r.goalId===g.id).sort((a,b)=>b.date.localeCompare(a.date));
+        return `<div class="dash-goal-block">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);margin-bottom:4px">${g.group}</div>
+          <div class="dash-goal-text">${esc(g.text)}</div>
+          ${linked.length===0?`<div style="font-size:12px;color:var(--text-faint)">No linked reflections yet</div>`:
+            linked.slice(0,5).map(r=>`<div class="dash-refl-entry">
+              <div class="dash-refl-text">${esc(r.freeText||r.wentWell||'')}</div>
+              <div class="dash-refl-date">${new Date(r.date+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+            </div>`).join('')}
+          ${linked.length>5?`<div style="font-size:12px;color:var(--text-muted);margin-top:6px">+ ${linked.length-5} more</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>`;
+
+  document.getElementById('content').innerHTML = `
+    <div class="list-header"><span class="list-title">Dashboard</span><div class="spacer"></div></div>
+    <div class="dash-window-tabs">${tabs}</div>
+    ${ruleSections}
+    ${goalsSec}
+  `;
+}
+
+function setDashWindow(val) { dashWindow = val; renderDashboardView(); }
+
+// ── Goal CRUD ─────────────────────────────────────────────────────────
+let editingGoalId = null, editingGoalGroup = null;
+
+function openNewGoalModal(group) {
+  editingGoalId = null; editingGoalGroup = group||'personal';
+  document.getElementById('goal-modal-title').textContent = 'New goal';
+  document.getElementById('gm-group').value = editingGoalGroup;
+  document.getElementById('gm-text').value = '';
+  document.getElementById('gm-delete-btn').style.display = 'none';
+  document.getElementById('goal-modal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('gm-text').focus(),50);
+}
+
+function openEditGoalModal(group, id) {
+  editingGoalId = id; editingGoalGroup = group;
+  const g = (state.goals[group]||[]).find(x=>x.id===id); if (!g) return;
+  document.getElementById('goal-modal-title').textContent = 'Edit goal';
+  document.getElementById('gm-group').value = group;
+  document.getElementById('gm-text').value = g.text;
+  document.getElementById('gm-delete-btn').style.display = 'block';
+  document.getElementById('goal-modal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('gm-text').focus(),50);
+}
+
+function closeGoalModal() { document.getElementById('goal-modal').style.display = 'none'; }
+
+function saveGoal() {
+  const text = document.getElementById('gm-text').value.trim(); if (!text) return;
+  const group = document.getElementById('gm-group').value;
+  if (!state.goals) state.goals = {personal:[],professional:[]};
+  if (!state.goals[group]) state.goals[group] = [];
+  if (editingGoalId) {
+    if (group !== editingGoalGroup) {
+      state.goals[editingGoalGroup] = (state.goals[editingGoalGroup]||[]).filter(g=>g.id!==editingGoalId);
+      state.goals[group].push({id:editingGoalId, text});
+    } else {
+      const g = state.goals[group].find(x=>x.id===editingGoalId);
+      if (g) g.text = text;
+    }
+  } else {
+    state.goals[group].push({id:uid(), text});
+  }
+  closeGoalModal(); save(); renderGoalsView();
+}
+
+function deleteGoalFromModal() {
+  if (!confirm('Delete this goal?')) return;
+  state.goals[editingGoalGroup] = (state.goals[editingGoalGroup]||[]).filter(g=>g.id!==editingGoalId);
+  closeGoalModal(); save(); renderGoalsView();
+}
+
+// ── Rule CRUD ─────────────────────────────────────────────────────────
+let editingRuleId = null;
+
+function openNewRuleModal() {
+  editingRuleId = null;
+  document.getElementById('rule-modal-title').textContent = 'New commitment';
+  document.getElementById('rm-text').value = '';
+  document.getElementById('rm-category').value = '';
+  document.getElementById('rm-cadence').value = 'daily';
+  document.getElementById('rm-delete-btn').style.display = 'none';
+  document.getElementById('rule-modal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('rm-text').focus(),50);
+}
+
+function openEditRuleModal(id) {
+  editingRuleId = id;
+  const r = (state.ruleItems||[]).find(x=>x.id===id); if (!r) return;
+  document.getElementById('rule-modal-title').textContent = 'Edit commitment';
+  document.getElementById('rm-text').value = r.text;
+  document.getElementById('rm-category').value = r.category||'';
+  document.getElementById('rm-cadence').value = r.cadence;
+  document.getElementById('rm-delete-btn').style.display = 'block';
+  document.getElementById('rule-modal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('rm-text').focus(),50);
+}
+
+function closeRuleModal() { document.getElementById('rule-modal').style.display = 'none'; }
+
+function saveRule() {
+  const text = document.getElementById('rm-text').value.trim(); if (!text) return;
+  const category = document.getElementById('rm-category').value.trim();
+  const cadence = document.getElementById('rm-cadence').value;
+  if (!state.ruleItems) state.ruleItems = [];
+  if (editingRuleId) {
+    const r = state.ruleItems.find(x=>x.id===editingRuleId);
+    if (r) { r.text=text; r.category=category; r.cadence=cadence; }
+  } else {
+    state.ruleItems.push({id:uid(), category, cadence, text});
+  }
+  closeRuleModal(); save(); renderRuleOfLifeView();
+}
+
+function deleteRuleFromModal() {
+  if (!confirm('Delete this commitment? All history will also be removed.')) return;
+  state.ruleItems = (state.ruleItems||[]).filter(r=>r.id!==editingRuleId);
+  state.ruleChecks = (state.ruleChecks||[]).filter(c=>c.ruleId!==editingRuleId);
+  closeRuleModal(); save(); renderRuleOfLifeView();
+}
+
+// ── Reflection CRUD ───────────────────────────────────────────────────
+let editingReflectionId = null, pickedEnergy = 0;
+
+function pickEnergy(val) {
+  pickedEnergy = val;
+  document.querySelectorAll('.energy-btn').forEach((b,i)=>b.classList.toggle('selected',i+1===val));
+}
+
+function openNewReflectionModal(date) {
+  editingReflectionId = null; pickedEnergy = 0;
+  const d = date||TODAY;
+  document.getElementById('rfm-title').textContent = d===TODAY?"Today's reflection":'New reflection';
+  document.getElementById('rfm-date').value = d;
+  document.getElementById('rfm-went-well').value = '';
+  document.getElementById('rfm-tomorrow').value = '';
+  document.getElementById('rfm-free').value = '';
+  document.getElementById('rfm-delete-btn').style.display = 'none';
+  document.querySelectorAll('.energy-btn').forEach(b=>b.classList.remove('selected'));
+  const prompt = d===TODAY ? getTodayPrompt() : null;
+  const banner = document.getElementById('rfm-prompt-banner');
+  if (prompt) {
+    banner.style.display = 'block';
+    banner.innerHTML = `<div class="prompt-banner"><div class="prompt-banner-label">Today's prompt</div><div class="prompt-banner-text">${esc(prompt.text)}</div></div>`;
+  } else { banner.style.display = 'none'; }
+  document.getElementById('reflection-modal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('rfm-went-well').focus(),50);
+}
+
+function openEditReflectionModal(id) {
+  editingReflectionId = id;
+  const r = (state.reflections||[]).find(x=>x.id===id); if (!r) return;
+  pickedEnergy = r.energy||0;
+  document.getElementById('rfm-title').textContent = 'Edit reflection';
+  document.getElementById('rfm-date').value = r.date;
+  document.getElementById('rfm-went-well').value = r.wentWell||'';
+  document.getElementById('rfm-tomorrow').value = r.tomorrow||'';
+  document.getElementById('rfm-free').value = r.freeText||'';
+  document.getElementById('rfm-delete-btn').style.display = 'block';
+  document.querySelectorAll('.energy-btn').forEach((b,i)=>b.classList.toggle('selected',i+1===pickedEnergy));
+  document.getElementById('rfm-prompt-banner').style.display = 'none';
+  document.getElementById('reflection-modal').style.display = 'flex';
+}
+
+function closeReflectionModal() { document.getElementById('reflection-modal').style.display = 'none'; }
+
+function saveReflection() {
+  const date = document.getElementById('rfm-date').value; if (!date) return;
+  const wentWell = document.getElementById('rfm-went-well').value.trim();
+  const tomorrow = document.getElementById('rfm-tomorrow').value.trim();
+  const freeText = document.getElementById('rfm-free').value.trim();
+  if (!wentWell&&!tomorrow&&!freeText&&!pickedEnergy) return;
+  if (!state.reflections) state.reflections = [];
+  if (editingReflectionId) {
+    const idx = state.reflections.findIndex(r=>r.id===editingReflectionId);
+    if (idx>=0) state.reflections[idx] = {...state.reflections[idx], date, energy:pickedEnergy||null, wentWell, tomorrow, freeText};
+  } else {
+    const prompt = date===TODAY ? getTodayPrompt() : null;
+    state.reflections.push({id:uid(), date, energy:pickedEnergy||null, wentWell, tomorrow, freeText, goalId:prompt?.goalId||null});
+  }
+  closeReflectionModal(); save(); renderReflectionView();
+}
+
+function deleteReflectionFromModal() {
+  if (!confirm('Delete this reflection?')) return;
+  state.reflections = (state.reflections||[]).filter(r=>r.id!==editingReflectionId);
+  closeReflectionModal(); save(); renderReflectionView();
+}
+
+// ── Prompt CRUD ───────────────────────────────────────────────────────
+let editingPromptId = null;
+
+function openNewPromptModal() {
+  editingPromptId = null;
+  document.getElementById('pm-title').textContent = 'New prompt';
+  document.getElementById('pm-text').value = '';
+  document.getElementById('pm-delete-btn').style.display = 'none';
+  populatePromptGoalSelect(null);
+  document.getElementById('prompt-modal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('pm-text').focus(),50);
+}
+
+function openEditPromptModal(id) {
+  editingPromptId = id;
+  const p = (state.prompts||[]).find(x=>x.id===id); if (!p) return;
+  document.getElementById('pm-title').textContent = 'Edit prompt';
+  document.getElementById('pm-text').value = p.text;
+  document.getElementById('pm-delete-btn').style.display = 'block';
+  populatePromptGoalSelect(p.goalId);
+  document.getElementById('prompt-modal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('pm-text').focus(),50);
+}
+
+function populatePromptGoalSelect(selectedId) {
+  const g = state.goals||{};
+  const all = [...(g.personal||[]).map(x=>({id:x.id,label:'Personal: '+x.text.slice(0,50)})),...(g.professional||[]).map(x=>({id:x.id,label:'Professional: '+x.text.slice(0,50)}))];
+  document.getElementById('pm-goal').innerHTML = `<option value="">None</option>`+all.map(x=>`<option value="${x.id}"${selectedId===x.id?' selected':''}>${esc(x.label)}</option>`).join('');
+}
+
+function closePromptModal() { document.getElementById('prompt-modal').style.display = 'none'; }
+
+function savePrompt() {
+  const text = document.getElementById('pm-text').value.trim(); if (!text) return;
+  const goalId = document.getElementById('pm-goal').value||null;
+  if (!state.prompts) state.prompts = [];
+  if (editingPromptId) {
+    const p = state.prompts.find(x=>x.id===editingPromptId);
+    if (p) { p.text=text; p.goalId=goalId; }
+  } else {
+    state.prompts.push({id:uid(), text, goalId});
+  }
+  closePromptModal(); save(); renderReflectionView();
+}
+
+function deletePromptFromModal() {
+  if (!confirm('Delete this prompt?')) return;
+  state.prompts = (state.prompts||[]).filter(p=>p.id!==editingPromptId);
+  closePromptModal(); save(); renderReflectionView();
+}
 
 // ── Calendar auto-sync helpers ────────────────────────────────────────
 async function autoSyncTask(task) {
