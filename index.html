@@ -206,6 +206,8 @@
   .tasks-section { margin-bottom: 24px; }
   .section-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
   .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .overdue-label { color: #c0392b; }
+  .overdue-label::after { background: rgba(192,57,43,0.2); }
   .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
   .task-card:hover { border-color: var(--border-strong); box-shadow: 0 2px 8px rgba(0,0,0,0.09); }
   .task-card.done { opacity: 0.5; }
@@ -1148,10 +1150,12 @@ function renderListView() {
 }
 
 function renderTodayView() {
+  const overdue = ws().tasks.filter(t => !t.parentId && t.doDate && t.doDate < TODAY && t.status !== 'Done');
   const todayTasks = ws().tasks.filter(t => !t.parentId && isToday(t.doDate));
   const active = todayTasks.filter(t => t.status !== 'Done');
   const done = todayTasks.filter(t => t.status === 'Done');
   const doneCollapsed = ws().completedCollapsed['__today__'] !== false;
+  const overdueCollapsed = ws().completedCollapsed['__today__overdue'] === true;
 
   document.getElementById('content').innerHTML = `
     <div class="list-header">
@@ -1159,8 +1163,13 @@ function renderTodayView() {
       <div class="spacer"></div>
     </div>
     <div id="task-sections">
-      ${todayTasks.length === 0 ? `<div class="empty"><div class="empty-icon" style="color:var(--gold)">${ICONS.emptyCelebrate}</div><div class="empty-title">Nothing scheduled for today</div><div class="empty-sub">Tasks with today's Do Date appear here</div></div>` : ''}
-      ${active.length > 0 ? `<div class="tasks-section">${active.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}</div>` : ''}
+      ${overdue.length > 0 ? `
+        <div class="tasks-section">
+          <div class="section-label overdue-label" onclick="toggleDoneCollapsed('__today__overdue')">${overdueCollapsed?ICONS.chevRight:ICONS.chevDown} Overdue (${overdue.length})</div>
+          ${overdueCollapsed ? '' : overdue.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
+        </div>` : ''}
+      ${todayTasks.length === 0 && overdue.length === 0 ? `<div class="empty"><div class="empty-icon" style="color:var(--gold)">${ICONS.emptyCelebrate}</div><div class="empty-title">Nothing scheduled for today</div><div class="empty-sub">Tasks with today's Do Date appear here</div></div>` : ''}
+      ${active.length > 0 ? `<div class="tasks-section">${active.length > 0 || overdue.length > 0 ? `<div class="section-label" style="cursor:default">Today</div>` : ''}${active.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}</div>` : ''}
       ${done.length > 0 ? `
         <div class="tasks-section">
           <div class="section-label" onclick="toggleDoneCollapsed('__today__')">${doneCollapsed?ICONS.chevRight:ICONS.chevDown} Completed (${done.length})</div>
@@ -1174,6 +1183,10 @@ function renderThisWeekView() {
   const dates = getThisWeekDates();
   const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  const weekStart = dates[0];
+  const overdue = ws().tasks.filter(t => !t.parentId && t.doDate && t.doDate < weekStart && t.status !== 'Done');
+  const overdueCollapsed = ws().completedCollapsed['__thisweek__overdue'] === true;
 
   function fmtDay(dateStr) {
     const d = new Date(dateStr + 'T00:00:00');
@@ -1209,6 +1222,12 @@ function renderThisWeekView() {
   const totalActive = dates.reduce((n, d) =>
     n + ws().tasks.filter(t => !t.parentId && t.doDate === d && t.status !== 'Done').length, 0);
 
+  const overdueSection = overdue.length > 0 ? `
+    <div class="tasks-section">
+      <div class="section-label overdue-label" onclick="toggleDoneCollapsed('__thisweek__overdue')">${overdueCollapsed?ICONS.chevRight:ICONS.chevDown} Overdue (${overdue.length})</div>
+      ${overdueCollapsed ? '' : overdue.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
+    </div>` : '';
+
   document.getElementById('content').innerHTML = `
     <div class="list-header">
       <span class="list-title">This Week</span>
@@ -1216,7 +1235,8 @@ function renderThisWeekView() {
       ${totalActive > 0 ? `<span style="font-size:13px;color:var(--text-muted)">${totalActive} task${totalActive !== 1 ? 's' : ''}</span>` : ''}
     </div>
     <div id="task-sections">
-      ${totalActive === 0 && dates.every(d => ws().tasks.filter(t => !t.parentId && t.doDate === d).length === 0)
+      ${overdueSection}
+      ${totalActive === 0 && overdue.length === 0 && dates.every(d => ws().tasks.filter(t => !t.parentId && t.doDate === d).length === 0)
         ? `<div class="empty"><div class="empty-icon" style="color:var(--text-faint)">${ICONS.emptyCalendar}</div><div class="empty-title">Nothing scheduled this week</div><div class="empty-sub">Tasks with a Do Date this week appear here</div></div>`
         : sections}
     </div>
