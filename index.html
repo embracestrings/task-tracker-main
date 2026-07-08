@@ -2307,7 +2307,65 @@ function renderDashboardView() {
     <div class="list-header"><span class="list-title">Dashboard</span><div class="spacer"></div></div>
     ${ruleSections}
     ${goalsSec}
+    <div style="margin-top:40px;border-top:1px solid var(--border);padding-top:18px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);margin-bottom:12px">Data Recovery</div>
+      <div id="backup-status" style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Check if a cloud backup is available to restore.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" onclick="checkBackup()" style="font-size:12px">Check backup</button>
+        <button class="btn btn-danger" id="restore-btn" onclick="restoreBackup()" style="font-size:12px;display:none">Restore backup</button>
+      </div>
+    </div>
   `;
+}
+
+async function checkBackup() {
+  const el = document.getElementById('backup-status');
+  el.textContent = 'Checking…';
+  try {
+    const res = await fetch('/api/sync', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'peek_backup' })
+    });
+    const d = await res.json();
+    const b = d.backup;
+    const m = d.main;
+    const mainSummary = m
+      ? `Current: ${m.ruleItemsCount} rule items, ${m.reflectionsCount} reflections, ${m.goalsPersonal + m.goalsProfessional} goals`
+      : 'Current: empty';
+    if (!b) {
+      el.innerHTML = `${mainSummary}<br><span style="color:var(--text-faint)">No backup found in cloud storage.</span>`;
+    } else {
+      const backupSummary = `Backup: ${b.ruleItemsCount} rule items, ${b.reflectionsCount} reflections, ${b.goalsPersonal + b.goalsProfessional} goals, ${b.ruleChecksCount} check-ins`;
+      el.innerHTML = `${mainSummary}<br><span style="color:${b.ruleItemsCount > 0 || b.reflectionsCount > 0 ? '#16335B' : 'var(--text-faint)'}">${backupSummary}</span>`;
+      if (b.ruleItemsCount > 0 || b.reflectionsCount > 0 || b.goalsPersonal > 0) {
+        document.getElementById('restore-btn').style.display = '';
+      }
+    }
+  } catch(e) {
+    el.textContent = 'Error checking backup: ' + e.message;
+  }
+}
+
+async function restoreBackup() {
+  if (!confirm('Restore the backup? This will replace your current cloud data with the backup. Your current state will be saved as a pre-restore backup.')) return;
+  const el = document.getElementById('backup-status');
+  el.textContent = 'Restoring…';
+  try {
+    const res = await fetch('/api/sync', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'restore_backup' })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      el.textContent = 'Restored! Reloading data…';
+      document.getElementById('restore-btn').style.display = 'none';
+      await load();
+    } else {
+      el.textContent = 'Restore failed: ' + (d.error || 'unknown error');
+    }
+  } catch(e) {
+    el.textContent = 'Error restoring: ' + e.message;
+  }
 }
 
 // ── Goal CRUD ─────────────────────────────────────────────────────────
