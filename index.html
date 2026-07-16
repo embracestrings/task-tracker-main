@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Tracker">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
     /* Brand palette */
@@ -19,7 +19,9 @@
     --accent-light: #E8EDF4;  /* Light blue tint for active backgrounds */
     --accent-text: #0d2040;   /* Darker blue */
     --gold: #BA9E78;          /* Gold — secondary accent */
+    --gold-light: #D4BC99;    /* Gold lighter */
     --gold-bg: #F5EFE5;       /* Light gold for badge backgrounds */
+    --card-border: rgba(186,158,120,0.3); /* Gold hairline for cards */
 
     /* Surface & text */
     --bg: #F2F2F3;            /* Cream */
@@ -29,7 +31,7 @@
     --border-strong: #C0BCBA;
     --text: #1a1917;
     --text-muted: #6b6661;
-    --text-faint: #a8a39d;
+    --text-faint: #7d786f;    /* darkened for WCAG AA on cream bg */
 
     /* Status colors */
     --red: #c0392b; --red-bg: #fdf0ee;
@@ -47,7 +49,7 @@
   html { background: #F2F2F3; }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     background: var(--bg); color: var(--text);
     height: 100vh;
     height: calc(100dvh + env(safe-area-inset-bottom, 0px));
@@ -69,7 +71,7 @@
     position: relative; z-index: 10;
   }
   .app-name {
-    font-family: 'Lora', Georgia, serif;
+    font-family: 'Cormorant Garamond', Georgia, serif;
     font-size: 16px; font-weight: 700; letter-spacing: 0.01em;
     color: white;
   }
@@ -97,8 +99,9 @@
   .sidebar-scroll { flex: 1; overflow-y: auto; }
 
   /* Zone 3 — pinned Reflect section */
-  .sidebar-bottom { flex-shrink: 0; border-top: 1px solid rgba(255,255,255,0.14); }
+  .sidebar-bottom { flex-shrink: 0; border-top: 1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.14); }
   .sidebar-bottom .sidebar-section { border-top: none; padding-bottom: 8px; }
+  .sidebar-bottom .sidebar-section-label { color: var(--gold); }
 
   /* Zone 1 — collapsed workspace header */
   .ws-header {
@@ -160,12 +163,12 @@
   .list-item-wrap:hover .list-item-edit { opacity: 1; }
   .list-item-edit:hover { background: rgba(255,255,255,0.15); }
   .list-name-input { background: transparent; border: none; border-bottom: 1.5px solid var(--gold); outline: none; font-size: 13px; font-weight: 500; color: white; font-family: inherit; width: 100%; padding: 0; }
-  .list-title-input { background: transparent; border: none; border-bottom: 1.5px solid var(--accent); outline: none; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); font-family: 'Lora', Georgia, serif; min-width: 80px; }
+  .list-title-input { background: transparent; border: none; border-bottom: 1.5px solid var(--accent); outline: none; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); font-family: 'Cormorant Garamond', Georgia, serif; min-width: 80px; }
 
   /* ── Content area ──────────────────────── */
   .content { flex: 1; overflow-y: auto; padding: 20px 24px; padding-bottom: calc(20px + var(--safe-bottom)); background: var(--bg); }
   .list-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-  .list-title { font-family: 'Lora', Georgia, serif; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; cursor: default; color: var(--accent); }
+  .list-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 22px; font-weight: 700; letter-spacing: -0.01em; cursor: default; color: var(--accent); }
   .list-title-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .list-header .spacer { flex: 1; }
 
@@ -195,9 +198,9 @@
   /* ── Buttons ───────────────────────────── */
   .btn { padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all 0.1s; }
   .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
-  .btn-primary:hover { background: var(--accent-text); }
+  .btn-primary:hover { background: var(--gold); color: var(--accent); border-color: var(--gold); }
   .btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border); }
-  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-ghost:hover { background: transparent; color: var(--gold); border-color: var(--gold); }
   .btn-danger { background: transparent; color: var(--red); border-color: var(--red); }
   .btn-danger:hover { background: var(--red-bg); }
   .btn-sm { padding: 4px 10px; font-size: 12px; }
@@ -208,8 +211,8 @@
   .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
   .overdue-label { color: #c0392b; }
   .overdue-label::after { background: rgba(192,57,43,0.2); }
-  .task-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 6px; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-  .task-card:hover { border-color: var(--border-strong); box-shadow: 0 2px 8px rgba(0,0,0,0.09); }
+  .task-card { background: var(--surface); border: 1px solid var(--card-border); border-radius: 12px; margin-bottom: 8px; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 4px 14px rgba(22,51,91,0.06); overflow: hidden; }
+  .task-card:hover { box-shadow: 0 8px 24px rgba(22,51,91,0.11); transform: translateY(-1px); }
   .task-card.done { opacity: 0.5; }
   .task-card.drag-over { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-light); }
   .task-card.dragging { opacity: 0.4; }
@@ -217,7 +220,7 @@
   .drag-handle { color: var(--text-faint); cursor: grab; font-size: 14px; padding-top: 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.1s; }
   .task-card:hover .drag-handle { opacity: 1; }
   .check-wrap { padding-top: 1px; flex-shrink: 0; }
-  .check { width: 17px; height: 17px; border: 1.5px solid var(--border-strong); border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
+  .check { width: 18px; height: 18px; border: 1.5px solid var(--border-strong); border-radius: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
   .check:hover { border-color: var(--accent); }
   .check.checked { background: var(--accent); border-color: var(--accent); }
   .check.checked::after { content: ''; width: 9px; height: 5px; border-left: 2px solid white; border-bottom: 2px solid white; transform: rotate(-45deg) translateY(-1px); display: block; }
@@ -254,9 +257,15 @@
   .task-note { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; font-style: italic; }
 
   .empty { text-align: center; padding: 60px 20px; color: var(--text-faint); }
-  .empty-icon { font-size: 36px; margin-bottom: 12px; display: flex; justify-content: center; }
+  .empty-icon { margin: 0 auto 16px; width: 64px; height: 64px; background: var(--gold-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--gold); }
   .empty-title { font-size: 15px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; }
-  .empty-sub { font-size: 13px; }
+  .empty-sub { font-size: 13px; margin-bottom: 18px; }
+  .empty-cta { display: inline-block; margin-top: 4px; padding: 8px 20px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 500; font-family: inherit; letter-spacing: 0.04em; cursor: pointer; transition: background 0.15s, color 0.15s; }
+  .empty-cta:hover { background: var(--gold); color: var(--accent); }
+
+  /* Focus rings */
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; }
   .search-group { margin-bottom: 20px; }
   .search-group-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-faint); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
   .search-group-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
@@ -265,7 +274,7 @@
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
   .modal { background: var(--surface); border-radius: 14px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
   .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 0; }
-  .modal-title { font-family: 'Lora', Georgia, serif; font-size: 17px; font-weight: 700; color: var(--accent); }
+  .modal-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 17px; font-weight: 700; color: var(--accent); }
   .modal-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
   .modal-footer { padding: 0 20px 18px; display: flex; gap: 8px; justify-content: flex-end; }
   .field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -327,7 +336,9 @@
     .task-name { font-size: 13px; }
     .badge { font-size: 10px; padding: 2px 6px; }
     .task-right { gap: 2px; }
-    .icon-btn { width: 30px; height: 30px; font-size: 15px; }
+    .icon-btn { width: 44px; height: 44px; font-size: 15px; }
+    .list-item { min-height: 44px; }
+    .check { width: 22px; height: 22px; }
 
     .inline-add { padding: 10px 16px; }
 
@@ -1168,7 +1179,7 @@ function renderTodayView() {
           <div class="section-label overdue-label" onclick="toggleDoneCollapsed('__today__overdue')">${overdueCollapsed?ICONS.chevRight:ICONS.chevDown} Overdue (${overdue.length})</div>
           ${overdueCollapsed ? '' : overdue.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
         </div>` : ''}
-      ${todayTasks.length === 0 && overdue.length === 0 ? `<div class="empty"><div class="empty-icon" style="color:var(--gold)">${ICONS.emptyCelebrate}</div><div class="empty-title">Nothing scheduled for today</div><div class="empty-sub">Tasks with today's Do Date appear here</div></div>` : ''}
+      ${todayTasks.length === 0 && overdue.length === 0 ? `<div class="empty"><div class="empty-icon">${ICONS.emptyCelebrate}</div><div class="empty-title">Nothing scheduled for today</div><div class="empty-sub">Tasks with today's Do Date appear here</div><button class="empty-cta" onclick="expandInlineAdd()">+ Add task</button></div>` : ''}
       ${active.length > 0 ? `<div class="tasks-section">${active.length > 0 || overdue.length > 0 ? `<div class="section-label" style="cursor:default">Today</div>` : ''}${active.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}</div>` : ''}
       ${done.length > 0 ? `
         <div class="tasks-section">
@@ -1237,7 +1248,7 @@ function renderThisWeekView() {
     <div id="task-sections">
       ${overdueSection}
       ${totalActive === 0 && overdue.length === 0 && dates.every(d => ws().tasks.filter(t => !t.parentId && t.doDate === d).length === 0)
-        ? `<div class="empty"><div class="empty-icon" style="color:var(--text-faint)">${ICONS.emptyCalendar}</div><div class="empty-title">Nothing scheduled this week</div><div class="empty-sub">Tasks with a Do Date this week appear here</div></div>`
+        ? `<div class="empty"><div class="empty-icon">${ICONS.emptyCalendar}</div><div class="empty-title">Nothing scheduled this week</div><div class="empty-sub">Tasks with a Do Date this week appear here</div><button class="empty-cta" onclick="expandInlineAdd()">+ Add task</button></div>`
         : sections}
     </div>
   `;
@@ -1366,7 +1377,7 @@ function renderIdeaView() {
       <button class="btn btn-primary idea-add-btn" onclick="submitIdea()">Add</button>
     </div>
     <div id="idea-list">
-      ${notes.length === 0 ? `<div class="empty"><div class="empty-icon" style="color:var(--gold)">${ICONS.emptyIdea}</div><div class="empty-title">No ideas yet</div><div class="empty-sub">Start capturing your thoughts above</div></div>` :
+      ${notes.length === 0 ? `<div class="empty"><div class="empty-icon">${ICONS.emptyIdea}</div><div class="empty-title">No ideas yet</div><div class="empty-sub">Start capturing your thoughts above</div></div>` :
         notes.map(n => `
           <div class="idea-card" onclick="openIdeaModal('${n.id}')">
             <div style="flex:1">
@@ -1527,7 +1538,7 @@ function renderSearch() {
       <div class="spacer"></div>
       <span style="font-size:13px;color:var(--text-muted)">${matches.length} result${matches.length!==1?'s':''}</span>
     </div>
-    ${matches.length === 0 ? `<div class="empty"><div class="empty-icon" style="color:var(--text-faint)">${ICONS.emptySearch}</div><div class="empty-title">No results</div></div>` :
+    ${matches.length === 0 ? `<div class="empty"><div class="empty-icon">${ICONS.emptySearch}</div><div class="empty-title">No results</div><div class="empty-sub">Try a different search term</div></div>` :
       Object.entries(byList).map(([listId, tasks]) => {
         const list = getList(listId);
         return `<div class="search-group">
@@ -1576,6 +1587,7 @@ function renderSingleTaskCard(t, listId, sourceList) {
   const list = sourceList || getList(t.listId);
 
   return `<div class="task-card${t.status==='Done'?' done':''}" id="tc-${t.id}"
+    style="border-left: 4px solid ${list?.color || 'var(--gold)'}"
     draggable="true" ondragstart="dragStart(event,'${t.id}')" ondragover="dragOver(event,'${t.id}')" ondrop="dragDrop(event,'${t.id}','${listId||t.listId}')" ondragleave="dragLeave(event)" ondragend="dragEnd(event)">
     <div class="task-row" onclick="openTaskModal('${t.id}')" style="cursor:pointer">
       <span class="drag-handle" title="Drag to reorder">${ICONS.drag}</span>
@@ -1593,9 +1605,9 @@ function renderSingleTaskCard(t, listId, sourceList) {
         ${subs.length > 0 ? `<div class="progress-bar"><div class="progress-fill" style="width:${progressPct}%"></div></div>` : ''}
       </div>
       <div class="task-right" onclick="event.stopPropagation()">
-        <button class="icon-btn" onclick="toggleExpand('${t.id}')">${expanded ? ICONS.chevUp : ICONS.chevDown}</button>
-        <button class="icon-btn" onclick="openTaskModal('${t.id}')">${ICONS.edit}</button>
-        <button class="icon-btn danger" onclick="deleteTask('${t.id}')">${ICONS.trash}</button>
+        <button class="icon-btn" aria-label="${expanded ? 'Collapse' : 'Expand'}" onclick="toggleExpand('${t.id}')">${expanded ? ICONS.chevUp : ICONS.chevDown}</button>
+        <button class="icon-btn" aria-label="Edit task" onclick="openTaskModal('${t.id}')">${ICONS.edit}</button>
+        <button class="icon-btn danger" aria-label="Delete task" onclick="deleteTask('${t.id}')">${ICONS.trash}</button>
       </div>
     </div>
     ${expanded ? renderSubtasks(t.id, subs) : ''}
@@ -1617,7 +1629,7 @@ function renderSubtasks(parentId, subs) {
 }
 
 function renderEmpty() {
-  return `<div class="empty"><div class="empty-icon" style="color:var(--accent)">${ICONS.emptyCheck}</div><div class="empty-title">All clear</div><div class="empty-sub">Click the + above to add a task</div></div>`;
+  return `<div class="empty"><div class="empty-icon">${ICONS.emptyCheck}</div><div class="empty-title">All clear</div><div class="empty-sub">Nothing left to do here</div><button class="empty-cta" onclick="expandInlineAdd()">+ Add task</button></div>`;
 }
 
 // ── Drag & Drop ──────────────────────────────────────────────────────
@@ -2158,7 +2170,7 @@ function renderRuleOfLifeView() {
       <button class="btn btn-ghost btn-sm" onclick="toggleRuleShowAll()" style="margin-right:6px">${ruleShowAll?'Due only':'Show all'}</button>
       <button class="btn btn-ghost btn-sm" onclick="openNewRuleModal()">＋ Add</button>
     </div>
-    ${items.length===0?`<div class="empty"><div class="empty-icon" style="color:var(--accent)">${ICONS.emptyCross}</div><div class="empty-title">No commitments yet</div><div class="empty-sub">Add your first Rule of Life item</div></div>`:
+    ${items.length===0?`<div class="empty"><div class="empty-icon">${ICONS.emptyCross}</div><div class="empty-title">No commitments yet</div><div class="empty-sub">Add your first Rule of Life item</div><button class="empty-cta" onclick="openNewRuleModal()">+ Add commitment</button></div>`:
       (sections||`<div style="font-size:13px;color:var(--text-faint);text-align:center;padding:32px 0">All done for now 🎉</div>`)}
   `;
 }
@@ -2187,7 +2199,7 @@ function renderReflectionView() {
       ${!todayEntry?`<button class="btn btn-primary btn-sm" onclick="openNewReflectionModal()">+ Today</button>`:''}
       <button class="btn btn-ghost btn-sm" onclick="openNewReflectionModal()" style="margin-left:6px">+ Entry</button>
     </div>
-    ${reflections.length===0?`<div class="empty"><div class="empty-icon" style="color:var(--gold)">${ICONS.emptyBook}</div><div class="empty-title">No reflections yet</div><div class="empty-sub">Record your first daily reflection above</div></div>`:
+    ${reflections.length===0?`<div class="empty"><div class="empty-icon">${ICONS.emptyBook}</div><div class="empty-title">No reflections yet</div><div class="empty-sub">Record your first daily reflection above</div></div>`:
       reflections.map(r=>{
         const dots=r.energy?Array.from({length:5},(_,i)=>`<div class="energy-dot${i<r.energy?' lit':''}"></div>`).join(''):'';
         const excerpt=r.wentWell||r.freeText||'';
@@ -2253,7 +2265,7 @@ function renderDashboardView() {
   const categories = [...new Set(items.map(r=>r.category||'Other'))].sort();
 
   const ruleSections = categories.length===0
-    ? `<div class="empty" style="padding:40px 20px"><div class="empty-icon" style="color:var(--accent)">${ICONS.emptyChart}</div><div class="empty-title">No Rule of Life items yet</div><div class="empty-sub">Add items in the Rule of Life view</div></div>`
+    ? `<div class="empty" style="padding:40px 20px"><div class="empty-icon">${ICONS.emptyChart}</div><div class="empty-title">No Rule of Life items yet</div><div class="empty-sub">Add items in the Rule of Life view</div><button class="empty-cta" onclick="setActiveList('__ruleoflife__')">Go to Rule of Life</button></div>`
     : categories.map(cat=>{
         const catItems = items.filter(r=>(r.category||'Other')===cat).sort((a,b)=>CADENCE_ORDER.indexOf(a.cadence)-CADENCE_ORDER.indexOf(b.cadence));
         const catStats = catItems.map(r=>getRuleStats(r.id,r.cadence));
