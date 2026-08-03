@@ -962,16 +962,13 @@ function isToday(date) { return date === TODAY; }
 
 function getThisWeekDates() {
   const today = new Date(TODAY + 'T00:00:00');
-  const day = today.getDay(); // 0=Sun,1=Mon,...,6=Sat
-  // Find the Saturday of this week
-  const daysUntilSat = day === 0 ? 6 : 6 - day;
   const dates = [];
-  for (let i = 0; i <= daysUntilSat; i++) {
+  for (let i = 0; i < 7; i++) {
     const d = new Date(today);
     d.setDate(today.getDate() + i);
     dates.push(d.toISOString().slice(0, 10));
   }
-  return dates; // [today, ..., Saturday]
+  return dates; // [today, today+1, ..., today+6] — rolling 7-day window
 }
 
 function isThisWeek(date) {
@@ -1069,7 +1066,7 @@ function renderHeaderStats() {
   if (tc) { tc.textContent = todayCount; tc.style.display = todayCount > 0 ? '' : 'none'; }
   document.getElementById('today-btn').className = 'list-item' + (ws().activeList === '__today__' ? ' active' : '');
 
-  const weekCount = ws().tasks.filter(t => !t.parentId && isThisWeek(t.doDate) && t.status !== 'Done').length;
+  const weekCount = ws().tasks.filter(t => !t.parentId && t.status !== 'Done' && t.doDate && (isThisWeek(t.doDate) || t.doDate < TODAY)).length;
   const wc = document.getElementById('thisweek-count');
   if (wc) { wc.textContent = weekCount; wc.style.display = weekCount > 0 ? '' : 'none'; }
   const wb = document.getElementById('thisweek-btn');
