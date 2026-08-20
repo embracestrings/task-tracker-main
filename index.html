@@ -1561,7 +1561,7 @@ function renderIdeaView() {
           </div>`).join('')}
     </div>
   `;
-  setTimeout(() => document.getElementById('idea-input')?.focus(), 50);
+  document.getElementById('idea-input')?.focus();
 }
 
 function handleIdeaEnter(e) {
@@ -1582,7 +1582,7 @@ function openIdeaModal(id) {
   document.getElementById('idea-modal-title').textContent = 'Edit idea';
   document.getElementById('im-text').value = note.text;
   document.getElementById('idea-modal').style.display = 'flex';
-  setTimeout(() => document.getElementById('im-text').focus(), 50);
+  document.getElementById('im-text').focus();
 }
 function closeIdeaModal() { document.getElementById('idea-modal').style.display = 'none'; }
 function saveIdea() {
@@ -1616,7 +1616,7 @@ function openNewIdeaModal() {
   document.getElementById('ism-delete-btn').style.display = 'none';
   renderIdeaColorPicker();
   document.getElementById('idea-space-modal').style.display = 'flex';
-  setTimeout(() => document.getElementById('ism-name').focus(), 50);
+  document.getElementById('ism-name').focus();
 }
 function openEditIdeaSpaceModal(id) {
   editingIdeaSpaceId = id;
@@ -1626,7 +1626,7 @@ function openEditIdeaSpaceModal(id) {
   document.getElementById('ism-delete-btn').style.display = 'block';
   renderIdeaColorPicker();
   document.getElementById('idea-space-modal').style.display = 'flex';
-  setTimeout(() => document.getElementById('ism-name').focus(), 50);
+  document.getElementById('ism-name').focus();
 }
 function closeIdeaSpaceModal() { document.getElementById('idea-space-modal').style.display = 'none'; }
 function saveIdeaSpace() {
@@ -1660,7 +1660,7 @@ function openNewWorkspaceModal() {
   document.getElementById('wm-delete-btn').style.display = 'none';
   renderWorkspaceColorPicker();
   document.getElementById('workspace-modal').style.display = 'flex';
-  setTimeout(() => document.getElementById('wm-name').focus(), 50);
+  document.getElementById('wm-name').focus();
 }
 function openEditWorkspaceModal(id) {
   editingWorkspaceId = id;
@@ -1670,7 +1670,7 @@ function openEditWorkspaceModal(id) {
   document.getElementById('wm-delete-btn').style.display = Object.keys(state.workspaces).length > 1 ? 'block' : 'none';
   renderWorkspaceColorPicker();
   document.getElementById('workspace-modal').style.display = 'flex';
-  setTimeout(() => document.getElementById('wm-name').focus(), 50);
+  document.getElementById('wm-name').focus();
 }
 function closeWorkspaceModal() { document.getElementById('workspace-modal').style.display = 'none'; }
 function saveWorkspace() {
@@ -1951,7 +1951,7 @@ function openTaskModal(id) {
   document.getElementById('tm-notes').value = t.notes || '';
   document.getElementById('tm-list').innerHTML = ws().lists.map(l => `<option value="${l.id}"${t.listId===l.id?' selected':''}>${esc(l.name)}</option>`).join('');
   document.getElementById('task-modal').style.display = 'flex';
-  setTimeout(() => document.getElementById('tm-name').focus(), 50);
+  document.getElementById('tm-name').focus();
 }
 function openNewTaskModal() {
   collapseInlineAdd();
@@ -1966,7 +1966,7 @@ function openNewTaskModal() {
   document.getElementById('tm-notes').value = '';
   document.getElementById('tm-list').innerHTML = ws().lists.map(l => `<option value="${l.id}"${defaultListId===l.id?' selected':''}>${esc(l.name)}</option>`).join('');
   document.getElementById('task-modal').style.display = 'flex';
-  setTimeout(() => document.getElementById('tm-name').focus(), 50);
+  document.getElementById('tm-name').focus();
 }
 function closeTaskModal() { document.getElementById('task-modal').style.display = 'none'; }
 function saveTask() {
@@ -2004,7 +2004,7 @@ function openNewListModal() {
   document.getElementById('lm-name').value = '';
   document.getElementById('lm-delete-btn').style.display = 'none';
   renderColorPicker(); document.getElementById('list-modal').style.display = 'flex';
-  setTimeout(() => document.getElementById('lm-name').focus(), 50);
+  document.getElementById('lm-name').focus();
 }
 function openEditListModal(id) {
   editingListId = id; const l = getList(id); pickedColor = l.color;
@@ -2012,7 +2012,7 @@ function openEditListModal(id) {
   document.getElementById('lm-name').value = l.name;
   document.getElementById('lm-delete-btn').style.display = 'block';
   renderColorPicker(); document.getElementById('list-modal').style.display = 'flex';
-  setTimeout(() => document.getElementById('lm-name').focus(), 50);
+  document.getElementById('lm-name').focus();
 }
 function deleteListFromModal() { closeListModal(); deleteList(editingListId); }
 function closeListModal() { document.getElementById('list-modal').style.display = 'none'; }
@@ -2618,7 +2618,7 @@ function openNewGoalModal(group) {
   document.getElementById('gm-text').value = '';
   document.getElementById('gm-delete-btn').style.display = 'none';
   document.getElementById('goal-modal').style.display = 'flex';
-  setTimeout(()=>document.getElementById('gm-text').focus(),50);
+  document.getElementById('gm-text').focus();
 }
 
 function openEditGoalModal(group, id) {
@@ -2629,7 +2629,7 @@ function openEditGoalModal(group, id) {
   document.getElementById('gm-text').value = g.text;
   document.getElementById('gm-delete-btn').style.display = 'block';
   document.getElementById('goal-modal').style.display = 'flex';
-  setTimeout(()=>document.getElementById('gm-text').focus(),50);
+  document.getElementById('gm-text').focus();
 }
 
 function closeGoalModal() { document.getElementById('goal-modal').style.display = 'none'; }
@@ -2671,7 +2671,7 @@ function openNewRuleModal() {
   document.getElementById('rm-period').value = '';
   document.getElementById('rm-delete-btn').style.display = 'none';
   document.getElementById('rule-modal').style.display = 'flex';
-  setTimeout(()=>document.getElementById('rm-text').focus(),50);
+  document.getElementById('rm-text').focus();
 }
 
 function openEditRuleModal(id) {
@@ -2684,7 +2684,7 @@ function openEditRuleModal(id) {
   document.getElementById('rm-period').value = r.customPeriod||'';
   document.getElementById('rm-delete-btn').style.display = 'block';
   document.getElementById('rule-modal').style.display = 'flex';
-  setTimeout(()=>document.getElementById('rm-text').focus(),50);
+  document.getElementById('rm-text').focus();
 }
 
 function closeRuleModal() { document.getElementById('rule-modal').style.display = 'none'; }
@@ -2736,7 +2736,7 @@ function openNewReflectionModal(date) {
     banner.innerHTML = `<div class="prompt-banner"><div class="prompt-banner-label">Today's prompt</div><div class="prompt-banner-text">${esc(prompt.text)}</div></div>`;
   } else { banner.style.display = 'none'; }
   document.getElementById('reflection-modal').style.display = 'flex';
-  setTimeout(()=>document.getElementById('rfm-went-well').focus(),50);
+  document.getElementById('rfm-went-well').focus();
 }
 
 function openEditReflectionModal(id) {
@@ -2789,7 +2789,7 @@ function openNewPromptModal() {
   document.getElementById('pm-delete-btn').style.display = 'none';
   populatePromptGoalSelect(null);
   document.getElementById('prompt-modal').style.display = 'flex';
-  setTimeout(()=>document.getElementById('pm-text').focus(),50);
+  document.getElementById('pm-text').focus();
 }
 
 function openEditPromptModal(id) {
@@ -2800,7 +2800,7 @@ function openEditPromptModal(id) {
   document.getElementById('pm-delete-btn').style.display = 'block';
   populatePromptGoalSelect(p.goalId);
   document.getElementById('prompt-modal').style.display = 'flex';
-  setTimeout(()=>document.getElementById('pm-text').focus(),50);
+  document.getElementById('pm-text').focus();
 }
 
 function populatePromptGoalSelect(selectedId) {
