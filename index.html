@@ -176,7 +176,21 @@
   .list-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
   .list-title { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.01em; cursor: default; color: var(--accent); }
   .list-title-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .list-subtitle { font-family: var(--font-mono); font-size: 11.5px; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; color: var(--gold-deep); }
   .list-header .spacer { flex: 1; }
+
+  /* ── Week strip (This Week day-carousel) ─── */
+  .week-strip { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 16px; margin-bottom: 4px; }
+  .day-chip { flex-shrink: 0; width: 46px; padding: 7px 0; border-radius: 4px; text-align: center; cursor: pointer; border: 1px solid transparent; background: var(--surface); transition: background 0.12s, border-color 0.12s; }
+  .day-chip:hover { border-color: var(--card-border); }
+  .day-chip .dc-d { font-family: var(--font-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); }
+  .day-chip .dc-n { font-family: var(--font-mono); font-size: 14px; font-weight: 500; color: var(--text); margin-top: 2px; }
+  .day-chip .dc-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 3px auto 0; opacity: 0; }
+  .day-chip.has-tasks .dc-dot { opacity: 1; }
+  .day-chip.today { background: var(--accent); border-color: var(--accent); }
+  .day-chip.today .dc-d, .day-chip.today .dc-n { color: white; }
+  .day-chip.today .dc-n { color: var(--gold-light); }
+  .day-chip.today .dc-dot { background: white; }
 
   /* ── Toolbar & filters ─────────────────── */
   .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
@@ -966,6 +980,13 @@ function isOverdue(deadlineDate, status) {
 
 function isToday(date) { return date === TODAY; }
 
+const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDateMono(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return `${DAY_NAMES[d.getDay()].toUpperCase()} · ${MONTH_NAMES[d.getMonth()].toUpperCase()} ${d.getDate()}`;
+}
+
 function getThisWeekDates() {
   const today = new Date(TODAY + 'T00:00:00');
   const dates = [];
@@ -1174,6 +1195,7 @@ function renderTodayView() {
   document.getElementById('content').innerHTML = `
     <div class="list-header">
       <span class="list-title">Today</span>
+      <span class="list-subtitle">${fmtDateMono(TODAY)}</span>
       <div class="spacer"></div>
     </div>
     <div id="task-sections">
@@ -1195,9 +1217,6 @@ function renderTodayView() {
 
 function renderThisWeekView() {
   const dates = getThisWeekDates();
-  const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
   const weekStart = dates[0];
   const overdue = ws().tasks.filter(t => !t.parentId && t.doDate && t.doDate < weekStart && t.status !== 'Done');
   const overdueCollapsed = ws().completedCollapsed['__thisweek__overdue'] === true;
@@ -1208,6 +1227,19 @@ function renderThisWeekView() {
     return `${label} · ${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`;
   }
 
+  const dayCounts = {};
+  dates.forEach(d => { dayCounts[d] = ws().tasks.filter(t => !t.parentId && t.doDate === d && t.status !== 'Done').length; });
+
+  const strip = dates.map(dateStr => {
+    const d = new Date(dateStr + 'T00:00:00');
+    const isT = dateStr === TODAY;
+    return `<div class="day-chip${isT ? ' today' : ''}${dayCounts[dateStr] > 0 ? ' has-tasks' : ''}" onclick="document.getElementById('day-${dateStr}').scrollIntoView({behavior:'smooth',block:'start'})">
+      <div class="dc-d">${DAY_NAMES[d.getDay()]}</div>
+      <div class="dc-n">${d.getDate()}</div>
+      <div class="dc-dot"></div>
+    </div>`;
+  }).join('');
+
   const sections = dates.map(dateStr => {
     const dayTasks = ws().tasks.filter(t => !t.parentId && t.doDate === dateStr);
     const active = dayTasks.filter(t => t.status !== 'Done');
@@ -1215,13 +1247,13 @@ function renderThisWeekView() {
     const doneCollapsed = ws().completedCollapsed['__thisweek__' + dateStr] !== false;
 
     if (dayTasks.length === 0) return `
-      <div class="tasks-section">
+      <div class="tasks-section" id="day-${dateStr}">
         <div class="section-label" style="cursor:default">${fmtDay(dateStr)}</div>
         <div style="font-size:13px;color:var(--text-faint);padding:6px 0 10px">Nothing scheduled</div>
       </div>`;
 
     return `
-      <div class="tasks-section">
+      <div class="tasks-section" id="day-${dateStr}">
         <div class="section-label" style="cursor:default">${fmtDay(dateStr)}</div>
         ${active.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
         ${done.length > 0 ? `
@@ -1233,8 +1265,7 @@ function renderThisWeekView() {
       </div>`;
   }).join('');
 
-  const totalActive = dates.reduce((n, d) =>
-    n + ws().tasks.filter(t => !t.parentId && t.doDate === d && t.status !== 'Done').length, 0);
+  const totalActive = dates.reduce((n, d) => n + dayCounts[d], 0);
 
   const overdueSection = overdue.length > 0 ? `
     <div class="tasks-section">
@@ -1242,12 +1273,16 @@ function renderThisWeekView() {
       ${overdueCollapsed ? '' : overdue.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
     </div>` : '';
 
+  const rangeLabel = `${MONTH_NAMES[new Date(dates[0]+'T00:00:00').getMonth()].toUpperCase()} ${new Date(dates[0]+'T00:00:00').getDate()} – ${MONTH_NAMES[new Date(dates[6]+'T00:00:00').getMonth()].toUpperCase()} ${new Date(dates[6]+'T00:00:00').getDate()}`;
+
   document.getElementById('content').innerHTML = `
     <div class="list-header">
       <span class="list-title">This Week</span>
+      <span class="list-subtitle">${rangeLabel}${overdue.length > 0 ? ` · ${overdue.length} OVERDUE` : ''}</span>
       <div class="spacer"></div>
       ${totalActive > 0 ? `<span style="font-size:13px;color:var(--text-muted)">${totalActive} task${totalActive !== 1 ? 's' : ''}</span>` : ''}
     </div>
+    <div class="week-strip">${strip}</div>
     <div id="task-sections">
       ${overdueSection}
       ${totalActive === 0 && overdue.length === 0 && dates.every(d => ws().tasks.filter(t => !t.parentId && t.doDate === d).length === 0)
