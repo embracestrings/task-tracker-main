@@ -566,7 +566,7 @@
   <button class="bn-item" id="bn-reflect" onclick="openMobileMenu('reflect')">
     <span class="bn-label">Reflect</span>
   </button>
-  <button class="fab" id="fab-add" onclick="openNewTaskModal()" title="Add task" aria-label="Add task">+</button>
+  <button class="fab" id="fab-add" onclick="handleFabClick()" title="Add" aria-label="Add">+</button>
   <button class="bn-item" id="bn-tasks" onclick="openMobileMenu('tasks')">
     <span class="bn-label">Tasks</span>
   </button>
@@ -1949,6 +1949,23 @@ function openTaskModal(id) {
   document.getElementById('task-modal').style.display = 'flex';
   document.getElementById('tm-name').focus();
 }
+// The "+" button adds whatever makes sense on the current page: a task on
+// any task-list view, an idea while viewing an idea space, a reflection
+// entry anywhere in Reflect (Goals/Rule of Life/Daily Reflection/Dashboard).
+function handleFabClick() {
+  const active = ws().activeList;
+  if (['__goals__', '__ruleoflife__', '__reflection__', '__dashboard__'].includes(active)) {
+    openNewReflectionModal();
+    return;
+  }
+  if (isIdeaSpace(active)) {
+    const el = document.getElementById('idea-input');
+    if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); }
+    return;
+  }
+  openNewTaskModal();
+}
+
 function openNewTaskModal() {
   collapseInlineAdd();
   editingTaskId = null;
