@@ -95,7 +95,6 @@
   .sidebar {
     width: var(--sidebar-w);
     background: var(--accent);
-    background-image: repeating-linear-gradient(180deg, rgba(255,255,255,0.028) 0px, rgba(255,255,255,0.028) 1px, transparent 1px, transparent 27px);
     display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden;
   }
 
@@ -229,7 +228,17 @@
   .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
   .overdue-label { color: var(--red); }
   .overdue-label::after { background: var(--red-bg); }
-  .task-card { background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; margin-bottom: 0; transition: background 0.12s ease; overflow: hidden; }
+  .task-card { position: relative; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; margin-bottom: 0; transition: background 0.12s ease; overflow: hidden; }
+  .swipe-hint { position: absolute; inset: 0; display: flex; z-index: 0; pointer-events: none; }
+  .swipe-hint .sh-left, .swipe-hint .sh-right {
+    flex: 1; display: flex; align-items: center; height: 100%;
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: white; opacity: 0; transition: opacity 0.15s;
+  }
+  .swipe-hint .sh-left { background: var(--green); justify-content: flex-start; padding-left: 18px; }
+  .swipe-hint .sh-right { background: var(--gold-deep); justify-content: flex-end; padding-right: 18px; }
+  .task-card.swiping-right .sh-left { opacity: 1; }
+  .task-card.swiping-left .sh-right { opacity: 1; }
   .task-card:hover { background: var(--accent-light); }
   .task-card.done { opacity: 0.55; }
   .task-card.drag-over { background: var(--gold-bg); box-shadow: inset 0 0 0 1px var(--gold); }
@@ -366,7 +375,7 @@
     .toolbar { gap: 6px; margin-bottom: 12px; }
     .filter-btn { padding: 4px 10px; font-size: 11px; }
 
-    .task-row { padding: 10px; gap: 8px; }
+    .task-row { padding: 10px; gap: 8px; position: relative; z-index: 1; background: var(--bg); touch-action: pan-y; }
     .drag-handle { display: none; }
     .task-name { font-size: 13px; }
     .badge { font-size: 10px; padding: 2px 6px; }
@@ -388,7 +397,6 @@
       display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
       background: var(--accent);
-      background-image: repeating-linear-gradient(180deg, rgba(255,255,255,0.028) 0px, rgba(255,255,255,0.028) 1px, transparent 1px, transparent 27px);
       padding: 8px 4px calc(6px + var(--safe-bottom));
       box-shadow: 0 -2px 14px rgba(0,0,0,0.22);
     }
@@ -1095,6 +1103,60 @@ function render() {
   renderContent();
   renderHeaderStats();
   renderBottomNav();
+  attachSwipeHandlers();
+}
+
+// ── Swipe (mobile): right = complete, left = reschedule tomorrow ──────
+function attachSwipeHandlers() {
+  document.querySelectorAll('.task-card').forEach(card => {
+    const row = card.querySelector(':scope > .task-row');
+    if (!row) return;
+    const taskId = card.id.replace(/^tc-/, '');
+    let startX = 0, startY = 0, dx = 0, active = false, decided = false, horizontal = false;
+
+    row.addEventListener('touchstart', e => {
+      if (e.touches.length !== 1) return;
+      startX = e.touches[0].clientX; startY = e.touches[0].clientY;
+      dx = 0; active = true; decided = false; horizontal = false;
+      row.style.transition = 'none';
+    }, { passive: true });
+
+    row.addEventListener('touchmove', e => {
+      if (!active) return;
+      const touch = e.touches[0];
+      const ddx = touch.clientX - startX, ddy = touch.clientY - startY;
+      if (!decided) {
+        if (Math.abs(ddx) < 8 && Math.abs(ddy) < 8) return;
+        decided = true;
+        horizontal = Math.abs(ddx) > Math.abs(ddy);
+        if (!horizontal) { active = false; return; }
+      }
+      e.preventDefault();
+      dx = Math.max(-120, Math.min(120, ddx));
+      row.style.transform = `translateX(${dx}px)`;
+      card.classList.toggle('swiping-right', dx > 12);
+      card.classList.toggle('swiping-left', dx < -12);
+    }, { passive: false });
+
+    const finish = () => {
+      if (!active) return;
+      active = false;
+      card.classList.remove('swiping-right', 'swiping-left');
+      row.style.transition = 'transform 0.18s ease';
+      if (dx > 70) {
+        row.style.transform = 'translateX(140px)';
+        setTimeout(() => toggleDone(taskId), 130);
+      } else if (dx < -70) {
+        row.style.transform = 'translateX(-140px)';
+        setTimeout(() => rescheduleTomorrow(taskId), 130);
+      } else {
+        row.style.transform = 'translateX(0)';
+      }
+      dx = 0;
+    };
+    row.addEventListener('touchend', finish);
+    row.addEventListener('touchcancel', finish);
+  });
 }
 
 function renderBottomNav() {
@@ -1686,6 +1748,7 @@ function renderSingleTaskCard(t, listId, sourceList) {
   return `<div class="task-card${t.status==='Done'?' done':''}" id="tc-${t.id}"
     style="border-left: 4px solid ${list?.color || 'var(--gold)'}"
     draggable="true" ondragstart="dragStart(event,'${t.id}')" ondragover="dragOver(event,'${t.id}')" ondrop="dragDrop(event,'${t.id}','${listId||t.listId}')" ondragleave="dragLeave(event)" ondragend="dragEnd(event)">
+    <div class="swipe-hint" aria-hidden="true"><span class="sh-left">Done</span><span class="sh-right">Tomorrow</span></div>
     <div class="task-row" onclick="openTaskModal('${t.id}')" style="cursor:pointer">
       <span class="drag-handle" title="Drag to reorder">${ICONS.drag}</span>
       <div class="check-wrap" onclick="event.stopPropagation()"><div class="check${t.status==='Done'?' checked':''}" onclick="toggleDone('${t.id}')"></div></div>
@@ -1807,6 +1870,14 @@ function toggleDone(id) {
 function toggleExpand(id) {
   if (expandedTasks.has(id)) expandedTasks.delete(id); else expandedTasks.add(id);
   save(); render();
+}
+
+function rescheduleTomorrow(id) {
+  const t = ws().tasks.find(x => x.id === id); if (!t) return;
+  const d = new Date(TODAY + 'T00:00:00'); d.setDate(d.getDate() + 1);
+  t.doDate = d.toISOString().slice(0, 10);
+  save(); render();
+  autoSyncTask(t);
 }
 
 function deleteTask(id) {
