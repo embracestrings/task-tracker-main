@@ -353,6 +353,12 @@
       content: ''; display: block; width: 36px; height: 4px; border-radius: 2px;
       background: rgba(255,255,255,0.25); margin: 10px auto 2px; flex-shrink: 0;
     }
+    /* Reflect and Tasks are distinct sheets sharing one panel — each mode hides the other's sections */
+    .sidebar.mode-tasks #sidebar-reflect-section { display: none; }
+    .sidebar.mode-reflect #workspace-switcher,
+    .sidebar.mode-reflect #sidebar-views-section,
+    .sidebar.mode-reflect #sidebar-lists-section,
+    .sidebar.mode-reflect #sidebar-ideas-section { display: none; }
 
     .content { padding: 14px 14px calc(14px + var(--safe-bottom) + 78px); }
     .list-header { margin-bottom: 12px; }
@@ -377,9 +383,9 @@
     .modal-bg { padding: 0; align-items: flex-end; }
     .modal { border-radius: 16px 16px 0 0; max-height: 90vh; max-width: 100%; }
 
-    /* ── Bottom nav: View · Add · List ──────── */
+    /* ── Bottom nav: Reflect · Add · Tasks ──── */
     .bottom-nav {
-      display: grid; grid-template-columns: 1fr auto 1fr; align-items: end;
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
       background: var(--accent);
       background-image: repeating-linear-gradient(180deg, rgba(255,255,255,0.028) 0px, rgba(255,255,255,0.028) 1px, transparent 1px, transparent 27px);
@@ -387,13 +393,13 @@
       box-shadow: 0 -2px 14px rgba(0,0,0,0.22);
     }
     .bn-item {
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
-      background: none; border: none; cursor: pointer; padding: 6px 2px; min-height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      background: none; border: none; cursor: pointer; padding: 10px 4px; min-height: 44px;
+      border-radius: 8px; transition: background 0.15s;
     }
-    .bn-stem { width: 2px; height: 14px; border-radius: 1px; background: rgba(255,255,255,0.3); transition: all 0.15s; }
-    .bn-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(255,255,255,0.55); transition: color 0.15s; }
-    .bn-item.active .bn-stem { background: var(--gold); height: 18px; }
-    .bn-item.active .bn-label { color: var(--gold-light); }
+    .bn-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255,255,255,0.6); transition: color 0.15s; }
+    .bn-item.active { background: rgba(255,255,255,0.08); }
+    .bn-item.active .bn-label { color: var(--gold-light); font-weight: 500; }
 
     /* Circular add button, centered and elevated above the bar */
     .fab {
@@ -515,7 +521,7 @@
         <div id="list-nav"></div>
         <button class="sidebar-add-list" onclick="openNewListModal()">＋ New list</button>
       </div>
-      <div class="sidebar-section">
+      <div class="sidebar-section" id="sidebar-ideas-section">
         <div class="sidebar-section-label">Ideas</div>
         <div id="idea-nav"></div>
         <button class="sidebar-add-list" onclick="openNewIdeaModal()">＋ New idea space</button>
@@ -551,12 +557,12 @@
 </div>
 
 <nav class="bottom-nav" id="bottom-nav">
-  <button class="bn-item" id="bn-view" onclick="openMobileMenu('sidebar-views-section')">
-    <span class="bn-stem"></span><span class="bn-label">View</span>
+  <button class="bn-item" id="bn-reflect" onclick="openMobileMenu('reflect')">
+    <span class="bn-label">Reflect</span>
   </button>
   <button class="fab" id="fab-add" onclick="openNewTaskModal()" title="Add task" aria-label="Add task">+</button>
-  <button class="bn-item" id="bn-list" onclick="openMobileMenu('sidebar-lists-section')">
-    <span class="bn-stem"></span><span class="bn-label">List</span>
+  <button class="bn-item" id="bn-tasks" onclick="openMobileMenu('tasks')">
+    <span class="bn-label">Tasks</span>
   </button>
 </nav>
 
@@ -569,14 +575,7 @@
     </div>
     <div class="modal-body">
       <div class="field"><label>Task name</label><input id="tm-name" placeholder="What needs to be done?" /></div>
-      <div class="field-row">
-        <div class="field"><label>Deadline date</label><input type="date" id="tm-deadline-date" /></div>
-        <div class="field"><label>Deadline time</label><input type="time" id="tm-deadline-time" /></div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Do date</label><input type="date" id="tm-do-date" /></div>
-        <div class="field"><label>Do time</label><input type="time" id="tm-do-time" /></div>
-      </div>
+      <div class="field"><label>Do date</label><input type="date" id="tm-do-date" /></div>
       <div class="field"><label>Recurrence</label><select id="tm-recurrence"><option value="">None</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>
       <div class="field"><label>Move to list</label><select id="tm-list"></select></div>
       <div class="field"><label>Notes</label><textarea id="tm-notes" placeholder="Any extra context…"></textarea></div>
@@ -1101,20 +1100,19 @@ function render() {
 function renderBottomNav() {
   const active = ws().activeList;
   const set = (id, on) => { const el = document.getElementById(id); if (el) el.classList.toggle('active', on); };
-  const viewIds = ['__today__','__thisweek__','__goals__','__ruleoflife__','__reflection__','__dashboard__'];
-  set('bn-view', viewIds.includes(active));
-  set('bn-list', !!getList(active) || isIdeaSpace(active));
+  const reflectIds = ['__goals__','__ruleoflife__','__reflection__','__dashboard__'];
+  set('bn-reflect', reflectIds.includes(active));
+  set('bn-tasks', active === '__today__' || active === '__thisweek__' || !!getList(active) || isIdeaSpace(active));
 }
 
-function openMobileMenu(scrollToId) {
-  document.querySelector('.sidebar').classList.add('open');
+function openMobileMenu(mode) {
+  const sidebar = document.querySelector('.sidebar');
+  sidebar.classList.remove('mode-reflect', 'mode-tasks');
+  sidebar.classList.add('mode-' + mode);
+  const scroller = document.querySelector('.sidebar-scroll');
+  if (scroller) scroller.scrollTop = 0;
+  sidebar.classList.add('open');
   document.getElementById('sidebar-overlay').classList.add('visible');
-  if (scrollToId) {
-    setTimeout(() => {
-      const el = document.getElementById(scrollToId);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 50);
-  }
 }
 
 function toggleWorkspaceSwitcher() {
@@ -1662,14 +1660,7 @@ function renderInlineAdd() {
       <input class="inline-add-name" id="ia-name" placeholder="Add a task…" oninput="expandInlineAdd()" />
     </div>
     <div class="inline-add-fields">
-      <div class="inline-add-row">
-        <div class="inline-field"><label>Deadline date</label><input type="date" id="ia-deadline-date" /></div>
-        <div class="inline-field"><label>Deadline time</label><input type="time" id="ia-deadline-time" /></div>
-      </div>
-      <div class="inline-add-row">
-        <div class="inline-field"><label>Do date</label><input type="date" id="ia-do-date" /></div>
-        <div class="inline-field"><label>Do time</label><input type="time" id="ia-do-time" /></div>
-      </div>
+      <div class="inline-field"><label>Do date</label><input type="date" id="ia-do-date" /></div>
       <div class="inline-field"><label>Recurrence</label><select id="ia-recurrence"><option value="">None</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>
       <div class="inline-field"><label>Notes</label><textarea id="ia-notes" placeholder="Any extra context…"></textarea></div>
       <div class="inline-add-footer">
@@ -1848,7 +1839,7 @@ function expandInlineAdd() {
 function collapseInlineAdd() {
   const el = document.getElementById('inline-add'); if (!el) return;
   el.classList.remove('expanded');
-  ['ia-name','ia-deadline-date','ia-deadline-time','ia-do-date','ia-do-time','ia-notes'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+  ['ia-name','ia-do-date','ia-notes'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
   const r = document.getElementById('ia-recurrence'); if (r) r.value = '';
 }
 function submitInlineAdd() {
@@ -1860,10 +1851,7 @@ function submitInlineAdd() {
     status: 'To do',
     priority: 'Medium',
     category: '',
-    deadlineDate: document.getElementById('ia-deadline-date').value,
-    deadlineTime: document.getElementById('ia-deadline-time').value,
     doDate: document.getElementById('ia-do-date').value || (ws().activeList === '__today__' ? TODAY : ''),
-    doTime: document.getElementById('ia-do-time').value,
     recurrence: document.getElementById('ia-recurrence').value,
     notes: document.getElementById('ia-notes').value.trim(),
     parentId: null,
@@ -1880,10 +1868,7 @@ function openTaskModal(id) {
   const t = ws().tasks.find(x => x.id === id); if (!t) return;
   document.getElementById('task-modal-title').textContent = 'Edit task';
   document.getElementById('tm-name').value = t.name;
-  document.getElementById('tm-deadline-date').value = t.deadlineDate || '';
-  document.getElementById('tm-deadline-time').value = t.deadlineTime || '';
   document.getElementById('tm-do-date').value = t.doDate || '';
-  document.getElementById('tm-do-time').value = t.doTime || '';
   document.getElementById('tm-recurrence').value = t.recurrence || '';
   document.getElementById('tm-notes').value = t.notes || '';
   document.getElementById('tm-list').innerHTML = ws().lists.map(l => `<option value="${l.id}"${t.listId===l.id?' selected':''}>${esc(l.name)}</option>`).join('');
@@ -1898,10 +1883,7 @@ function openNewTaskModal() {
   const defaultDoDate = active === '__today__' ? TODAY : '';
   document.getElementById('task-modal-title').textContent = 'Add task';
   document.getElementById('tm-name').value = '';
-  document.getElementById('tm-deadline-date').value = '';
-  document.getElementById('tm-deadline-time').value = '';
   document.getElementById('tm-do-date').value = defaultDoDate;
-  document.getElementById('tm-do-time').value = '';
   document.getElementById('tm-recurrence').value = '';
   document.getElementById('tm-notes').value = '';
   document.getElementById('tm-list').innerHTML = ws().lists.map(l => `<option value="${l.id}"${defaultListId===l.id?' selected':''}>${esc(l.name)}</option>`).join('');
@@ -1913,10 +1895,7 @@ function saveTask() {
   const name = document.getElementById('tm-name').value.trim(); if (!name) return;
   const fields = {
     name,
-    deadlineDate: document.getElementById('tm-deadline-date').value,
-    deadlineTime: document.getElementById('tm-deadline-time').value,
     doDate: document.getElementById('tm-do-date').value,
-    doTime: document.getElementById('tm-do-time').value,
     recurrence: document.getElementById('tm-recurrence').value,
     notes: document.getElementById('tm-notes').value.trim(),
     listId: document.getElementById('tm-list').value,
