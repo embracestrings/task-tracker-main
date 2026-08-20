@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Task Tracker</title>
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#16233D">
+<meta name="theme-color" content="#EFEAE0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -46,7 +46,6 @@
     --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
     --sidebar-w: 220px;
-    --header-h: 56px;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
@@ -66,30 +65,25 @@
   .app { display: flex; flex: 1; overflow: hidden; }
   .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-  /* ── Header ─────────────────────────────── */
-  header {
-    background: var(--accent);
-    padding: calc(var(--safe-top) + 10px) 20px 10px;
-    min-height: calc(var(--header-h) + var(--safe-top));
-    display: flex; align-items: center; gap: 12px; flex-shrink: 0;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.22);
-    position: relative; z-index: 10;
+  /* ── Content header (list name + search, anchored above scroll) ── */
+  .content-header {
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: nowrap;
+    padding: calc(var(--safe-top) + 14px) 24px 14px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    position: relative; z-index: 5;
   }
-  .app-name {
-    font-family: var(--font-display);
-    font-size: 17px; font-weight: 600; letter-spacing: 0.01em;
-    color: white;
-  }
-  .app-name span { color: var(--gold); }
-  header .spacer { flex: 1; }
+  #ch-title-wrap { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  #ch-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .content-header .spacer { flex: 1; }
   .header-search {
     display: flex; align-items: center; gap: 8px;
-    background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 8px; padding: 5px 10px; width: 200px; transition: all 0.15s;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 5px 10px; width: 220px; flex-shrink: 0; transition: border-color 0.15s;
   }
-  .header-search:focus-within { background: rgba(255,255,255,0.22); border-color: var(--gold); }
-  .header-search input { border: none; outline: none; background: transparent; font-size: 13px; color: white; width: 100%; }
-  .header-search input::placeholder { color: rgba(255,255,255,0.45); }
+  .header-search:focus-within { border-color: var(--accent); }
+  .header-search input { border: none; outline: none; background: transparent; font-size: 13px; color: var(--text); width: 100%; font-family: var(--font-body); }
+  .header-search input::placeholder { color: var(--text-faint); }
 
   /* ── Sidebar ─────────────────────────────── */
   .sidebar {
@@ -170,11 +164,9 @@
 
   /* ── Content area ──────────────────────── */
   .content { flex: 1; overflow-y: auto; padding: 20px 24px; padding-bottom: calc(20px + var(--safe-bottom)); background: var(--bg); }
-  .list-header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
-  .list-title { font-family: var(--font-display); font-size: 26px; font-weight: 600; letter-spacing: -0.01em; cursor: default; color: var(--accent); }
+  .list-title { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.01em; cursor: default; color: var(--accent); }
   .list-title-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .list-subtitle { font-family: var(--font-mono); font-size: 11.5px; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; color: var(--gold-deep); }
-  .list-header .spacer { flex: 1; }
 
   /* ── Week strip (This Week day-carousel) ─── */
   .week-strip { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 16px; margin-bottom: 4px; }
@@ -225,9 +217,9 @@
   /* ── Task cards ────────────────────────── */
   .tasks-section { margin-bottom: 24px; }
   @keyframes contentFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-  .list-header, .tasks-section { animation: contentFadeIn 0.2s ease; }
+  .tasks-section { animation: contentFadeIn 0.2s ease; }
   @media (prefers-reduced-motion: reduce) {
-    .list-header, .tasks-section { animation: none; }
+    .tasks-section { animation: none; }
   }
   .section-label { font-family: var(--font-mono); font-size: 10.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--gold-deep); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
   .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
@@ -351,9 +343,8 @@
 
   /* ── Mobile ────────────────────────────── */
   @media (max-width: 640px) {
-    header { padding: calc(var(--safe-top) + 8px) 12px 8px; gap: 8px; }
-    .app-name { font-size: 15px; }
-    .header-search { flex: 1; min-width: 0; width: auto; }
+    .content-header { padding: calc(var(--safe-top) + 10px) 14px 10px; gap: 8px; flex-wrap: wrap; }
+    .header-search { flex: 1 1 100%; width: auto; order: 3; }
 
     /* Sidebar becomes a bottom sheet, reached via the bottom nav — not a side drawer */
     .sidebar {
@@ -377,8 +368,7 @@
     .sidebar.mode-reflect #sidebar-ideas-section { display: none; }
 
     .content { padding: 14px 14px calc(14px + var(--safe-bottom) + 78px); }
-    .list-header { margin-bottom: 12px; }
-    .list-title { font-size: 19px; }
+    .list-title { font-size: 18px; }
     .toolbar { gap: 6px; margin-bottom: 12px; }
     .filter-btn { padding: 4px 10px; font-size: 11px; }
 
@@ -502,14 +492,6 @@
 </head>
 <body>
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
-<header>
-  <span class="app-name">My <span>Tracker</span></span>
-  <div class="spacer"></div>
-  <div class="header-search" style="flex:1;max-width:360px">
-    <span style="color:rgba(255,255,255,0.5);display:flex;align-items:center"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="5.5" cy="5.5" r="4"/><line x1="8.5" y1="8.5" x2="12" y2="12"/></svg></span>
-    <input id="global-search" placeholder="Search tasks…" oninput="handleSearch(this.value)" />
-  </div>
-</header>
 
 <div class="app">
   <aside class="sidebar">
@@ -567,6 +549,15 @@
     </div>
   </aside>
   <main class="main">
+    <div class="content-header" id="content-header">
+      <span id="ch-title-wrap"></span>
+      <span id="ch-actions"></span>
+      <div class="spacer"></div>
+      <div class="header-search">
+        <span style="color:var(--text-faint);display:flex;align-items:center"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="5.5" cy="5.5" r="4"/><line x1="8.5" y1="8.5" x2="12" y2="12"/></svg></span>
+        <input id="global-search" placeholder="Search tasks…" oninput="handleSearch(this.value)" />
+      </div>
+    </div>
     <div class="content" id="content"></div>
   </main>
 </div>
@@ -1260,6 +1251,18 @@ function renderSidebar() {
   }).join('');
 }
 
+// Persistent header (list name + search) that lives outside #content so it
+// never gets rebuilt by renderContent() — rebuilding it on every keystroke
+// would destroy and recreate #global-search, losing focus mid-search.
+function setContentHeader({ title, subtitle = '', dotColor = null, titleOnClick = '', titleTitle = '', actionsHtml = '' }) {
+  document.getElementById('ch-title-wrap').innerHTML = `
+    ${dotColor ? `<span class="list-title-dot" style="background:${dotColor}"></span>` : ''}
+    <span class="list-title" id="list-title-display"${titleOnClick ? ` onclick="${titleOnClick}"` : ''}${titleTitle ? ` title="${titleTitle}"` : ''}>${esc(title)}</span>
+    ${subtitle ? `<span class="list-subtitle">${subtitle}</span>` : ''}
+  `;
+  document.getElementById('ch-actions').innerHTML = actionsHtml;
+}
+
 function renderContent() {
   if (searchQuery.trim()) { renderSearch(); return; }
   if (ws().activeList === '__today__') { renderTodayView(); return; }
@@ -1286,21 +1289,21 @@ function renderListView() {
   const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
   const visibleDone = done.filter(t => !t.completedAt || new Date(t.completedAt) > sevenDaysAgo);
 
-  document.getElementById('content').innerHTML = `
-    <div class="list-header">
-      <span class="list-title-dot" style="background:${list.color}"></span>
-      <span class="list-title" id="list-title-display" onclick="handleTitleClick(event,'${list.id}')" title="Triple-click to rename">${esc(list.name)}</span>
+  setContentHeader({
+    title: list.name,
+    dotColor: list.color,
+    titleOnClick: `handleTitleClick(event,'${list.id}')`,
+    titleTitle: 'Triple-click to rename',
+    actionsHtml: `
       <button class="btn btn-ghost btn-sm" onclick="openEditListModal('${list.id}')" title="Edit list" style="padding:4px 7px;display:flex;align-items:center">${ICONS.edit}</button>
-      <div class="spacer"></div>
       ${hasManualOrder ? `<button class="btn btn-ghost btn-sm" onclick="resetOrder('${list.id}')">↺ Auto-sort</button>` : ''}
-      <button class="btn btn-ghost btn-sm" onclick="openGmailModal()" style="gap:6px;display:flex;align-items:center">
-        ${ICONS.mail} Sync Gmail
-      </button>
       ${SYNC_WORKSPACES.includes(state.activeWorkspace) ? `
       <button class="btn btn-ghost btn-sm" id="cal-sync-btn" onclick="handleCalendarSync()" style="gap:5px;display:flex;align-items:center">
         ${ICONS.calendar} ${calendarConnected[state.activeWorkspace] ? 'Sync Calendar' : 'Connect Calendar'}
       </button>` : ''}
-    </div>
+    `,
+  });
+  document.getElementById('content').innerHTML = `
     ${renderInlineAdd()}
     <div id="task-sections">
       ${active.length === 0 && visibleDone.length === 0 ? renderEmpty() : ''}
@@ -1325,12 +1328,8 @@ function renderTodayView() {
   const doneCollapsed = ws().completedCollapsed['__today__'] !== false;
   const overdueCollapsed = ws().completedCollapsed['__today__overdue'] === true;
 
+  setContentHeader({ title: 'Today', subtitle: fmtDateMono(TODAY) });
   document.getElementById('content').innerHTML = `
-    <div class="list-header">
-      <span class="list-title">Today</span>
-      <span class="list-subtitle">${fmtDateMono(TODAY)}</span>
-      <div class="spacer"></div>
-    </div>
     ${renderInlineAdd()}
     <div id="task-sections">
       ${overdue.length > 0 ? `
@@ -1409,13 +1408,11 @@ function renderThisWeekView() {
 
   const rangeLabel = `${MONTH_NAMES[new Date(dates[0]+'T00:00:00').getMonth()].toUpperCase()} ${new Date(dates[0]+'T00:00:00').getDate()} – ${MONTH_NAMES[new Date(dates[6]+'T00:00:00').getMonth()].toUpperCase()} ${new Date(dates[6]+'T00:00:00').getDate()}`;
 
+  setContentHeader({
+    title: 'This Week',
+    subtitle: `${rangeLabel}${overdue.length > 0 ? ` · ${overdue.length} OVERDUE` : ''}${totalActive > 0 ? ` · ${totalActive} TASK${totalActive !== 1 ? 'S' : ''}` : ''}`,
+  });
   document.getElementById('content').innerHTML = `
-    <div class="list-header">
-      <span class="list-title">This Week</span>
-      <span class="list-subtitle">${rangeLabel}${overdue.length > 0 ? ` · ${overdue.length} OVERDUE` : ''}</span>
-      <div class="spacer"></div>
-      ${totalActive > 0 ? `<span style="font-size:13px;color:var(--text-muted)">${totalActive} task${totalActive !== 1 ? 's' : ''}</span>` : ''}
-    </div>
     <div class="week-strip">${strip}</div>
     ${renderInlineAdd()}
     <div id="task-sections">
@@ -1538,13 +1535,13 @@ function renderIdeaView() {
   const space = getIdea(ws().activeList);
   if (!space) return;
   const notes = getIdeaNotes(ws().activeList).sort((a,b) => b.createdAt - a.createdAt);
+  setContentHeader({
+    title: space.name,
+    dotColor: space.color,
+    titleOnClick: `handleTitleClick(event,'${space.id}')`,
+    actionsHtml: `<button class="btn btn-ghost btn-sm" onclick="openEditIdeaSpaceModal('${space.id}')" title="Edit idea space" style="padding:4px 7px;display:flex;align-items:center">${ICONS.edit}</button>`,
+  });
   document.getElementById('content').innerHTML = `
-    <div class="list-header">
-      <span class="list-title-dot" style="background:${space.color}"></span>
-      <span class="list-title" id="list-title-display" onclick="handleTitleClick(event,'${space.id}')">${esc(space.name)}</span>
-      <button class="btn btn-ghost btn-sm" onclick="openEditIdeaSpaceModal('${space.id}')" title="Edit idea space" style="padding:4px 7px;display:flex;align-items:center">${ICONS.edit}</button>
-      <div class="spacer"></div>
-    </div>
     <div class="idea-add">
       <textarea id="idea-input" placeholder="Capture an idea…" onkeydown="handleIdeaEnter(event)"></textarea>
       <button class="btn btn-primary idea-add-btn" onclick="submitIdea()">Add</button>
@@ -1705,12 +1702,11 @@ function renderSearch() {
   ));
   const byList = {};
   matches.forEach(t => { if (!byList[t.listId]) byList[t.listId] = []; byList[t.listId].push(t); });
+  setContentHeader({
+    title: 'Search results',
+    subtitle: `${matches.length} result${matches.length!==1?'s':''} for "${esc(searchQuery)}"`,
+  });
   document.getElementById('content').innerHTML = `
-    <div class="list-header">
-      <span class="list-title">Search: "${esc(searchQuery)}"</span>
-      <div class="spacer"></div>
-      <span style="font-size:13px;color:var(--text-muted)">${matches.length} result${matches.length!==1?'s':''}</span>
-    </div>
     ${matches.length === 0 ? `<div class="empty"><div class="empty-icon">${ICONS.emptySearch}</div><div class="empty-title">No results</div><div class="empty-sub">Try a different search term</div></div>` :
       Object.entries(byList).map(([listId, tasks]) => {
         const list = getList(listId);
@@ -2353,8 +2349,8 @@ function renderGoalsView() {
       <button class="btn btn-ghost btn-sm" onclick="openNewGoalModal('${group}')" style="margin-top:4px">＋ Add ${label.toLowerCase()} goal</button>
     </div>`;
   }
+  setContentHeader({ title: 'Goals' });
   document.getElementById('content').innerHTML = `
-    <div class="list-header"><span class="list-title">Goals</span><div class="spacer"></div></div>
     ${renderGroup('Personal', goals.personal||[], 'personal')}
     ${renderGroup('Professional', goals.professional||[], 'professional')}
   `;
@@ -2391,13 +2387,14 @@ function renderRuleOfLifeView() {
     </div>`;
   }).join('');
 
-  document.getElementById('content').innerHTML = `
-    <div class="list-header">
-      <span class="list-title">Rule of Life</span>
-      <div class="spacer"></div>
+  setContentHeader({
+    title: 'Rule of Life',
+    actionsHtml: `
       <button class="btn btn-ghost btn-sm" onclick="toggleRuleShowAll()" style="margin-right:6px">${ruleShowAll?'Due only':'Show all'}</button>
       <button class="btn btn-ghost btn-sm" onclick="openNewRuleModal()">＋ Add</button>
-    </div>
+    `,
+  });
+  document.getElementById('content').innerHTML = `
     ${items.length===0?`<div class="empty"><div class="empty-icon">${ICONS.emptyCross}</div><div class="empty-title">No commitments yet</div><div class="empty-sub">Add your first Rule of Life item</div><button class="empty-cta" onclick="openNewRuleModal()">+ Add commitment</button></div>`:
       (sections||`<div style="font-size:13px;color:var(--text-faint);text-align:center;padding:32px 0">All done for now 🎉</div>`)}
   `;
@@ -2420,13 +2417,14 @@ function renderReflectionView() {
     return `${DAY_ABBR[dt.getDay()]} ${MONTH_ABBR[dt.getMonth()]} ${dt.getDate()}, ${dt.getFullYear()}`;
   }
 
-  document.getElementById('content').innerHTML = `
-    <div class="list-header">
-      <span class="list-title">Daily Reflection</span>
-      <div class="spacer"></div>
+  setContentHeader({
+    title: 'Daily Reflection',
+    actionsHtml: `
       ${!todayEntry?`<button class="btn btn-primary btn-sm" onclick="openNewReflectionModal()">+ Today</button>`:''}
       <button class="btn btn-ghost btn-sm" onclick="openNewReflectionModal()" style="margin-left:6px">+ Entry</button>
-    </div>
+    `,
+  });
+  document.getElementById('content').innerHTML = `
     ${reflections.length===0?`<div class="empty"><div class="empty-icon">${ICONS.emptyBook}</div><div class="empty-title">No reflections yet</div><div class="empty-sub">Record your first daily reflection above</div></div>`:
       reflections.map(r=>{
         const dots=r.energy?Array.from({length:5},(_,i)=>`<div class="energy-dot${i<r.energy?' lit':''}"></div>`).join(''):'';
@@ -2543,8 +2541,8 @@ function renderDashboardView() {
       }).join('')}
     </div>`;
 
+  setContentHeader({ title: 'Dashboard' });
   document.getElementById('content').innerHTML = `
-    <div class="list-header"><span class="list-title">Dashboard</span><div class="spacer"></div></div>
     ${ruleSections}
     ${goalsSec}
     <div style="margin-top:40px;border-top:1px solid var(--border);padding-top:18px">
