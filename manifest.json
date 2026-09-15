@@ -1,11 +1,11 @@
 {
-  "name": "My Tracker",
-  "short_name": "Tracker",
-  "description": "Personal task tracker with workspaces",
+  "name": "Abiding",
+  "short_name": "Abiding",
+  "description": "Breathwork, meditation, and daily reflection",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F2F2F3",
-  "theme_color": "#16335B",
+  "background_color": "#EFEAE0",
+  "theme_color": "#EFEAE0",
   "orientation": "portrait-primary",
   "icons": [
     {

@@ -1,30 +1,29 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Task Tracker</title>
+<title>Abiding</title>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#EFEAE0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Tracker">
+<meta name="apple-mobile-web-app-title" content="Abiding">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    /* Manuscript palette — deepened brand: ink, paper, brass */
-    --accent: #16233D;        /* Ink — primary (was Deep Blue #16335B) */
-    --accent-light: #E9E3D3;  /* Warm paper tint for active backgrounds */
-    --accent-text: #0d1526;   /* Darker ink */
-    --gold: #B99A6C;          /* Brass — secondary accent */
-    --gold-light: #D2B78F;    /* Brass lighter */
-    --gold-deep: #8C6F45;     /* Brass ink — text on light-brass backgrounds */
-    --gold-bg: #F5EFE0;       /* Light brass for badge backgrounds */
-    --card-border: rgba(185,154,108,0.32); /* Brass hairline for cards */
+    /* Manuscript palette — ink, paper, brass */
+    --accent: #16233D;
+    --accent-light: #E9E3D3;
+    --accent-text: #0d1526;
+    --gold: #B99A6C;
+    --gold-light: #D2B78F;
+    --gold-deep: #8C6F45;
+    --gold-bg: #F5EFE0;
+    --card-border: rgba(185,154,108,0.32);
 
-    /* Surface & text — warm manuscript paper, not flat cream */
     --bg: #EFEAE0;
     --surface: #FBF9F3;
     --surface2: #F4EFE3;
@@ -32,9 +31,8 @@
     --border-strong: #CBBFA0;
     --text: #1c1b18;
     --text-muted: #6b6459;
-    --text-faint: #83796a;    /* darkened for WCAG AA on paper bg */
+    --text-faint: #83796a;
 
-    /* Status colors */
     --red: #9C4A2E; --red-bg: #f5e7e1;
     --amber: #a8690f; --amber-bg: #f7edda;
     --green: #4B7859; --green-bg: #e9f1ec;
@@ -45,7 +43,7 @@
     --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
-    --sidebar-w: 220px;
+    --rail-w: 82px;
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
@@ -60,149 +58,58 @@
     display: flex; flex-direction: column;
     overflow: hidden; font-size: 14px;
   }
+  h1, h2, h3 { font-family: var(--font-display); }
 
   /* ── Layout ─────────────────────────────── */
   .app { display: flex; flex: 1; overflow: hidden; }
   .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-  /* ── Content header (list name + search, anchored above scroll) ── */
+  /* ── Nav rail (desktop) ─────────────────── */
+  .rail {
+    width: var(--rail-w); flex-shrink: 0; background: var(--accent); color: #EDE7D9;
+    display: flex; flex-direction: column; align-items: center; padding: 20px 0 16px; gap: 2px;
+    overflow-y: auto;
+  }
+  .rail-mark {
+    width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--gold); color: var(--gold);
+    display: flex; align-items: center; justify-content: center; font-family: var(--font-display);
+    font-size: 15px; font-weight: 600; margin-bottom: 20px; flex-shrink: 0;
+  }
+  .rail-item {
+    width: 100%; padding: 12px 4px; text-align: center; cursor: pointer; position: relative;
+    font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.05em; text-transform: uppercase;
+    color: rgba(237,231,217,0.55); transition: color 0.15s; background: none; border: none;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+  }
+  .rail-item svg { width: 17px; height: 17px; opacity: 0.75; }
+  .rail-item:hover { color: rgba(237,231,217,0.85); }
+  .rail-item.active { color: #fff; }
+  .rail-item.active svg { opacity: 1; }
+  .rail-item.active::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; background: var(--gold); }
+
+  /* ── Content header (view title, anchored above scroll) ── */
   .content-header {
-    display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: nowrap;
-    padding: calc(var(--safe-top) + 14px) 24px 14px;
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap;
+    padding: calc(var(--safe-top) + 16px) 28px 14px;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
-    position: relative; z-index: 5;
   }
-  #ch-title-wrap { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  #ch-title-wrap { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
   #ch-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   .content-header .spacer { flex: 1; }
-  .header-search {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 6px; padding: 5px 10px; width: 220px; flex-shrink: 0; transition: border-color 0.15s;
-  }
-  .header-search:focus-within { border-color: var(--accent); }
-  .header-search input { border: none; outline: none; background: transparent; font-size: 13px; color: var(--text); width: 100%; font-family: var(--font-body); }
-  .header-search input::placeholder { color: var(--text-faint); }
-
-  /* ── Sidebar ─────────────────────────────── */
-  .sidebar {
-    width: var(--sidebar-w);
-    background: var(--accent);
-    display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden;
-  }
-
-  /* Zone 2 — scrollable middle */
-  .sidebar-scroll { flex: 1; overflow-y: auto; }
-
-  /* Zone 3 — pinned Reflect section */
-  .sidebar-bottom { flex-shrink: 0; border-top: 1px solid rgba(255,255,255,0.14); background: rgba(0,0,0,0.14); }
-  .sidebar-bottom .sidebar-section { border-top: none; padding-bottom: 8px; }
-  .sidebar-bottom .sidebar-section-label { color: var(--gold); }
-
-  /* Zone 1 — collapsed workspace header */
-  .ws-header {
-    display: flex; align-items: center; gap: 9px; padding: 11px 14px;
-    cursor: pointer; user-select: none;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    background: rgba(0,0,0,0.1);
-    flex-shrink: 0;
-  }
-  .ws-header:hover { background: rgba(255,255,255,0.06); }
-  .ws-header-name { font-size: 13px; font-weight: 600; color: white; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .ws-header-chev { color: rgba(255,255,255,0.5); flex-shrink: 0; display: flex; align-items: center; }
-  .ws-dropdown { background: rgba(0,0,0,0.12); border-bottom: 1px solid rgba(255,255,255,0.09); }
-
-  /* Workspace switcher items */
-  .workspace-item-wrap { display: flex; align-items: center; position: relative; }
-  .workspace-item {
-    display: flex; align-items: center; gap: 8px; padding: 7px 14px;
-    cursor: pointer; border: none; background: none; width: 100%; text-align: left;
-    font-size: 13px; color: rgba(255,255,255,0.65); position: relative;
-    transition: background 0.1s; flex: 1; padding-right: 32px;
-  }
-  .workspace-item:hover { background: rgba(255,255,255,0.08); color: white; }
-  .workspace-item.active { color: white; font-weight: 600; background: rgba(255,255,255,0.12); }
-  .workspace-item.active::before { content: ''; position: absolute; left: 0; top: 3px; bottom: 3px; width: 3px; border-radius: 0 2px 2px 0; background: var(--gold); }
-  .workspace-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
-  .workspace-edit-btn {
-    position: absolute; right: 6px;
-    opacity: 0; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
-    border-radius: 4px; border: none; background: none; color: rgba(255,255,255,0.6);
-    font-size: 12px; cursor: pointer; flex-shrink: 0; transition: opacity 0.1s, background 0.1s;
-  }
-  .workspace-item-wrap:hover .workspace-edit-btn { opacity: 1; }
-  .workspace-edit-btn:hover { background: rgba(255,255,255,0.15); color: white; }
-  .sidebar-add-workspace { display: flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 12px; color: rgba(255,255,255,0.4); cursor: pointer; border: none; background: none; width: 100%; }
-  .sidebar-add-workspace:hover { color: var(--gold); }
-
-  /* Sidebar sections */
-  .sidebar-section { padding: 10px 0 4px; border-top: 1px solid rgba(255,255,255,0.07); }
-  .sidebar-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.38); padding: 0 14px 5px; }
-  .list-item {
-    display: flex; align-items: center; gap: 8px; padding: 7px 14px;
-    cursor: pointer; border: none; background: none; width: 100%; text-align: left;
-    font-size: 13px; color: rgba(255,255,255,0.65); position: relative; transition: background 0.1s;
-  }
-  .list-item:hover { background: rgba(255,255,255,0.08); color: white; }
-  .list-item.active { background: rgba(255,255,255,0.14); color: white; font-weight: 500; }
-  .list-item.active::before { content: ''; position: absolute; left: 0; top: 4px; bottom: 4px; width: 3px; background: var(--gold); border-radius: 0 2px 2px 0; }
-  .list-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .list-count { margin-left: auto; font-size: 10.5px; font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.12); padding: 1px 6px; border-radius: 3px; min-width: 24px; text-align: right; box-sizing: border-box; flex-shrink: 0; }
-  .list-item.active .list-count { background: var(--gold); color: var(--accent-text); }
-  .sidebar-add-list { display: flex; align-items: center; gap: 6px; padding: 6px 14px; font-size: 12px; color: rgba(255,255,255,0.4); cursor: pointer; border: none; background: none; width: 100%; }
-  .sidebar-add-list:hover { color: var(--gold); }
-  .list-item-edit {
-    opacity: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
-    border-radius: 4px; border: none; background: none; color: rgba(255,255,255,0.55);
-    font-size: 12px; cursor: pointer; flex-shrink: 0; transition: opacity 0.1s, background 0.1s;
-  }
-  .list-item-wrap:hover .list-item-edit { opacity: 1; }
-  .list-item-edit:hover { background: rgba(255,255,255,0.15); }
-  .list-name-input { background: transparent; border: none; border-bottom: 1.5px solid var(--gold); outline: none; font-size: 13px; font-weight: 500; color: white; font-family: inherit; width: 100%; padding: 0; }
-  .list-title-input { background: transparent; border: none; border-bottom: 1.5px solid var(--accent); outline: none; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); font-family: var(--font-display); min-width: 80px; }
-
-  /* ── Content area ──────────────────────── */
-  .content { flex: 1; overflow-y: auto; padding: 20px 24px; padding-bottom: calc(20px + var(--safe-bottom)); background: var(--bg); }
-  .list-title { font-family: var(--font-display); font-size: 22px; font-weight: 600; letter-spacing: -0.01em; cursor: default; color: var(--accent); }
-  .list-title-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .list-title { font-family: var(--font-display); font-size: 24px; font-weight: 600; letter-spacing: -0.01em; color: var(--accent); }
   .list-subtitle { font-family: var(--font-mono); font-size: 11.5px; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; color: var(--gold-deep); }
 
-  /* ── Week strip (This Week day-carousel) ─── */
-  .week-strip { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 16px; margin-bottom: 4px; }
-  .day-chip { flex-shrink: 0; width: 46px; padding: 7px 0; border-radius: 4px; text-align: center; cursor: pointer; border: 1px solid transparent; background: var(--surface); transition: background 0.12s, border-color 0.12s; }
-  .day-chip:hover { border-color: var(--card-border); }
-  .day-chip .dc-d { font-family: var(--font-mono); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-faint); }
-  .day-chip .dc-n { font-family: var(--font-mono); font-size: 14px; font-weight: 500; color: var(--text); margin-top: 2px; }
-  .day-chip .dc-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); margin: 3px auto 0; opacity: 0; }
-  .day-chip.has-tasks .dc-dot { opacity: 1; }
-  .day-chip.today { background: var(--accent); border-color: var(--accent); }
-  .day-chip.today .dc-d, .day-chip.today .dc-n { color: white; }
-  .day-chip.today .dc-n { color: var(--gold-light); }
-  .day-chip.today .dc-dot { background: white; }
+  /* ── Content area ──────────────────────── */
+  .content { flex: 1; overflow-y: auto; padding: 22px 28px; padding-bottom: calc(22px + var(--safe-bottom)); background: var(--bg); }
+  .view-intro { font-size: 13px; color: var(--text-faint); max-width: 560px; margin-bottom: 20px; line-height: 1.55; }
 
-  /* ── Toolbar & filters ─────────────────── */
-  .toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
-  .filter-btn { padding: 5px 12px; border-radius: 16px; font-size: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; transition: all 0.1s; }
-  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
-  .toolbar-sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
+  @keyframes contentFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .content > * { animation: contentFadeIn 0.2s ease; }
+  @media (prefers-reduced-motion: reduce) { .content > * { animation: none; } }
 
-  /* ── Inline add ────────────────────────── */
-  .inline-add { background: var(--surface); border: 1px dashed var(--card-border); border-radius: 4px; padding: 10px 14px; margin-bottom: 16px; cursor: text; transition: border-color 0.15s, border-style 0.15s; }
-  .inline-add.expanded { border: 1px solid var(--accent); cursor: default; }
-  .inline-add-collapsed { display: flex; align-items: center; gap: 8px; }
-  .inline-add-fields { display: none; flex-direction: column; gap: 10px; margin-top: 10px; }
-  .inline-add.expanded .inline-add-fields { display: flex; }
-  .inline-add-name { width: 100%; border: none; outline: none; font-size: 16px; background: transparent; color: var(--text); font-family: inherit; }
-  .inline-add-name::placeholder { color: var(--text-faint); }
-  .inline-add-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .inline-field { display: flex; flex-direction: column; gap: 3px; min-width: 0; overflow: hidden; }
-  .inline-field label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-faint); }
-  .inline-field input, .inline-field select, .inline-field textarea { border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 16px; color: var(--text); background: var(--surface); outline: none; font-family: inherit; transition: border-color 0.15s; width: 100%; min-width: 0; }
-  .inline-field input:focus, .inline-field select:focus, .inline-field textarea:focus { border-color: var(--accent); }
-  .inline-field textarea { resize: vertical; min-height: 52px; }
-  .inline-add-footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 2px; }
+  .section-label { font-family: var(--font-mono); font-size: 10.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--gold-deep); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
   /* ── Buttons ───────────────────────────── */
   .btn { padding: 7px 14px; border-radius: 5px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all 0.1s; font-family: var(--font-body); }
@@ -213,74 +120,13 @@
   .btn-danger { background: transparent; color: var(--red); border-color: var(--red); }
   .btn-danger:hover { background: var(--red-bg); }
   .btn-sm { padding: 4px 10px; font-size: 12px; }
-
-  /* ── Task cards ────────────────────────── */
-  .tasks-section { margin-bottom: 24px; }
-  @keyframes contentFadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-  .tasks-section { animation: contentFadeIn 0.2s ease; }
-  @media (prefers-reduced-motion: reduce) {
-    .tasks-section { animation: none; }
-  }
-  .section-label { font-family: var(--font-mono); font-size: 10.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--gold-deep); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
-  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-  .overdue-label { color: var(--red); }
-  .overdue-label::after { background: var(--red-bg); }
-  .task-card { position: relative; background: transparent; border: none; border-bottom: 1px solid var(--border); border-radius: 0; margin-bottom: 0; transition: background 0.12s ease; overflow: hidden; }
-  .swipe-hint { position: absolute; inset: 0; display: flex; z-index: 0; pointer-events: none; }
-  .swipe-hint .sh-left, .swipe-hint .sh-right {
-    flex: 1; display: flex; align-items: center; height: 100%;
-    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
-    color: white; opacity: 0; transition: opacity 0.15s;
-  }
-  .swipe-hint .sh-left { background: var(--green); justify-content: flex-start; padding-left: 18px; }
-  .swipe-hint .sh-right { background: var(--gold-deep); justify-content: flex-end; padding-right: 18px; }
-  .task-card.swiping-right .sh-left { opacity: 1; }
-  .task-card.swiping-left .sh-right { opacity: 1; }
-  .task-card:hover { background: var(--accent-light); }
-  .task-card.done { opacity: 0.55; }
-  .task-card.drag-over { background: var(--gold-bg); box-shadow: inset 0 0 0 1px var(--gold); }
-  .task-card.dragging { opacity: 0.4; }
-  .task-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 4px; }
-  .drag-handle { color: var(--text-faint); cursor: grab; font-size: 14px; padding-top: 2px; flex-shrink: 0; opacity: 0; transition: opacity 0.1s; }
-  .task-card:hover .drag-handle { opacity: 1; }
-  .check-wrap { padding-top: 1px; flex-shrink: 0; }
+  .icon-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; border: none; background: none; color: var(--text-faint); font-size: 15px; transition: all 0.1s; }
+  .icon-btn:hover { background: var(--surface2); color: var(--text); }
+  .icon-btn.danger:hover { background: var(--red-bg); color: var(--red); }
   .check { width: 16px; height: 16px; border: 1.5px solid var(--gold); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; flex-shrink: 0; }
   .check:hover { border-color: var(--accent); }
   .check.checked { background: var(--green); border-color: var(--green); }
   .check.checked::after { content: ''; width: 8px; height: 4px; border-left: 1.5px solid white; border-bottom: 1.5px solid white; transform: rotate(-45deg) translateY(-1px); display: block; }
-  .task-body { flex: 1; min-width: 0; }
-  .task-name { font-size: 13.5px; font-weight: 400; line-height: 1.4; margin-bottom: 5px; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; }
-  .task-name.editing { display: block; -webkit-line-clamp: unset; overflow: visible; cursor: default; }
-  .task-name-edit-input { font: inherit; color: inherit; width: 100%; border: none; border-bottom: 1.5px solid var(--accent); outline: none; background: transparent; padding: 0; }
-  .task-name.done { text-decoration: line-through; color: var(--text-faint); text-decoration-color: var(--text-faint); }
-  .task-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-  .badge { font-size: 10.5px; padding: 2px 7px; border-radius: 3px; font-weight: 500; white-space: nowrap; font-family: var(--font-mono); font-variant-numeric: tabular-nums; border: 1px solid transparent; }
-  .badge-high { background: var(--red-bg); color: var(--red); }
-  .badge-medium { background: var(--amber-bg); color: var(--amber); }
-  .badge-low { background: var(--green-bg); color: var(--green); }
-  .badge-status { background: var(--surface2); color: var(--text-muted); }
-  .badge-status.inprog { background: var(--blue-bg); color: var(--blue); }
-  .badge-cat { background: var(--gold-bg); color: var(--gold-deep); border-color: var(--card-border); font-family: var(--font-body); }
-  .badge-due { background: var(--surface2); color: var(--text-muted); border-color: var(--border); }
-  .badge-due.overdue { background: var(--red-bg); color: var(--red); border-color: rgba(156,74,46,0.35); }
-  .badge-dodate { background: var(--gold-bg); color: var(--gold-deep); border-color: var(--card-border); }
-  .badge-recurring { background: var(--green-bg); color: var(--green); font-family: var(--font-body); }
-  .badge-list { background: var(--surface2); color: var(--text-muted); font-family: var(--font-body); }
-  .task-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-  .icon-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 6px; cursor: pointer; border: none; background: none; color: var(--text-faint); font-size: 15px; transition: all 0.1s; }
-  .icon-btn:hover { background: var(--surface2); color: var(--text); }
-  .icon-btn.danger:hover { background: var(--red-bg); color: var(--red); }
-
-  .subtasks { border-top: 1px solid var(--border); padding: 6px 14px 10px 41px; display: flex; flex-direction: column; gap: 4px; }
-  .subtask-row { display: flex; align-items: center; gap: 8px; padding: 3px 0; }
-  .subtask-name { font-size: 13px; flex: 1; color: var(--text); }
-  .subtask-name.done { text-decoration: line-through; color: var(--text-muted); }
-  .subtask-add-wrap { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; flex: 1; margin-top: 4px; }
-  .subtask-add-wrap input { flex: 1; font-size: 16px; border: none; outline: none; background: transparent; color: var(--text); }
-  .subtask-add-wrap input::placeholder { color: var(--text-faint); }
-  .progress-bar { height: 3px; background: var(--surface2); border-radius: 2px; margin: 4px 0 0; overflow: hidden; }
-  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.3s; }
-  .task-note { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; font-style: italic; display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
 
   .empty { text-align: center; padding: 60px 20px; color: var(--text-faint); }
   .empty-icon { margin: 0 auto 16px; width: 64px; height: 64px; background: var(--gold-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--gold); }
@@ -289,18 +135,14 @@
   .empty-cta { display: inline-block; margin-top: 4px; padding: 8px 20px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 500; font-family: inherit; letter-spacing: 0.04em; cursor: pointer; transition: background 0.15s, color 0.15s; }
   .empty-cta:hover { background: var(--gold); color: var(--accent); }
 
-  /* Focus rings */
   :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; }
-  .search-group { margin-bottom: 20px; }
-  .search-group-label { font-family: var(--font-mono); font-size: 10.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--gold-deep); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-  .search-group-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
   /* ── Modals ────────────────────────────── */
   .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
   .modal { background: var(--surface); border-radius: 14px; width: 100%; max-width: 480px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
   .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 0; }
-  .modal-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 17px; font-weight: 700; color: var(--accent); }
+  .modal-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--accent); }
   .modal-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
   .modal-footer { padding: 0 20px 18px; display: flex; gap: 8px; justify-content: flex-end; }
   .field label { display: block; font-size: 12px; font-weight: 500; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
@@ -308,116 +150,83 @@
   .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
   .field textarea { resize: vertical; min-height: 70px; }
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .color-picker { display: flex; gap: 8px; flex-wrap: wrap; }
-  .color-dot { width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.1s; }
-  .color-dot:hover { transform: scale(1.15); }
-  .color-dot.selected { border-color: var(--text); }
 
-  /* Gmail */
-  .gmail-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; }
-  .gmail-item input[type=checkbox] { margin-top: 3px; flex-shrink: 0; accent-color: var(--accent); width: 15px; height: 15px; }
-  .gmail-item-body { flex: 1; }
-  .gmail-item-subject { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
-  .gmail-item-preview { font-size: 12px; color: var(--text-muted); }
-  .gmail-status { font-size: 13px; color: var(--text-muted); text-align: center; padding: 16px; }
-
-  /* Ideas */
-  .idea-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; margin-bottom: 8px; display: flex; gap: 10px; align-items: flex-start; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: 0 1px 2px rgba(22,35,61,0.06); }
-  .idea-card:hover { border-color: var(--border-strong); box-shadow: 0 2px 6px rgba(22,35,61,0.08); }
-  .idea-text { flex: 1; font-size: 14px; line-height: 1.5; word-break: break-word; }
-  .idea-date { font-size: 11px; color: var(--text-faint); margin-top: 4px; }
-  .idea-add { display: flex; gap: 8px; margin-bottom: 16px; }
-  .idea-add textarea { flex: 1; border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; font-size: 16px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; resize: none; min-height: 60px; transition: border-color 0.15s; }
-  .idea-add textarea:focus { border-color: var(--accent); }
-  .idea-add-btn { align-self: flex-end; }
-  .idea-modal-text { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 16px; font-family: inherit; color: var(--text); background: var(--surface); outline: none; resize: vertical; min-height: 100px; transition: border-color 0.15s; }
-  .idea-modal-text:focus { border-color: var(--accent); }
-
-  /* Sidebar overlay */
-  .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 99; }
-  .sidebar-overlay.visible { display: block; }
-
-  /* ── Bottom nav & FAB (mobile only) ──────── */
-  .bottom-nav { display: none; }
-  .fab { display: none; }
-
-  /* ── Mobile ────────────────────────────── */
-  @media (max-width: 640px) {
-    .content-header { padding: calc(var(--safe-top) + 10px) 14px 10px; gap: 8px; flex-wrap: wrap; }
-    .header-search { flex: 1 1 100%; width: auto; order: 3; }
-
-    /* Sidebar becomes a bottom sheet, reached via the bottom nav — not a side drawer */
-    .sidebar {
-      position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 100;
-      width: auto; max-height: 78vh;
-      border-radius: 16px 16px 0 0;
-      transform: translateY(100%); transition: transform 0.25s ease;
-      box-shadow: 0 -8px 32px rgba(0,0,0,0.35);
-      padding-top: 0;
-    }
-    .sidebar.open { transform: translateY(0); }
-    .sidebar::before {
-      content: ''; display: block; width: 36px; height: 4px; border-radius: 2px;
-      background: rgba(255,255,255,0.25); margin: 10px auto 2px; flex-shrink: 0;
-    }
-    /* Reflect and Tasks are distinct sheets sharing one panel — each mode hides the other's sections */
-    .sidebar.mode-tasks #sidebar-reflect-section { display: none; }
-    .sidebar.mode-reflect #workspace-switcher,
-    .sidebar.mode-reflect #sidebar-views-section,
-    .sidebar.mode-reflect #sidebar-lists-section,
-    .sidebar.mode-reflect #sidebar-ideas-section { display: none; }
-
-    .content { padding: 14px 14px calc(14px + var(--safe-bottom) + 78px); }
-    .list-title { font-size: 18px; }
-    .toolbar { gap: 6px; margin-bottom: 12px; }
-    .filter-btn { padding: 4px 10px; font-size: 11px; }
-
-    .task-row { padding: 10px; gap: 8px; position: relative; z-index: 1; background: var(--bg); touch-action: pan-y; }
-    .drag-handle { display: none; }
-    .task-name { font-size: 13px; }
-    .badge { font-size: 10px; padding: 2px 6px; }
-    .task-right { gap: 2px; }
-    .icon-btn { width: 44px; height: 44px; font-size: 15px; }
-    .list-item { min-height: 44px; }
-    .check { width: 22px; height: 22px; }
-
-    .inline-add { display: none; }
-
-    .list-item-edit { opacity: 1; }
-    .workspace-edit-btn { opacity: 1; }
-
-    .modal-bg { padding: 0; align-items: flex-end; }
-    .modal { border-radius: 16px 16px 0 0; max-height: 90vh; max-width: 100%; }
-
-    /* ── Bottom nav: Reflect · Add · Tasks ──── */
-    .bottom-nav {
-      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
-      position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
-      background: var(--accent);
-      padding: 8px 4px calc(6px + var(--safe-bottom));
-      box-shadow: 0 -2px 14px rgba(0,0,0,0.22);
-    }
-    .bn-item {
-      display: flex; align-items: center; justify-content: center;
-      background: none; border: none; cursor: pointer; padding: 10px 4px; min-height: 44px;
-      border-radius: 8px; transition: background 0.15s;
-    }
-    .bn-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255,255,255,0.6); transition: color 0.15s; }
-    .bn-item.active { background: rgba(255,255,255,0.08); }
-    .bn-item.active .bn-label { color: var(--gold-light); font-weight: 500; }
-
-    /* Circular add button, centered and elevated above the bar */
-    .fab {
-      display: flex; align-items: center; justify-content: center;
-      width: 54px; height: 54px; border-radius: 50%; border: 4px solid var(--accent);
-      background: var(--gold-deep); color: white; font-size: 28px; font-weight: 300; line-height: 1;
-      box-shadow: 0 10px 22px -6px rgba(140,111,69,0.55);
-      cursor: pointer; transform: translateY(-20px); margin: 0 6px;
-    }
-    .fab:active { transform: translateY(-20px) scale(0.94); }
+  /* ── Technique / style cards (Breathe & Meditate) ── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; margin-bottom: 8px; }
+  .tcard {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px 16px 14px;
+    cursor: pointer; transition: border-color 0.15s, transform 0.15s; text-align: left;
+    display: flex; flex-direction: column; gap: 9px; font-family: inherit;
   }
+  .tcard:hover { border-color: var(--gold); transform: translateY(-2px); }
+  .tcard .tc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .tcard h3 { font-size: 18px; color: var(--accent); font-weight: 600; }
+  .tcard .tc-tag {
+    font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--gold-deep); background: var(--gold-bg); padding: 3px 7px; border-radius: 3px; white-space: nowrap; flex-shrink: 0;
+  }
+  .tcard .tc-pattern { font-family: var(--font-mono); font-size: 12px; color: var(--text-muted); }
+  .tcard .tc-desc { font-size: 12.5px; color: var(--text-faint); line-height: 1.5; }
+  .tcard .tc-evidence { font-size: 10.5px; color: var(--green); display: flex; align-items: center; gap: 5px; margin-top: auto; padding-top: 2px; }
+  .tcard .tc-evidence.thin { color: var(--text-faint); }
+  .tcard .tc-evidence.caution { color: var(--red); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
 
-  /* ── Goals ────────────────────────────────── */
+  /* ── Session log ───────────────────────── */
+  .log-section { margin-top: 36px; padding-top: 22px; border-top: 1px solid var(--border); }
+  .log-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .log-row .lr-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .log-row .lr-name { flex: 1; }
+  .log-row .lr-time { font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+  .log-empty { font-size: 13px; color: var(--text-faint); padding: 8px 0; }
+
+  /* ── Session overlay (pacer) ───────────── */
+  .session-overlay {
+    position: fixed; inset: 0; background: var(--accent); z-index: 300;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    color: #EDE7D9; text-align: center; padding: 24px;
+  }
+  .session-overlay.active { display: flex; }
+  .session-close {
+    position: absolute; top: calc(var(--safe-top) + 18px); right: 22px; background: none; border: 1px solid rgba(237,231,217,0.3);
+    color: rgba(237,231,217,0.7); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .session-close:hover { border-color: var(--gold); color: var(--gold); }
+  .session-name { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+  .session-round { font-family: var(--font-mono); font-size: 11px; color: rgba(237,231,217,0.5); margin-bottom: 24px; min-height: 14px; }
+  .pacer-wrap { width: 240px; height: 240px; max-width: 66vw; max-height: 66vw; display: flex; align-items: center; justify-content: center; position: relative; margin-bottom: 28px; }
+  .pacer-ring { position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(185,154,108,0.35); }
+  .pacer-shape {
+    width: 110px; height: 110px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--gold-deep), #0d1526 75%);
+    border: 1px solid var(--gold); transform: scale(0.72);
+    transition: transform 4s cubic-bezier(0.45,0,0.55,1);
+    box-shadow: 0 0 40px -6px rgba(185,154,108,0.4);
+  }
+  .phase-label { font-family: var(--font-display); font-size: 30px; font-weight: 600; color: #fff; margin-bottom: 6px; min-height: 40px; }
+  .phase-sub { font-family: var(--font-mono); font-size: 13px; color: rgba(237,231,217,0.55); margin-bottom: 28px; min-height: 18px; }
+  .session-controls { display: flex; gap: 12px; align-items: center; }
+  .sbtn {
+    font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 10px 20px; border-radius: 4px; border: 1px solid rgba(237,231,217,0.3); background: transparent;
+    color: rgba(237,231,217,0.8); cursor: pointer; transition: all 0.15s;
+  }
+  .sbtn:hover { border-color: var(--gold); color: var(--gold); }
+  .sbtn.primary { background: var(--gold-deep); border-color: var(--gold-deep); color: #fff; }
+  .sbtn.primary:hover { background: var(--gold); border-color: var(--gold); color: var(--accent); }
+  .session-done { display: none; flex-direction: column; align-items: center; }
+  .session-done.active { display: flex; }
+  .session-done .check-big { width: 56px; height: 56px; border-radius: 50%; border: 1px solid var(--green); color: var(--green); display: flex; align-items: center; justify-content: center; margin-bottom: 18px; font-size: 24px; }
+  .wimhof-hold-timer { font-family: var(--font-mono); font-size: 44px; color: var(--gold); margin: 10px 0 22px; font-variant-numeric: tabular-nums; }
+  .safety-note { font-size: 11.5px; color: rgba(217,122,87,0.9); max-width: 320px; margin-top: 20px; line-height: 1.5; }
+
+  /* ── Rate picker (Resonance) ───────────── */
+  .rate-picker { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; justify-content: center; }
+  .rate-chip { font-family: var(--font-mono); font-size: 12px; padding: 7px 12px; border-radius: 4px; border: 1px solid rgba(237,231,217,0.3); background: transparent; color: rgba(237,231,217,0.75); cursor: pointer; }
+  .rate-chip.selected { background: var(--gold-deep); border-color: var(--gold-deep); color: #fff; }
+
+  /* ── Goals ─────────────────────────────── */
   .goals-group-label { font-family: var(--font-mono); font-size: 10.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--gold-deep); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
   .goals-group-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
   .goal-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; margin-bottom: 6px; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: 0 1px 2px rgba(22,35,61,0.06); }
@@ -427,7 +236,7 @@
   .goal-edit-btn { opacity: 0; transition: opacity 0.1s; flex-shrink: 0; }
   .goal-item:hover .goal-edit-btn { opacity: 1; }
 
-  /* ── Rule of Life ─────────────────────────── */
+  /* ── Rule of Life ──────────────────────── */
   .rule-category { margin-bottom: 20px; }
   .rule-category-header { font-family: var(--font-mono); font-size: 10.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--gold-deep); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
   .rule-category-header::after { content: ''; flex: 1; height: 1px; background: var(--border); }
@@ -436,32 +245,35 @@
   .rule-cadence { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 8px; background: var(--surface2); color: var(--text-faint); flex-shrink: 0; }
   .rule-cadence.daily    { background: #16233D; color: #ffffff; }
   .rule-cadence.weekly   { background: #3a6186; color: #ffffff; }
-  .rule-cadence.monthly  { background: #BA9E78; color: #ffffff; }
+  .rule-cadence.monthly  { background: #B99A6C; color: #ffffff; }
   .rule-cadence.quarterly{ background: #d4bfa0; color: #3d2e1a; }
   .rule-cadence.annually { background: #e8ddd4; color: #4a3828; }
   .rule-text { flex: 1; font-size: 14px; line-height: 1.4; }
   .rule-edit-btn { opacity: 0; transition: opacity 0.1s; flex-shrink: 0; }
   .rule-item:hover .rule-edit-btn { opacity: 1; }
 
-  /* ── Dashboard ────────────────────────────── */
-  .dash-window-tabs { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
-  .dash-tab { padding: 5px 14px; border-radius: 16px; font-size: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--text-muted); cursor: pointer; transition: all 0.1s; }
-  .dash-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+  /* ── Practice (dashboard) ──────────────── */
+  .stat-row { display: flex; gap: 14px; margin-bottom: 30px; flex-wrap: wrap; }
+  .stat-tile { flex: 1; min-width: 120px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .stat-tile .st-num { font-family: var(--font-display); font-size: 28px; font-weight: 600; color: var(--accent); }
+  .stat-tile .st-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); margin-top: 2px; }
+  .heatmap { display: flex; gap: 2px; flex-wrap: wrap; }
+  .hm-cell { width: 11px; height: 11px; border-radius: 2px; background: var(--surface2); }
+  .hm-cell.done { background: var(--gold); opacity: 0.9; }
+  .practice-legend { display: flex; gap: 16px; font-size: 11px; color: var(--text-faint); margin: 10px 0 32px; flex-wrap: wrap; }
+  .practice-legend span { display: flex; align-items: center; gap: 6px; }
   .dash-category-block { margin-bottom: 28px; }
   .dash-category-header { font-family: var(--font-mono); font-size: 11.5px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.09em; color: var(--accent); margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
   .dash-category-avg { display: flex; align-items: center; }
   .dash-rule-row { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(22,35,61,0.06); }
   .dash-rule-name { font-size: 13px; font-weight: 500; line-height: 1.4; }
-  .heatmap { display: flex; gap: 2px; flex-wrap: wrap; }
-  .hm-cell { width: 11px; height: 11px; border-radius: 2px; background: var(--surface2); }
-  .hm-cell.done { background: var(--gold); opacity: 0.9; }
   .dash-goal-block { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(22,35,61,0.06); }
   .dash-goal-text { font-size: 14px; font-weight: 500; color: var(--accent-text); margin-bottom: 8px; line-height: 1.4; }
   .dash-refl-entry { padding: 8px 0; border-top: 1px solid var(--border); }
   .dash-refl-text { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
   .dash-refl-date { font-size: 11px; color: var(--text-faint); margin-top: 3px; }
 
-  /* ── Reflection ───────────────────────────── */
+  /* ── Reflection ────────────────────────── */
   .reflection-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; box-shadow: 0 1px 2px rgba(22,35,61,0.06); }
   .reflection-card:hover { border-color: var(--border-strong); box-shadow: 0 2px 6px rgba(22,35,61,0.08); }
   .reflection-card-date { font-size: 12px; font-weight: 600; color: var(--accent); margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
@@ -483,190 +295,51 @@
   .prompts-toggle { font-size: 12px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 12px 0 8px; border-top: 1px solid var(--border); margin-top: 20px; user-select: none; }
   .prompts-toggle:hover { color: var(--text); }
 
-  @media (max-width: 640px) {
-    .goal-edit-btn { opacity: 1; }
-    .rule-edit-btn { opacity: 1; }
-    .prompt-edit-btn { opacity: 1; }
+  /* ── Bottom nav (mobile) ───────────────── */
+  .bottom-nav { display: none; }
+  @media (max-width: 720px) {
+    .rail { display: none; }
+    .content-header { padding: calc(var(--safe-top) + 12px) 16px 12px; }
+    .content { padding: 16px 16px calc(16px + var(--safe-bottom) + 76px); }
+    .list-title { font-size: 20px; }
+    .modal-bg { padding: 0; align-items: flex-end; }
+    .modal { border-radius: 16px 16px 0 0; max-height: 90vh; max-width: 100%; }
+    .goal-edit-btn, .rule-edit-btn, .prompt-edit-btn { opacity: 1; }
+
+    .bottom-nav {
+      display: grid; grid-template-columns: repeat(6, 1fr); align-items: center;
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
+      background: var(--accent);
+      padding: 8px 2px calc(6px + var(--safe-bottom));
+      box-shadow: 0 -2px 14px rgba(0,0,0,0.22);
+    }
+    .bn-item {
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+      background: none; border: none; cursor: pointer; padding: 6px 1px; min-height: 44px;
+      color: rgba(237,231,217,0.55);
+    }
+    .bn-item svg { width: 16px; height: 16px; opacity: 0.8; }
+    .bn-label { font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.03em; text-transform: uppercase; }
+    .bn-item.active { color: var(--gold-light); }
+    .bn-item.active svg { opacity: 1; }
   }
 </style>
 </head>
 <body>
-<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
 <div class="app">
-  <aside class="sidebar">
-    <!-- Zone 1: collapsible workspace dropdown -->
-    <div id="workspace-switcher"></div>
-
-    <!-- Zone 2: scrollable Views / Lists / Ideas -->
-    <div class="sidebar-scroll">
-      <div class="sidebar-section" id="sidebar-views-section">
-        <div class="sidebar-section-label">Views</div>
-        <button class="list-item" id="today-btn" onclick="setActiveList('__today__')">
-          <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block"></span>
-          <span>Today</span>
-          <span class="list-count" id="today-count" style="display:none"></span>
-        </button>
-        <button class="list-item" id="thisweek-btn" onclick="setActiveList('__thisweek__')">
-          <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block"></span>
-          <span>This Week</span>
-          <span class="list-count" id="thisweek-count" style="display:none"></span>
-        </button>
-      </div>
-      <div class="sidebar-section" id="sidebar-lists-section">
-        <div class="sidebar-section-label">Lists</div>
-        <div id="list-nav"></div>
-        <button class="sidebar-add-list" onclick="openNewListModal()">＋ New list</button>
-      </div>
-      <div class="sidebar-section" id="sidebar-ideas-section">
-        <div class="sidebar-section-label">Ideas</div>
-        <div id="idea-nav"></div>
-        <button class="sidebar-add-list" onclick="openNewIdeaModal()">＋ New idea space</button>
-      </div>
-    </div>
-
-    <!-- Zone 3: pinned Reflect section -->
-    <div class="sidebar-bottom" id="sidebar-reflect-section">
-      <div class="sidebar-section">
-        <div class="sidebar-section-label">Reflect</div>
-        <button class="list-item" id="goals-btn" onclick="setActiveList('__goals__')">
-          <span style="width:8px;height:8px;border-radius:50%;background:var(--gold);flex-shrink:0;display:inline-block"></span>
-          <span>Goals</span>
-        </button>
-        <button class="list-item" id="ruleoflife-btn" onclick="setActiveList('__ruleoflife__')">
-          <span style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;display:inline-block"></span>
-          <span>Rule of Life</span>
-        </button>
-        <button class="list-item" id="reflection-btn" onclick="setActiveList('__reflection__')">
-          <span style="width:8px;height:8px;border-radius:50%;background:var(--purple);flex-shrink:0;display:inline-block"></span>
-          <span>Daily Reflection</span>
-        </button>
-        <button class="list-item" id="dashboard-btn" onclick="setActiveList('__dashboard__')">
-          <span style="width:8px;height:8px;border-radius:50%;background:var(--blue);flex-shrink:0;display:inline-block"></span>
-          <span>Dashboard</span>
-        </button>
-      </div>
-    </div>
-  </aside>
+  <aside class="rail" id="rail"></aside>
   <main class="main">
     <div class="content-header" id="content-header">
       <span id="ch-title-wrap"></span>
       <span id="ch-actions"></span>
       <div class="spacer"></div>
-      <div class="header-search">
-        <span style="color:var(--text-faint);display:flex;align-items:center"><svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="5.5" cy="5.5" r="4"/><line x1="8.5" y1="8.5" x2="12" y2="12"/></svg></span>
-        <input id="global-search" placeholder="Search tasks…" oninput="handleSearch(this.value)" />
-      </div>
     </div>
     <div class="content" id="content"></div>
   </main>
 </div>
 
-<nav class="bottom-nav" id="bottom-nav">
-  <button class="bn-item" id="bn-reflect" onclick="openMobileMenu('reflect')">
-    <span class="bn-label">Reflect</span>
-  </button>
-  <button class="fab" id="fab-add" onclick="handleFabClick()" title="Add" aria-label="Add">+</button>
-  <button class="bn-item" id="bn-tasks" onclick="openMobileMenu('tasks')">
-    <span class="bn-label">Tasks</span>
-  </button>
-</nav>
-
-<!-- Task Edit Modal -->
-<div class="modal-bg" id="task-modal" style="display:none" onclick="if(event.target===this)closeTaskModal()">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="task-modal-title">Edit task</span>
-      <button class="icon-btn" onclick="closeTaskModal()"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <div class="field"><label>Task name</label><input id="tm-name" placeholder="What needs to be done?" /></div>
-      <div class="field"><label>Do date</label><input type="date" id="tm-do-date" /></div>
-      <div class="field"><label>Recurrence</label><select id="tm-recurrence"><option value="">None</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>
-      <div class="field"><label>Move to list</label><select id="tm-list"></select></div>
-      <div class="field"><label>Notes</label><textarea id="tm-notes" placeholder="Any extra context…"></textarea></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeTaskModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveTask()">Save task</button>
-    </div>
-  </div>
-</div>
-
-<!-- List Modal -->
-<div class="modal-bg" id="list-modal" style="display:none" onclick="if(event.target===this)closeListModal()">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="list-modal-title">New list</span>
-      <button class="icon-btn" onclick="closeListModal()"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <div class="field"><label>List name</label><input id="lm-name" placeholder="e.g. Work, Personal, Q3 Goals…" /></div>
-      <div class="field"><label>Color</label><div class="color-picker" id="lm-colors"></div></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-danger" id="lm-delete-btn" onclick="deleteListFromModal()" style="margin-right:auto;display:none">Delete list</button>
-      <button class="btn btn-ghost" onclick="closeListModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveList()">Save list</button>
-    </div>
-  </div>
-</div>
-
-<!-- Workspace Modal -->
-<div class="modal-bg" id="workspace-modal" style="display:none" onclick="if(event.target===this)closeWorkspaceModal()">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="workspace-modal-title">New workspace</span>
-      <button class="icon-btn" onclick="closeWorkspaceModal()"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <div class="field"><label>Workspace name</label><input id="wm-name" placeholder="e.g. Client, Side project…" /></div>
-      <div class="field"><label>Color</label><div class="color-picker" id="wm-colors"></div></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-danger" id="wm-delete-btn" onclick="deleteWorkspaceFromModal()" style="margin-right:auto;display:none">Delete workspace</button>
-      <button class="btn btn-ghost" onclick="closeWorkspaceModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveWorkspace()">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- Gmail Sync Modal -->
-<div class="modal-bg" id="gmail-modal" style="display:none" onclick="if(event.target===this)closeGmailModal()">
-  <div class="modal" style="max-width:560px">
-    <div class="modal-header">
-      <span class="modal-title">Sync from Gmail</span>
-      <button class="icon-btn" onclick="closeGmailModal()"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <p style="font-size:13px;color:var(--text-muted)">Emails with <strong>[task]</strong> in the subject will be parsed into tasks. Select which ones to import.</p>
-      <div id="gmail-list"><div class="gmail-status">Loading emails…</div></div>
-    </div>
-    <div class="modal-footer">
-      <span id="gmail-import-count" style="font-size:12px;color:var(--text-muted);margin-right:auto"></span>
-      <button class="btn btn-ghost" onclick="closeGmailModal()">Cancel</button>
-      <button class="btn btn-primary" id="gmail-import-btn" onclick="importSelectedEmails()" style="display:none">Import selected</button>
-    </div>
-  </div>
-</div>
-
-<!-- Idea Edit Modal -->
-<div class="modal-bg" id="idea-modal" style="display:none" onclick="if(event.target===this)closeIdeaModal()">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="idea-modal-title">Edit idea</span>
-      <button class="icon-btn" onclick="closeIdeaModal()"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <textarea class="idea-modal-text" id="im-text" placeholder="Your idea…"></textarea>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-danger" onclick="deleteIdeaFromModal()" style="margin-right:auto">Delete</button>
-      <button class="btn btn-ghost" onclick="closeIdeaModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveIdea()">Save</button>
-    </div>
-  </div>
-</div>
+<nav class="bottom-nav" id="bottom-nav"></nav>
 
 <!-- Goal Modal -->
 <div class="modal-bg" id="goal-modal" style="display:none" onclick="if(event.target===this)closeGoalModal()">
@@ -761,28 +434,45 @@
   </div>
 </div>
 
-<!-- Idea Space Modal -->
-<div class="modal-bg" id="idea-space-modal" style="display:none" onclick="if(event.target===this)closeIdeaSpaceModal()">
-  <div class="modal">
-    <div class="modal-header">
-      <span class="modal-title" id="idea-space-modal-title">New idea space</span>
-      <button class="icon-btn" onclick="closeIdeaSpaceModal()"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
+<!-- Session overlay (Breathe / Meditate) -->
+<div class="session-overlay" id="session-overlay">
+  <button class="session-close" onclick="endSession()">✕</button>
+  <div class="session-name" id="s-name"></div>
+  <div class="session-round" id="s-round"></div>
+
+  <div id="rate-picker-block" style="display:none">
+    <div class="rate-picker" id="rate-picker"></div>
+  </div>
+
+  <div id="pacer-block">
+    <div class="pacer-wrap">
+      <div class="pacer-ring"></div>
+      <div class="pacer-shape" id="pacer-shape"></div>
     </div>
-    <div class="modal-body">
-      <div class="field"><label>Name</label><input id="ism-name" placeholder="e.g. Book ideas, Travel, Side projects…" /></div>
-      <div class="field"><label>Color</label><div class="color-picker" id="ism-colors"></div></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-danger" id="ism-delete-btn" onclick="deleteIdeaSpaceFromModal()" style="margin-right:auto;display:none">Delete space</button>
-      <button class="btn btn-ghost" onclick="closeIdeaSpaceModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveIdeaSpace()">Save</button>
-    </div>
+    <div class="phase-label" id="phase-label">Ready</div>
+    <div class="phase-sub" id="phase-sub"></div>
+  </div>
+
+  <div id="wimhof-hold-block" style="display:none">
+    <div class="wimhof-hold-timer mono" id="wimhof-timer">0:00</div>
+  </div>
+
+  <div class="session-controls" id="session-controls">
+    <button class="sbtn primary" onclick="startPhaseSession()">Begin</button>
+  </div>
+
+  <div class="safety-note" id="safety-note" style="display:none">Do this seated or lying down. Never while driving, swimming, or in water — breath-holds like this can cause you to pass out.</div>
+
+  <div class="session-done" id="session-done">
+    <div class="check-big">✓</div>
+    <h2 style="color:#fff;font-size:22px;margin-bottom:8px">Logged</h2>
+    <div class="phase-sub" id="done-summary"></div>
+    <div class="session-controls" style="margin-top:16px"><button class="sbtn" onclick="endSession()">Close</button></div>
   </div>
 </div>
 
 <script>
-const STORE_KEY = 'tracker_v4';
-const LIST_COLORS = ['#16335B','#BA9E78','#1a5fa8','#c0392b','#5b3fa8','#7a746c','#2d7a55','#e76f51'];
+const STORE_KEY = 'abiding_v1';
 const TODAY = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
 const FEATURE_START_DATE = '2026-07-07';
 const DEFAULT_PROMPTS = [
@@ -796,84 +486,73 @@ const DEFAULT_PROMPTS = [
 ];
 
 const ICONS = {
-  edit:     `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5,1.5l3,3L4,12H1V9Z"/><line x1="6.5" y1="3.5" x2="9.5" y2="6.5"/></svg>`,
-  trash:    `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="3" x2="12" y2="3"/><path d="M4,3V2a1,1,0,0,1,1-1H8a1,1,0,0,1,1,1V3"/><path d="M2,3l.9,8a1,1,0,0,0,1,.9h5.2a1,1,0,0,0,1-.9L11,3"/><line x1="5" y1="6" x2="5" y2="10"/><line x1="8" y1="6" x2="8" y2="10"/></svg>`,
-  mail:     `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="11" height="8" rx="1.5"/><polyline points="1,3 6.5,8 12,3"/></svg>`,
-  calendar: `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="2" width="11" height="10" rx="2"/><line x1="1" y1="6" x2="12" y2="6"/><line x1="4" y1="0.5" x2="4" y2="3.5"/><line x1="9" y1="0.5" x2="9" y2="3.5"/></svg>`,
-  drag:     `<svg width="9" height="13" viewBox="0 0 9 13" fill="currentColor"><circle cx="2.5" cy="2.5" r="1.1" opacity="0.4"/><circle cx="6.5" cy="2.5" r="1.1" opacity="0.4"/><circle cx="2.5" cy="6.5" r="1.1" opacity="0.4"/><circle cx="6.5" cy="6.5" r="1.1" opacity="0.4"/><circle cx="2.5" cy="10.5" r="1.1" opacity="0.4"/><circle cx="6.5" cy="10.5" r="1.1" opacity="0.4"/></svg>`,
+  edit: `<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5,1.5l3,3L4,12H1V9Z"/><line x1="6.5" y1="3.5" x2="9.5" y2="6.5"/></svg>`,
   chevDown: `<svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,3.5 5.5,7 9,3.5"/></svg>`,
-  chevUp:   `<svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,7.5 5.5,4 9,7.5"/></svg>`,
   chevRight:`<svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3.5,2 7,5.5 3.5,9"/></svg>`,
-  clock:    `<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><circle cx="5" cy="5" r="4"/><polyline points="5,2.5 5,5 6.5,6.5"/></svg>`,
-  calSmall: `<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="0.7" y="1.5" width="8.6" height="7.8" rx="1.5"/><line x1="0.7" y1="4" x2="9.3" y2="4"/><line x1="3" y1="0" x2="3" y2="2.8"/><line x1="7" y1="0" x2="7" y2="2.8"/></svg>`,
-  repeat:   `<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="0.5,3 2,1.5 3.5,3"/><path d="M2,1.5v3.5a2.5,2.5,0,0,0,5,0V4.5"/><polyline points="9.5,7 8,8.5 6.5,7"/></svg>`,
-  // Empty state illustrations
-  emptyCheck:    `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="24" cy="24" r="17" opacity="0.2"/><polyline points="15,24 21,30 33,18"/></svg>`,
-  emptyCelebrate:`<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="24,8 27.5,18 39,18 29.5,25 33,36 24,29 15,36 18.5,25 9,18 20.5,18"/></svg>`,
-  emptyCalendar: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="10" width="36" height="30" rx="4"/><line x1="6" y1="20" x2="42" y2="20"/><line x1="16" y1="6" x2="16" y2="14"/><line x1="32" y1="6" x2="32" y2="14"/><line x1="14" y1="29" x2="18" y2="29"/><line x1="22" y1="29" x2="26" y2="29"/><line x1="30" y1="29" x2="34" y2="29"/></svg>`,
-  emptyIdea:     `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M24,8C17,8,12,13,12,20c0,5.5,3,9,6,11.5V34h12v-2.5c3-2.5,6-6,6-11.5C36,13,31,8,24,8Z"/><line x1="18" y1="38" x2="30" y2="38"/><line x1="20" y1="42" x2="28" y2="42"/></svg>`,
-  emptyBook:     `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M24,14C22,11,14,10,8,12L8,38C14,36,22,37,24,40C26,37,34,36,40,38L40,12C34,10,26,11,24,14Z"/><line x1="24" y1="14" x2="24" y2="40"/><line x1="12" y1="20" x2="20" y2="20" opacity="0.45"/><line x1="12" y1="26" x2="20" y2="26" opacity="0.45"/><line x1="28" y1="20" x2="36" y2="20" opacity="0.45"/><line x1="28" y1="26" x2="36" y2="26" opacity="0.45"/></svg>`,
-  emptyChart:    `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="28" width="8" height="12" rx="2"/><rect x="20" y="20" width="8" height="20" rx="2"/><rect x="33" y="14" width="8" height="26" rx="2"/><line x1="4" y1="40" x2="44" y2="40"/></svg>`,
-  emptyCross:    `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="24" y1="10" x2="24" y2="38"/><line x1="13" y1="18" x2="35" y2="18"/></svg>`,
-  emptySearch:   `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="21" cy="21" r="13"/><line x1="30" y1="30" x2="42" y2="42"/></svg>`,
+  emptyBook: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M24,14C22,11,14,10,8,12L8,38C14,36,22,37,24,40C26,37,34,36,40,38L40,12C34,10,26,11,24,14Z"/><line x1="24" y1="14" x2="24" y2="40"/><line x1="12" y1="20" x2="20" y2="20" opacity="0.45"/><line x1="12" y1="26" x2="20" y2="26" opacity="0.45"/><line x1="28" y1="20" x2="36" y2="20" opacity="0.45"/><line x1="28" y1="26" x2="36" y2="26" opacity="0.45"/></svg>`,
+  emptyChart: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="28" width="8" height="12" rx="2"/><rect x="20" y="20" width="8" height="20" rx="2"/><rect x="33" y="14" width="8" height="26" rx="2"/><line x1="4" y1="40" x2="44" y2="40"/></svg>`,
+  emptyCross: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="24" y1="10" x2="24" y2="38"/><line x1="13" y1="18" x2="35" y2="18"/></svg>`,
 };
 
-const WORKSPACE_DEFS = [
-  { id: 'velocitytx',  name: 'VelocityTX',       color: '#16335B' },
-  { id: 'embrace',     name: 'Embrace',            color: '#BA9E78' },
-  { id: 'personal',    name: 'Personal',           color: '#7a746c' },
-  { id: 'acu',         name: 'ACU Angel Network',  color: '#5b3fa8' },
+const NAV_ICONS = {
+  breathe: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/></svg>`,
+  meditate: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v3M12 18v3M4.2 7.5l2.5 1.5M17.3 15l2.5 1.5M4.2 16.5l2.5-1.5M17.3 9l2.5-1.5"/><circle cx="12" cy="12" r="4.5"/></svg>`,
+  reflect: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 5h16v13l-4-2H4z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="12.5" x2="13" y2="12.5"/></svg>`,
+  ruleoflife: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><polygon points="12,7 14,12 12,17 10,12"/></svg>`,
+  practice: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg>`,
+  goals: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.8" fill="currentColor"/></svg>`,
+};
+const NAV_ITEMS = [
+  { id: '__breathe__', label: 'Breathe', icon: 'breathe' },
+  { id: '__meditate__', label: 'Meditate', icon: 'meditate' },
+  { id: '__reflect__', label: 'Reflect', icon: 'reflect' },
+  { id: '__ruleoflife__', label: 'Rule of Life', icon: 'ruleoflife' },
+  { id: '__practice__', label: 'Practice', icon: 'practice' },
+  { id: '__goals__', label: 'Goals', icon: 'goals' },
 ];
 
-function makeDefaultWorkspace(wid) {
-  const def = WORKSPACE_DEFS.find(w => w.id === wid) || { name: wid, color: LIST_COLORS[0] };
-  const isMain = wid === 'velocitytx';
-  return {
-    name: def.name,
-    color: def.color,
-    lists: [{ id: 'tasks', name: 'Active tasks', color: def.color }],
-    ideas: isMain
-      ? [{ id: 'goals', name: 'Long-term goals', color: '#1a5fa8' },
-         { id: 'think', name: 'Things to think about', color: '#7a746c' }]
-      : [],
-    tasks: [],
-    notes: [],
-    manualOrders: {},
-    completedCollapsed: {},
-    activeList: 'tasks',
-  };
-}
+// ── Breathwork patterns (researched protocols) ──────────────────────────
+const BREATH_PATTERNS = [
+  { id:'coherent', name:'Coherent Breathing', tag:'Daily baseline', pattern:'5.5s in · 5.5s out', desc:'Fixed 5.5 breaths/min — the rate research shows maximizes heart-rate variability for most people.', evidence:'strong', phases:[{label:'Inhale',secs:5.5},{label:'Exhale',secs:5.5}], cycles:12 },
+  { id:'resonance', name:'Resonance Finder', tag:'Personalized', pattern:'Your rate · in = out', desc:'Same mechanic as Coherent, but you set the rate — resonance frequency varies by person, often 4.5–6.5 br/min.', evidence:'strong', adjustable:true, cycles:10 },
+  { id:'sigh', name:'Physiological Sigh', tag:'Fast relief', pattern:'2 inhales · long exhale', desc:'Double inhale (deep, then a short sharp top-up) followed by a long slow exhale. Huberman Lab’s fastest-acting stress reset.', evidence:'strong', phases:[{label:'Inhale',secs:2},{label:'Inhale again',secs:1},{label:'Exhale slowly',secs:6}], cycles:8 },
+  { id:'extended', name:'Extended Exhale', tag:'Quick calm', pattern:'4s in · 8s out', desc:'Simplest parasympathetic trigger — exhale twice as long as you inhale. No holds, easy to learn.', evidence:'solid', phases:[{label:'Inhale',secs:4},{label:'Exhale',secs:8}], cycles:8 },
+  { id:'box', name:'Box Breathing', tag:'Focus', pattern:'4-4-4-4', desc:'Equal inhale, hold, exhale, hold. Popularized by Navy SEALs for staying composed under pressure.', evidence:'thin', phases:[{label:'Inhale',secs:4},{label:'Hold',secs:4},{label:'Exhale',secs:4},{label:'Hold',secs:4}], cycles:8 },
+  { id:'478', name:'4-7-8 Breathing', tag:'Sleep', pattern:'4-7-8', desc:'Dr. Andrew Weil’s technique for falling asleep and easing anxiety. The long hold is the whole point.', evidence:'thin', phases:[{label:'Inhale',secs:4},{label:'Hold',secs:7},{label:'Exhale',secs:8}], cycles:6 },
+  { id:'altnostril', name:'Alternate Nostril', tag:'Balance', pattern:'L → hold → R → R → hold → L', desc:'Traditional pranayama (Nadi Shodhana). Alternate which side you breathe through — good as a pre-focus ritual.', evidence:'traditional', phases:[{label:'Inhale left',secs:4},{label:'Hold',secs:4},{label:'Exhale right',secs:4},{label:'Inhale right',secs:4},{label:'Hold',secs:4},{label:'Exhale left',secs:4}], cycles:6 },
+  { id:'wimhof', name:'Wim Hof Method', tag:'Energy', pattern:'30 breaths → hold → recover', desc:'Power breathing into a breath-hold, repeated in rounds. Strongest energizing effect here — also the one with real safety rules.', evidence:'caution', special:'wimhof', rounds:3 },
+];
+
+const MEDITATE_STYLES = [
+  { id:'silent', name:'Silent Sit', tag:'Zazen', pattern:'Timer + breath count', desc:'Seated, silent, optionally counting each breath 1–10 on a loop. Bell to start, bell to end.', minutes:10, mode:'count' },
+  { id:'bodyscan', name:'Body Scan', tag:'Body-based', pattern:'Staged, region by region', desc:'Attention moves feet → legs → torso → arms → shoulders → face, pausing at each.', minutes:12, mode:'stages', stages:['Feet and legs','Hips and lower back','Belly and chest','Hands and arms','Shoulders and neck','Face and scalp','Whole body, all at once'] },
+  { id:'lovingkindness', name:'Loving-Kindness', tag:'Metta', pattern:'Staged phrases, outward', desc:'"May you be well" — directed first at yourself, then outward: someone loved, someone neutral, someone difficult, everyone.', minutes:10, mode:'stages', stages:['Yourself','Someone you love','Someone neutral','Someone difficult','All beings'] },
+  { id:'openawareness', name:'Open Awareness', tag:'No guidance', pattern:'Just a timer and a bell', desc:'Bare sitting. No prompts, no counting — notice whatever arises and let it pass.', minutes:15, mode:'plain' },
+];
+const evidenceLabel = { strong:'Strong evidence', solid:'Solid rationale', thin:'Popular, evidence thin', traditional:'Traditional practice', caution:'Read the safety note' };
+const evidenceClass = { strong:'', solid:'', thin:'thin', traditional:'thin', caution:'caution' };
 
 let state = {
-  activeWorkspace: 'velocitytx',
-  workspaceOrder: ['velocitytx', 'embrace', 'personal', 'acu'],
-  workspaces: {
-    velocitytx: makeDefaultWorkspace('velocitytx'),
-    embrace:    makeDefaultWorkspace('embrace'),
-    personal:   makeDefaultWorkspace('personal'),
-    acu:        makeDefaultWorkspace('acu'),
-  },
+  breatheSessions: [],
+  meditateSessions: [],
   goals: { personal: [], professional: [] },
   ruleItems: [],
   ruleChecks: [],
   reflections: [],
   prompts: DEFAULT_PROMPTS.map(p => ({...p})),
+  activeView: '__breathe__',
 };
 
-function ws() { return state.workspaces[state.activeWorkspace]; }
-
-let workspaceSwitcherOpen = false;
-let editingTaskId = null;
-let editingListId = null;
-let editingWorkspaceId = null;
-let expandedTasks = new Set();
-let pickedColor = LIST_COLORS[0];
-let pickedWorkspaceColor = LIST_COLORS[0];
-let searchQuery = '';
-let dragSrcId = null;
-let pendingEmails = [];
-let calendarConnected = {};  // { workspaceId: true/false }
-const SYNC_WORKSPACES = ['embrace', 'personal', 'acu'];
+let resonanceRate = 5.5;
+let editingGoalId = null, editingGoalGroup = null;
+let editingRuleId = null;
+let editingReflectionId = null, pickedEnergy = 0;
+let editingPromptId = null;
+let ruleShowAll = true;
+let showPromptsSection = false;
+let dashWindow = 'year';
+const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAY_ABBR = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 // ── Persist ──────────────────────────────────────────────────────────
 let saveTimer = null;
@@ -881,12 +560,7 @@ let saveTimer = null;
 async function load() {
   try {
     const raw = localStorage.getItem(STORE_KEY);
-    if (raw) {
-      mergeLoaded(JSON.parse(raw));
-    } else {
-      const oldRaw = localStorage.getItem('tracker_v3');
-      if (oldRaw) mergeLoaded(JSON.parse(oldRaw));
-    }
+    if (raw) mergeLoaded(JSON.parse(raw));
   } catch(e) {}
   render();
 
@@ -905,95 +579,33 @@ async function load() {
   } catch(e) {
     console.warn('Cloud load failed, using local data:', e);
   }
-
-  // Check Google Calendar connection status for all sync workspaces (non-blocking)
-  fetch('/api/calendar', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'status_all', workspaceIds: SYNC_WORKSPACES })
-  }).then(r => r.json()).then(d => {
-    if (d.connected) calendarConnected = d.connected;
-  }).catch(() => {});
 }
 
-function serialize() {
-  return { ...state, _expanded: [...expandedTasks] };
-}
+function serialize() { return { ...state }; }
 
+const VALID_VIEWS = NAV_ITEMS.map(n => n.id);
 function mergeLoaded(saved) {
-  // Old flat format migration
-  if (saved.lists && !saved.workspaces) {
-    const ideas = saved.ideas || [];
-    let lists = saved.lists || [];
-    ['goals','think'].forEach(id => {
-      const inLists = lists.find(l => l.id === id);
-      const inIdeas = ideas.find(l => l.id === id);
-      if (inLists && !inIdeas) { ideas.push(inLists); lists = lists.filter(l => l.id !== id); }
-    });
-    if (lists.length === 0) lists.push({ id: 'tasks', name: 'Active tasks', color: '#16335B' });
-    const allIds = [...lists.map(l=>l.id), ...ideas.map(l=>l.id), '__today__'];
-    const activeList = allIds.includes(saved.activeList) ? saved.activeList : lists[0]?.id || 'tasks';
-    state.workspaces.velocitytx = {
-      name: 'VelocityTX', color: '#16335B',
-      lists, ideas,
-      tasks: saved.tasks || [],
-      notes: saved.notes || [],
-      manualOrders: saved.manualOrders || {},
-      completedCollapsed: saved.completedCollapsed || {},
-      activeList,
-    };
-    state.activeWorkspace = 'velocitytx';
-    expandedTasks = new Set(saved._expanded || []);
-    ensureWorkspaces();
-    return;
-  }
-
-  if (saved.workspaces) {
-    state.activeWorkspace = saved.activeWorkspace || 'velocitytx';
-    state.workspaceOrder = saved.workspaceOrder || Object.keys(saved.workspaces);
-    Object.keys(saved.workspaces).forEach(id => {
-      state.workspaces[id] = saved.workspaces[id];
-    });
-    expandedTasks = new Set(saved._expanded || []);
-  }
-
+  if (saved.breatheSessions !== undefined) state.breatheSessions = saved.breatheSessions;
+  if (saved.meditateSessions !== undefined) state.meditateSessions = saved.meditateSessions;
   if (saved.goals !== undefined) state.goals = saved.goals;
   if (saved.ruleItems !== undefined) state.ruleItems = saved.ruleItems;
   if (saved.ruleChecks !== undefined) state.ruleChecks = saved.ruleChecks;
   if (saved.reflections !== undefined) state.reflections = saved.reflections;
   if (saved.prompts !== undefined) state.prompts = saved.prompts;
-
-  ensureWorkspaces();
+  if (saved.activeView && VALID_VIEWS.includes(saved.activeView)) state.activeView = saved.activeView;
   ensureTopLevel();
 }
 
-function ensureWorkspaces() {
-  // Seed any missing predefined workspaces
-  WORKSPACE_DEFS.forEach(w => {
-    if (!state.workspaces[w.id]) state.workspaces[w.id] = makeDefaultWorkspace(w.id);
-  });
-  // Ensure workspaceOrder exists and covers all workspaces
-  if (!state.workspaceOrder) state.workspaceOrder = Object.keys(state.workspaces);
-  WORKSPACE_DEFS.forEach(w => {
-    if (!state.workspaceOrder.includes(w.id)) state.workspaceOrder.push(w.id);
-  });
-
-  Object.keys(state.workspaces).forEach(id => {
-    const w = state.workspaces[id];
-    if (!w.name) { const def = WORKSPACE_DEFS.find(d => d.id === id); w.name = def?.name || id; }
-    if (!w.color) { const def = WORKSPACE_DEFS.find(d => d.id === id); w.color = def?.color || LIST_COLORS[0]; }
-    if (!w.lists) w.lists = [];
-    if (!w.ideas) w.ideas = [];
-    if (!w.tasks) w.tasks = [];
-    if (!w.notes) w.notes = [];
-    if (!w.manualOrders) w.manualOrders = {};
-    if (!w.completedCollapsed) w.completedCollapsed = {};
-    if (w.lists.length === 0) w.lists.push({ id: 'tasks', name: 'Active tasks', color: w.color });
-    const allIds = [...w.lists.map(l=>l.id), ...w.ideas.map(l=>l.id), '__today__', '__thisweek__', '__goals__', '__ruleoflife__', '__reflection__', '__dashboard__'];
-    if (!allIds.includes(w.activeList)) w.activeList = w.lists[0]?.id || '';
-  });
-
-  if (!state.workspaces[state.activeWorkspace]) state.activeWorkspace = state.workspaceOrder[0];
+function ensureTopLevel() {
+  if (!state.breatheSessions) state.breatheSessions = [];
+  if (!state.meditateSessions) state.meditateSessions = [];
+  if (!state.goals) state.goals = { personal: [], professional: [] };
+  if (!state.goals.personal) state.goals.personal = [];
+  if (!state.goals.professional) state.goals.professional = [];
+  if (!state.ruleItems) state.ruleItems = [];
+  if (!state.ruleChecks) state.ruleChecks = [];
+  if (!state.reflections) state.reflections = [];
+  if (!state.prompts || !state.prompts.length) state.prompts = DEFAULT_PROMPTS.map(p => ({...p}));
 }
 
 function save() {
@@ -1014,1151 +626,283 @@ function save() {
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function fmtDateTime(date, time) {
-  if (!date) return '';
-  const dt = new Date(date + 'T00:00:00');
-  const datePart = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  if (!time) return datePart;
-  const [h, m] = time.split(':');
-  const hour = parseInt(h);
-  return `${datePart} ${hour%12||12}:${m}${hour>=12?'pm':'am'}`;
+// ── Nav ──────────────────────────────────────────────────────────────
+function setActiveView(id) {
+  state.activeView = id;
+  save();
+  render();
 }
 
-function isOverdue(deadlineDate, status) {
-  if (!deadlineDate || status === 'Done') return false;
-  return new Date(deadlineDate + 'T00:00:00') < new Date(TODAY + 'T00:00:00');
+function renderNav() {
+  const itemHtml = (compact) => NAV_ITEMS.map(n => `
+    <button class="${compact?'bn-item':'rail-item'}${state.activeView===n.id?' active':''}" onclick="setActiveView('${n.id}')">
+      ${NAV_ICONS[n.icon]}<span class="${compact?'bn-label':''}">${n.label}</span>
+    </button>`).join('');
+  document.getElementById('rail').innerHTML = `<div class="rail-mark">A</div>` + itemHtml(false);
+  document.getElementById('bottom-nav').innerHTML = itemHtml(true);
 }
 
-function isToday(date) { return date === TODAY; }
-
-const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function fmtDateMono(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  return `${DAY_NAMES[d.getDay()].toUpperCase()} · ${MONTH_NAMES[d.getMonth()].toUpperCase()} ${d.getDate()}`;
-}
-
-function getThisWeekDates() {
-  const today = new Date(TODAY + 'T00:00:00');
-  const dates = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    dates.push(d.toISOString().slice(0, 10));
-  }
-  return dates; // [today, today+1, ..., today+6] — rolling 7-day window
-}
-
-function isThisWeek(date) {
-  if (!date) return false;
-  const dates = getThisWeekDates();
-  return dates.includes(date);
-}
-function getList(id) { return ws().lists.find(l => l.id === id); }
-function getIdea(id) { return (ws().ideas||[]).find(l => l.id === id); }
-function isIdeaSpace(id) { return !!(ws().ideas||[]).find(l => l.id === id); }
-function getListTasks(listId) { return ws().tasks.filter(t => t.listId === listId && !t.parentId); }
-function getIdeaNotes(spaceId) { return (ws().notes||[]).filter(n => n.spaceId === spaceId); }
-function getSubtasks(parentId) { return ws().tasks.filter(t => t.parentId === parentId); }
-
-function advanceDate(date, recurrence) {
-  if (!date) return '';
-  const d = new Date(date + 'T00:00:00');
-  if (recurrence === 'daily') d.setDate(d.getDate() + 1);
-  else if (recurrence === 'weekly') d.setDate(d.getDate() + 7);
-  else if (recurrence === 'monthly') d.setMonth(d.getMonth() + 1);
-  return d.toISOString().slice(0,10);
-}
-
-function earliestDate(t) {
-  const dates = [t.doDate, t.deadlineDate].filter(Boolean);
-  if (!dates.length) return null;
-  return dates.reduce((min, d) => d < min ? d : min);
-}
-
-function sortedTasks(tasks, listId) {
-  const order = ws().manualOrders[listId];
-  if (order && order.length) {
-    const map = new Map(tasks.map(t => [t.id, t]));
-    const sorted = order.map(id => map.get(id)).filter(Boolean);
-    tasks.forEach(t => { if (!order.includes(t.id)) sorted.push(t); });
-    return sorted;
-  }
-  return [...tasks].sort((a, b) => {
-    if (a.status === 'Done' && b.status !== 'Done') return 1;
-    if (b.status === 'Done' && a.status !== 'Done') return -1;
-    const da = earliestDate(a), db = earliestDate(b);
-    if (da && db) return new Date(da) - new Date(db);
-    if (da) return -1; if (db) return 1;
-    return 0;
-  });
-}
-
-// ── Render ───────────────────────────────────────────────────────────
-function render() {
-  renderWorkspaceSwitcher();
-  renderSidebar();
-  renderContent();
-  renderHeaderStats();
-  renderBottomNav();
-  attachSwipeHandlers();
-}
-
-// ── Swipe (mobile): right = complete, left = reschedule tomorrow ──────
-function attachSwipeHandlers() {
-  document.querySelectorAll('.task-card').forEach(card => {
-    const row = card.querySelector(':scope > .task-row');
-    if (!row) return;
-    const taskId = card.id.replace(/^tc-/, '');
-    let startX = 0, startY = 0, dx = 0, active = false, decided = false, horizontal = false;
-
-    row.addEventListener('touchstart', e => {
-      if (e.touches.length !== 1) return;
-      startX = e.touches[0].clientX; startY = e.touches[0].clientY;
-      dx = 0; active = true; decided = false; horizontal = false;
-      row.style.transition = 'none';
-    }, { passive: true });
-
-    row.addEventListener('touchmove', e => {
-      if (!active) return;
-      const touch = e.touches[0];
-      const ddx = touch.clientX - startX, ddy = touch.clientY - startY;
-      if (!decided) {
-        if (Math.abs(ddx) < 8 && Math.abs(ddy) < 8) return;
-        decided = true;
-        horizontal = Math.abs(ddx) > Math.abs(ddy);
-        if (!horizontal) { active = false; return; }
-      }
-      e.preventDefault();
-      dx = Math.max(-120, Math.min(120, ddx));
-      row.style.transform = `translateX(${dx}px)`;
-      card.classList.toggle('swiping-right', dx > 12);
-      card.classList.toggle('swiping-left', dx < -12);
-    }, { passive: false });
-
-    const finish = () => {
-      if (!active) return;
-      active = false;
-      card.classList.remove('swiping-right', 'swiping-left');
-      row.style.transition = 'transform 0.18s ease';
-      if (dx > 70) {
-        row.style.transform = 'translateX(140px)';
-        setTimeout(() => toggleDone(taskId), 130);
-      } else if (dx < -70) {
-        row.style.transform = 'translateX(-140px)';
-        setTimeout(() => rescheduleTomorrow(taskId), 130);
-      } else {
-        row.style.transform = 'translateX(0)';
-      }
-      dx = 0;
-    };
-    row.addEventListener('touchend', finish);
-    row.addEventListener('touchcancel', finish);
-  });
-}
-
-function renderBottomNav() {
-  const active = ws().activeList;
-  const set = (id, on) => { const el = document.getElementById(id); if (el) el.classList.toggle('active', on); };
-  const reflectIds = ['__goals__','__ruleoflife__','__reflection__','__dashboard__'];
-  set('bn-reflect', reflectIds.includes(active));
-  set('bn-tasks', active === '__today__' || active === '__thisweek__' || !!getList(active) || isIdeaSpace(active));
-}
-
-function openMobileMenu(mode) {
-  const sidebar = document.querySelector('.sidebar');
-  sidebar.classList.remove('mode-reflect', 'mode-tasks');
-  sidebar.classList.add('mode-' + mode);
-  const scroller = document.querySelector('.sidebar-scroll');
-  if (scroller) scroller.scrollTop = 0;
-  sidebar.classList.add('open');
-  document.getElementById('sidebar-overlay').classList.add('visible');
-}
-
-function toggleWorkspaceSwitcher() {
-  workspaceSwitcherOpen = !workspaceSwitcherOpen;
-  renderWorkspaceSwitcher();
-}
-
-function renderWorkspaceSwitcher() {
-  const el = document.getElementById('workspace-switcher');
-  const order = state.workspaceOrder || Object.keys(state.workspaces);
-  const active = state.workspaces[state.activeWorkspace];
-
-  const header = `
-    <div class="ws-header" onclick="toggleWorkspaceSwitcher()">
-      <span class="workspace-dot" style="background:${active?.color || '#BA9E78'}"></span>
-      <span class="ws-header-name">${esc(active?.name || 'Workspace')}</span>
-      <span class="ws-header-chev">${workspaceSwitcherOpen ? ICONS.chevUp : ICONS.chevDown}</span>
-    </div>`;
-
-  const dropdown = workspaceSwitcherOpen ? `
-    <div class="ws-dropdown">
-      ${order.map(id => {
-        const w = state.workspaces[id]; if (!w) return '';
-        const isActive = state.activeWorkspace === id;
-        return `<div class="workspace-item-wrap">
-          <button class="workspace-item${isActive ? ' active' : ''}" onclick="switchWorkspace('${id}')">
-            <span class="workspace-dot" style="background:${w.color}"></span>
-            <span>${esc(w.name)}</span>
-          </button>
-          <button class="workspace-edit-btn" onclick="event.stopPropagation();openEditWorkspaceModal('${id}')" title="Edit workspace">${ICONS.edit}</button>
-        </div>`;
-      }).join('')}
-      <button class="sidebar-add-workspace" onclick="openNewWorkspaceModal()">＋ New workspace</button>
-    </div>` : '';
-
-  el.innerHTML = header + dropdown;
-}
-
-function renderHeaderStats() {
-  const todayCount = ws().tasks.filter(t => !t.parentId && isToday(t.doDate) && t.status !== 'Done').length;
-  const tc = document.getElementById('today-count');
-  if (tc) { tc.textContent = todayCount; tc.style.display = todayCount > 0 ? '' : 'none'; }
-  document.getElementById('today-btn').className = 'list-item' + (ws().activeList === '__today__' ? ' active' : '');
-
-  const weekCount = ws().tasks.filter(t => !t.parentId && t.status !== 'Done' && t.doDate && (isThisWeek(t.doDate) || t.doDate < TODAY)).length;
-  const wc = document.getElementById('thisweek-count');
-  if (wc) { wc.textContent = weekCount; wc.style.display = weekCount > 0 ? '' : 'none'; }
-  const wb = document.getElementById('thisweek-btn');
-  if (wb) wb.className = 'list-item' + (ws().activeList === '__thisweek__' ? ' active' : '');
-
-  [['__goals__','goals-btn'],['__ruleoflife__','ruleoflife-btn'],['__reflection__','reflection-btn'],['__dashboard__','dashboard-btn']].forEach(([view, btnId]) => {
-    const btn = document.getElementById(btnId);
-    if (btn) btn.className = 'list-item' + (ws().activeList === view ? ' active' : '');
-  });
-}
-
-function renderSidebar() {
-  const nav = document.getElementById('list-nav');
-  nav.innerHTML = ws().lists.map(l => {
-    const count = getListTasks(l.id).filter(t => t.status !== 'Done').length;
-    return `<button class="list-item${ws().activeList === l.id ? ' active' : ''}" onclick="handleSidebarListClick(event,'${l.id}')">
-      <span class="list-dot" style="background:${l.color}"></span>
-      <span id="sidebar-list-name-${l.id}">${esc(l.name)}</span>
-      ${count > 0 ? `<span class="list-count">${count}</span>` : ''}
-    </button>`;
-  }).join('');
-
-  const ideaNav = document.getElementById('idea-nav');
-  ideaNav.innerHTML = (ws().ideas||[]).map(l => {
-    const count = getIdeaNotes(l.id).length;
-    return `<button class="list-item${ws().activeList === l.id ? ' active' : ''}" onclick="handleSidebarListClick(event,'${l.id}')">
-      <span class="list-dot" style="background:${l.color}"></span>
-      <span id="sidebar-list-name-${l.id}">${esc(l.name)}</span>
-      ${count > 0 ? `<span class="list-count">${count}</span>` : ''}
-    </button>`;
-  }).join('');
-}
-
-// Persistent header (list name + search) that lives outside #content so it
-// never gets rebuilt by renderContent() — rebuilding it on every keystroke
-// would destroy and recreate #global-search, losing focus mid-search.
-function setContentHeader({ title, subtitle = '', dotColor = null, titleOnClick = '', titleTitle = '', actionsHtml = '' }) {
+function setContentHeader({ title, subtitle = '', actionsHtml = '' }) {
   document.getElementById('ch-title-wrap').innerHTML = `
-    ${dotColor ? `<span class="list-title-dot" style="background:${dotColor}"></span>` : ''}
-    <span class="list-title" id="list-title-display"${titleOnClick ? ` onclick="${titleOnClick}"` : ''}${titleTitle ? ` title="${titleTitle}"` : ''}>${esc(title)}</span>
+    <span class="list-title">${esc(title)}</span>
     ${subtitle ? `<span class="list-subtitle">${subtitle}</span>` : ''}
   `;
   document.getElementById('ch-actions').innerHTML = actionsHtml;
 }
 
+function render() {
+  renderNav();
+  renderContent();
+}
+
 function renderContent() {
-  if (searchQuery.trim()) { renderSearch(); return; }
-  if (ws().activeList === '__today__') { renderTodayView(); return; }
-  if (ws().activeList === '__thisweek__') { renderThisWeekView(); return; }
-  if (ws().activeList === '__goals__') { renderGoalsView(); return; }
-  if (ws().activeList === '__ruleoflife__') { renderRuleOfLifeView(); return; }
-  if (ws().activeList === '__reflection__') { renderReflectionView(); return; }
-  if (ws().activeList === '__dashboard__') { renderDashboardView(); return; }
-  if (isIdeaSpace(ws().activeList)) { renderIdeaView(); return; }
-  renderListView();
+  if (state.activeView === '__breathe__') return renderBreatheView();
+  if (state.activeView === '__meditate__') return renderMeditateView();
+  if (state.activeView === '__reflect__') return renderReflectionView();
+  if (state.activeView === '__ruleoflife__') return renderRuleOfLifeView();
+  if (state.activeView === '__practice__') return renderPracticeView();
+  if (state.activeView === '__goals__') return renderGoalsView();
+  renderBreatheView();
 }
 
-function renderListView() {
-  const list = getList(ws().activeList);
-  if (!list) return;
-  const hasManualOrder = !!(ws().manualOrders[list.id] && ws().manualOrders[list.id].length);
-
-  let tasks = getListTasks(ws().activeList);
-
-  const allSorted = sortedTasks(tasks, list.id);
-  const active = allSorted.filter(t => t.status !== 'Done');
-  const done = allSorted.filter(t => t.status === 'Done');
-  const doneCollapsed = ws().completedCollapsed[list.id] !== false;
-  const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const visibleDone = done.filter(t => !t.completedAt || new Date(t.completedAt) > sevenDaysAgo);
-
-  setContentHeader({
-    title: list.name,
-    dotColor: list.color,
-    titleOnClick: `handleTitleClick(event,'${list.id}')`,
-    titleTitle: 'Triple-click to rename',
-    actionsHtml: `
-      <button class="btn btn-ghost btn-sm" onclick="openEditListModal('${list.id}')" title="Edit list" style="padding:4px 7px;display:flex;align-items:center">${ICONS.edit}</button>
-      ${hasManualOrder ? `<button class="btn btn-ghost btn-sm" onclick="resetOrder('${list.id}')">↺ Auto-sort</button>` : ''}
-      ${SYNC_WORKSPACES.includes(state.activeWorkspace) ? `
-      <button class="btn btn-ghost btn-sm" id="cal-sync-btn" onclick="handleCalendarSync()" style="gap:5px;display:flex;align-items:center">
-        ${ICONS.calendar} ${calendarConnected[state.activeWorkspace] ? 'Sync Calendar' : 'Connect Calendar'}
-      </button>` : ''}
-    `,
-  });
+// ── Render: Breathe ────────────────────────────────────────────────────
+function renderBreatheView() {
+  setContentHeader({ title: 'Breathe', subtitle: `${state.breatheSessions.length} SESSIONS LOGGED` });
   document.getElementById('content').innerHTML = `
-    ${renderInlineAdd()}
-    <div id="task-sections">
-      ${active.length === 0 && visibleDone.length === 0 ? renderEmpty() : ''}
-      ${active.length > 0 ? `<div class="tasks-section">${renderTaskCards(active, list.id)}</div>` : ''}
-      ${visibleDone.length > 0 ? `
-        <div class="tasks-section">
-          <div class="section-label" onclick="toggleDoneCollapsed('${list.id}')">
-            ${doneCollapsed ? ICONS.chevRight : ICONS.chevDown} Completed (${visibleDone.length})
-          </div>
-          ${doneCollapsed ? '' : renderTaskCards(visibleDone, list.id)}
-        </div>` : ''}
-    </div>
-  `;
-  initDrag();
-}
-
-function renderTodayView() {
-  const overdue = ws().tasks.filter(t => !t.parentId && t.doDate && t.doDate < TODAY && t.status !== 'Done');
-  const todayTasks = ws().tasks.filter(t => !t.parentId && isToday(t.doDate));
-  const active = todayTasks.filter(t => t.status !== 'Done');
-  const done = todayTasks.filter(t => t.status === 'Done');
-  const doneCollapsed = ws().completedCollapsed['__today__'] !== false;
-  const overdueCollapsed = ws().completedCollapsed['__today__overdue'] === true;
-
-  setContentHeader({ title: 'Today', subtitle: fmtDateMono(TODAY) });
-  document.getElementById('content').innerHTML = `
-    ${renderInlineAdd()}
-    <div id="task-sections">
-      ${overdue.length > 0 ? `
-        <div class="tasks-section">
-          <div class="section-label overdue-label" onclick="toggleDoneCollapsed('__today__overdue')">${overdueCollapsed?ICONS.chevRight:ICONS.chevDown} Overdue (${overdue.length})</div>
-          ${overdueCollapsed ? '' : overdue.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
-        </div>` : ''}
-      ${todayTasks.length === 0 && overdue.length === 0 ? `<div class="empty"><div class="empty-icon">${ICONS.emptyCelebrate}</div><div class="empty-title">Nothing scheduled for today</div><div class="empty-sub">Tasks with today's Do Date appear here</div></div>` : ''}
-      ${active.length > 0 ? `<div class="tasks-section">${active.length > 0 || overdue.length > 0 ? `<div class="section-label" style="cursor:default">Today</div>` : ''}${active.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}</div>` : ''}
-      ${done.length > 0 ? `
-        <div class="tasks-section">
-          <div class="section-label" onclick="toggleDoneCollapsed('__today__')">${doneCollapsed?ICONS.chevRight:ICONS.chevDown} Completed (${done.length})</div>
-          ${doneCollapsed ? '' : done.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
-        </div>` : ''}
+    <p class="view-intro">Each pattern is timed to its actual protocol — pick one and the pacer guides you through it. Try a few and see what actually changes how you feel.</p>
+    <div class="grid">${BREATH_PATTERNS.map(p => `
+      <button class="tcard" onclick="openSession('breathe','${p.id}')">
+        <div class="tc-top"><h3>${esc(p.name)}</h3><span class="tc-tag">${esc(p.tag)}</span></div>
+        <div class="tc-pattern">${esc(p.pattern)}</div>
+        <div class="tc-desc">${esc(p.desc)}</div>
+        <div class="tc-evidence ${evidenceClass[p.evidence]}"><span class="dot"></span>${evidenceLabel[p.evidence]}</div>
+      </button>`).join('')}</div>
+    <div class="log-section">
+      <div class="section-label">Recent sessions</div>
+      ${renderLogRows(state.breatheSessions)}
     </div>
   `;
 }
 
-function renderThisWeekView() {
-  const dates = getThisWeekDates();
-  const weekStart = dates[0];
-  const overdue = ws().tasks.filter(t => !t.parentId && t.doDate && t.doDate < weekStart && t.status !== 'Done');
-  const overdueCollapsed = ws().completedCollapsed['__thisweek__overdue'] === true;
-
-  function fmtDay(dateStr) {
-    const d = new Date(dateStr + 'T00:00:00');
-    const label = dateStr === TODAY ? 'Today' : DAY_NAMES[d.getDay()];
-    return `${label} · ${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`;
-  }
-
-  const dayCounts = {};
-  dates.forEach(d => { dayCounts[d] = ws().tasks.filter(t => !t.parentId && t.doDate === d && t.status !== 'Done').length; });
-
-  const strip = dates.map(dateStr => {
-    const d = new Date(dateStr + 'T00:00:00');
-    const isT = dateStr === TODAY;
-    return `<div class="day-chip${isT ? ' today' : ''}${dayCounts[dateStr] > 0 ? ' has-tasks' : ''}" onclick="document.getElementById('day-${dateStr}').scrollIntoView({behavior:'smooth',block:'start'})">
-      <div class="dc-d">${DAY_NAMES[d.getDay()]}</div>
-      <div class="dc-n">${d.getDate()}</div>
-      <div class="dc-dot"></div>
-    </div>`;
-  }).join('');
-
-  const sections = dates.map(dateStr => {
-    const dayTasks = ws().tasks.filter(t => !t.parentId && t.doDate === dateStr);
-    const active = dayTasks.filter(t => t.status !== 'Done');
-    const done = dayTasks.filter(t => t.status === 'Done');
-    const doneCollapsed = ws().completedCollapsed['__thisweek__' + dateStr] !== false;
-
-    if (dayTasks.length === 0) return `
-      <div class="tasks-section" id="day-${dateStr}">
-        <div class="section-label" style="cursor:default">${fmtDay(dateStr)}</div>
-        <div style="font-size:13px;color:var(--text-faint);padding:6px 0 10px">Nothing scheduled</div>
-      </div>`;
-
-    return `
-      <div class="tasks-section" id="day-${dateStr}">
-        <div class="section-label" style="cursor:default">${fmtDay(dateStr)}</div>
-        ${active.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
-        ${done.length > 0 ? `
-          <div class="section-label" style="font-size:10px;margin-top:4px" onclick="toggleDoneCollapsed('__thisweek__${dateStr}')">
-            ${doneCollapsed ? ICONS.chevRight : ICONS.chevDown} Completed (${done.length})
-          </div>
-          ${doneCollapsed ? '' : done.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
-        ` : ''}
-      </div>`;
-  }).join('');
-
-  const totalActive = dates.reduce((n, d) => n + dayCounts[d], 0);
-
-  const overdueSection = overdue.length > 0 ? `
-    <div class="tasks-section">
-      <div class="section-label overdue-label" onclick="toggleDoneCollapsed('__thisweek__overdue')">${overdueCollapsed?ICONS.chevRight:ICONS.chevDown} Overdue (${overdue.length})</div>
-      ${overdueCollapsed ? '' : overdue.map(t => renderSingleTaskCard(t, null, getList(t.listId))).join('')}
-    </div>` : '';
-
-  const rangeLabel = `${MONTH_NAMES[new Date(dates[0]+'T00:00:00').getMonth()].toUpperCase()} ${new Date(dates[0]+'T00:00:00').getDate()} – ${MONTH_NAMES[new Date(dates[6]+'T00:00:00').getMonth()].toUpperCase()} ${new Date(dates[6]+'T00:00:00').getDate()}`;
-
-  setContentHeader({
-    title: 'This Week',
-    subtitle: `${rangeLabel}${overdue.length > 0 ? ` · ${overdue.length} OVERDUE` : ''}${totalActive > 0 ? ` · ${totalActive} TASK${totalActive !== 1 ? 'S' : ''}` : ''}`,
-  });
+// ── Render: Meditate ───────────────────────────────────────────────────
+function renderMeditateView() {
+  setContentHeader({ title: 'Meditate', subtitle: `${state.meditateSessions.length} SESSIONS LOGGED` });
   document.getElementById('content').innerHTML = `
-    <div class="week-strip">${strip}</div>
-    ${renderInlineAdd()}
-    <div id="task-sections">
-      ${overdueSection}
-      ${totalActive === 0 && overdue.length === 0 && dates.every(d => ws().tasks.filter(t => !t.parentId && t.doDate === d).length === 0)
-        ? `<div class="empty"><div class="empty-icon">${ICONS.emptyCalendar}</div><div class="empty-title">Nothing scheduled this week</div><div class="empty-sub">Tasks with a Do Date this week appear here</div></div>`
-        : sections}
+    <p class="view-intro">Not a breathing pattern — a way of holding attention. Pick a style and the timer (and a bell) does the rest.</p>
+    <div class="grid">${MEDITATE_STYLES.map(m => `
+      <button class="tcard" onclick="openSession('meditate','${m.id}')">
+        <div class="tc-top"><h3>${esc(m.name)}</h3><span class="tc-tag">${esc(m.tag)}</span></div>
+        <div class="tc-pattern">${esc(m.pattern)} · ${m.minutes} min</div>
+        <div class="tc-desc">${esc(m.desc)}</div>
+      </button>`).join('')}</div>
+    <div class="log-section">
+      <div class="section-label">Recent sessions</div>
+      ${renderLogRows(state.meditateSessions)}
     </div>
   `;
 }
 
-// ── Gmail Sync ────────────────────────────────────────────────────────
-async function openGmailModal() {
-  document.getElementById('gmail-modal').style.display = 'flex';
-  document.getElementById('gmail-list').innerHTML = '<div class="gmail-status">Searching for emails with [task] in subject…</div>';
-  document.getElementById('gmail-import-btn').style.display = 'none';
-  document.getElementById('gmail-import-count').textContent = '';
-  pendingEmails = [];
+function renderLogRows(sessions) {
+  const rows = sessions.slice(-8).reverse();
+  if (!rows.length) return '<div class="log-empty">Nothing logged yet — try one above.</div>';
+  return rows.map(r => `
+    <div class="log-row">
+      <span class="lr-dot" style="background:var(--gold)"></span>
+      <span class="lr-name">${esc(r.name)}</span>
+      <span class="lr-time">${fmtSessionTime(r)}</span>
+    </div>`).join('');
+}
+function fmtSessionTime(r) {
+  const d = new Date(r.startedAt);
+  const dateStr = `${MONTH_ABBR[d.getMonth()]} ${d.getDate()}`;
+  const durStr = r.durationSec > 90 ? Math.round(r.durationSec/60)+' min' : (r.durationSec||'—')+'s';
+  return `${dateStr} · ${durStr}`;
+}
 
+// ── Session engine (shared by Breathe phase-cycles + Meditate stages) ──
+let current = null;
+let phaseTimer = null;
+let phaseTimer2 = null;
+let cycleCount = 0;
+let sessionStartTime = 0;
+let wimhofRound = 1;
+let wimhofHoldStart = 0;
+let wimhofHoldInterval = null;
+let audioCtx = null;
+
+function playBell() {
   try {
-    const response = await fetch('/api/outlook', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'fetch' })
-    });
-    if (response.status === 401) {
-      const data = await response.json();
-      if (data.error === 'NOT_AUTHED') {
-        document.getElementById('gmail-list').innerHTML = `
-          <div class="gmail-status">
-            <p style="margin-bottom:12px">You need to connect your Gmail account first.</p>
-            <button class="btn btn-primary" onclick="connectGmail()">Connect Gmail</button>
-          </div>`;
-        return;
-      }
-    }
-    const data = await response.json();
-    if (data.error) throw new Error(data.error);
-    const emails = data.emails || [];
-    if (!emails.length) {
-      document.getElementById('gmail-list').innerHTML = '<div class="gmail-status">No emails found with [task] in the subject.</div>';
-      return;
-    }
-    pendingEmails = emails;
-    document.getElementById('gmail-list').innerHTML = emails.map((e, i) => `
-      <div class="gmail-item">
-        <input type="checkbox" id="email-${i}" checked onchange="updateImportCount()">
-        <div class="gmail-item-body">
-          <div class="gmail-item-subject">${esc(e.subject)}</div>
-          <div class="gmail-item-preview">${esc(e.from)} · ${esc(e.date)}</div>
-          <div class="gmail-item-preview" style="margin-top:3px">${esc((e.body||'').slice(0,120))}…</div>
-        </div>
-      </div>`).join('');
-    document.getElementById('gmail-import-btn').style.display = '';
-    updateImportCount();
-  } catch(err) {
-    document.getElementById('gmail-list').innerHTML = `<div class="gmail-status">Error: ${esc(String(err))}.</div>`;
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const t = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+    osc.type = 'sine'; osc.frequency.value = 528;
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.18, t+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t+2.2);
+    osc.start(t); osc.stop(t+2.2);
+  } catch(e) {}
+}
+
+function openSession(kind, id) {
+  current = { kind, id, def: (kind==='breathe' ? BREATH_PATTERNS : MEDITATE_STYLES).find(x=>x.id===id) };
+  cycleCount = 0; wimhofRound = 1;
+  document.getElementById('session-overlay').classList.add('active');
+  document.getElementById('session-done').classList.remove('active');
+  document.getElementById('pacer-block').style.display = '';
+  document.getElementById('wimhof-hold-block').style.display = 'none';
+  document.getElementById('rate-picker-block').style.display = current.def.adjustable ? 'block' : 'none';
+  document.getElementById('safety-note').style.display = current.def.special === 'wimhof' ? 'block' : 'none';
+  document.getElementById('s-name').textContent = current.def.name;
+  document.getElementById('s-round').textContent = '';
+  document.getElementById('phase-label').textContent = 'Ready';
+  document.getElementById('phase-sub').textContent = current.kind==='breathe'
+    ? (current.def.special ? '3 rounds · tap Begin' : current.def.adjustable ? 'Pick a rate below' : `${current.def.cycles} cycles · about ${Math.round(current.def.phases.reduce((n,p)=>n+p.secs,0)*current.def.cycles/60)} min`)
+    : `${current.def.minutes} minutes`;
+  document.getElementById('pacer-shape').style.transition = 'none';
+  document.getElementById('pacer-shape').style.transform = 'scale(0.72)';
+  document.getElementById('session-controls').innerHTML = '<button class="sbtn primary" onclick="startPhaseSession()">Begin</button>';
+  if (current.def.adjustable) renderRatePicker();
+}
+
+function renderRatePicker() {
+  const rates = [4.5, 5, 5.5, 6, 6.5];
+  document.getElementById('rate-picker').innerHTML = rates.map(r => `
+    <button class="rate-chip${r===resonanceRate?' selected':''}" onclick="pickResonanceRate(${r})">${r} br/min</button>
+  `).join('');
+}
+function pickResonanceRate(r) { resonanceRate = r; renderRatePicker(); }
+
+function startPhaseSession() {
+  sessionStartTime = Date.now();
+  document.getElementById('session-controls').innerHTML = '<button class="sbtn" onclick="endSession()">Stop</button>';
+  document.getElementById('rate-picker-block').style.display = 'none';
+  if (current.def.special === 'wimhof') { runWimHofRound(); return; }
+  if (current.kind === 'meditate') { runMeditateSession(); return; }
+  const phases = current.def.adjustable
+    ? [{label:'Inhale',secs:30/resonanceRate},{label:'Exhale',secs:30/resonanceRate}]
+    : current.def.phases;
+  runBreathPhase(0, phases);
+}
+
+function runBreathPhase(i, phases) {
+  if (i >= phases.length) { cycleCount++; if (cycleCount >= current.def.cycles) { finishSession(); return; } i = 0; }
+  const phase = phases[i];
+  const shape = document.getElementById('pacer-shape');
+  document.getElementById('phase-label').textContent = phase.label;
+  document.getElementById('phase-sub').textContent = `cycle ${cycleCount+1} of ${current.def.cycles}`;
+  shape.style.transition = `transform ${phase.secs}s cubic-bezier(0.45,0,0.55,1)`;
+  const l = phase.label.toLowerCase();
+  if (l.includes('inhale')) shape.style.transform = 'scale(2.15)';
+  else if (l.includes('exhale')) shape.style.transform = 'scale(0.5)';
+  phaseTimer = setTimeout(() => runBreathPhase(i+1, phases), phase.secs*1000);
+}
+
+function runWimHofRound() {
+  document.getElementById('s-round').textContent = `Round ${wimhofRound} of ${current.def.rounds}`;
+  let breath = 0;
+  const shape = document.getElementById('pacer-shape');
+  document.getElementById('phase-sub').textContent = '';
+  function powerBreath() {
+    breath++;
+    if (breath > 30) { startWimHofHold(); return; }
+    document.getElementById('phase-label').textContent = 'Breath ' + breath;
+    shape.style.transition = 'transform 1.2s ease-in-out';
+    shape.style.transform = 'scale(1.9)';
+    phaseTimer = setTimeout(() => {
+      shape.style.transform = 'scale(0.5)';
+      phaseTimer = setTimeout(powerBreath, 1200);
+    }, 1200);
   }
+  document.getElementById('phase-label').textContent = '30 power breaths';
+  phaseTimer = setTimeout(powerBreath, 900);
 }
-
-function updateImportCount() {
-  const checked = pendingEmails.filter((_,i) => document.getElementById('email-'+i)?.checked).length;
-  document.getElementById('gmail-import-count').textContent = `${checked} email${checked!==1?'s':''} selected`;
+function startWimHofHold() {
+  document.getElementById('pacer-block').style.display = 'none';
+  document.getElementById('wimhof-hold-block').style.display = 'block';
+  document.getElementById('phase-label').textContent = '';
+  wimhofHoldStart = Date.now();
+  document.getElementById('session-controls').innerHTML = '<button class="sbtn primary" onclick="endWimHofHold()">I need to breathe</button>';
+  wimhofHoldInterval = setInterval(() => {
+    const s = Math.floor((Date.now()-wimhofHoldStart)/1000);
+    document.getElementById('wimhof-timer').textContent = Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+  }, 200);
 }
-
-async function importSelectedEmails() {
-  const selected = pendingEmails.filter((_,i) => document.getElementById('email-'+i)?.checked);
-  if (!selected.length) return;
-  document.getElementById('gmail-import-btn').textContent = 'Importing…';
-  document.getElementById('gmail-import-btn').disabled = true;
-  for (const email of selected) {
-    try {
-      const parseRes = await fetch('/api/outlook', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'parse', email, listIds: ws().lists.map(l => l.id) })
-      });
-      const parseData = await parseRes.json();
-      if (parseData.error) throw new Error(parseData.error);
-      const parsed = parseData.task;
-      ws().tasks.push({ id: uid(), name: parsed.name || email.subject.replace(/\[task\]/gi,'').trim(),
-        listId: ws().lists.find(l => l.id === parsed.listId) ? parsed.listId : ws().lists[0].id,
-        status: 'To do', priority: ['High','Medium','Low'].includes(parsed.priority) ? parsed.priority : 'Medium',
-        category: parsed.category || '', deadlineDate: parsed.deadlineDate || '', deadlineTime: '',
-        doDate: parsed.doDate || '', doTime: '', recurrence: '', notes: parsed.notes || '',
-        parentId: null, importedFromEmail: email.id });
-    } catch(e) {
-      ws().tasks.push({ id: uid(), name: email.subject.replace(/\[task\]/gi,'').trim(),
-        listId: ws().lists[0].id, status: 'To do', priority: 'Medium',
-        category: '', deadlineDate: '', deadlineTime: '', doDate: '', doTime: '',
-        recurrence: '', notes: email.body || '', parentId: null });
+function endWimHofHold() {
+  clearInterval(wimhofHoldInterval);
+  document.getElementById('wimhof-hold-block').style.display = 'none';
+  document.getElementById('pacer-block').style.display = '';
+  document.getElementById('phase-label').textContent = 'Recovery inhale — hold';
+  const shape = document.getElementById('pacer-shape');
+  shape.style.transition = 'transform 2s ease-in-out'; shape.style.transform = 'scale(2.15)';
+  document.getElementById('session-controls').innerHTML = '';
+  let s = 15;
+  document.getElementById('phase-sub').textContent = s + 's';
+  const iv = setInterval(() => {
+    s--; document.getElementById('phase-sub').textContent = s + 's';
+    if (s<=0) {
+      clearInterval(iv);
+      shape.style.transition = 'transform 1s ease-in-out'; shape.style.transform = 'scale(0.72)';
+      if (wimhofRound >= current.def.rounds) { finishSession(); }
+      else { wimhofRound++; setTimeout(runWimHofRound, 1200); }
     }
-  }
-  save(); closeGmailModal(); render();
+  }, 1000);
 }
 
-async function connectGmail() {
-  const clientId = 'a187c147-706a-4de2-bb67-a5eb8a566c20';
-  const tenantId = '5618660f-3008-458d-9f44-ed60f5495a14';
-  const redirectUri = window.location.origin + '/api/auth';
-  const scope = 'https://graph.microsoft.com/Mail.Read offline_access';
-  const url = 'https://login.microsoftonline.com/' + tenantId + '/oauth2/v2.0/authorize?client_id=' + clientId + '&redirect_uri=' + encodeURIComponent(redirectUri) + '&response_type=code&scope=' + encodeURIComponent(scope) + '&prompt=consent';
-  const popup = window.open(url, 'outlook_auth', 'width=500,height=600');
-  if (!popup) { alert('Please allow popups for this site and try again.'); return; }
-  window.addEventListener('message', async (e) => {
-    if (e.data === 'outlook_authed') {
-      popup && popup.close();
-      document.getElementById('gmail-list').innerHTML = '<div class="gmail-status">Connected! Loading emails…</div>';
-      await openGmailModal();
+function runMeditateSession() {
+  playBell();
+  const def = current.def;
+  const totalSecs = def.minutes * 60;
+  const shape = document.getElementById('pacer-shape');
+  shape.style.transition = 'transform 4s ease-in-out';
+
+  if (def.mode === 'stages') {
+    const per = totalSecs / def.stages.length;
+    let i = 0;
+    function stage() {
+      if (i >= def.stages.length) { finishSession(); return; }
+      document.getElementById('phase-label').textContent = def.stages[i];
+      document.getElementById('phase-sub').textContent = `stage ${i+1} of ${def.stages.length}`;
+      shape.style.transform = shape.style.transform === 'scale(1.05)' ? 'scale(0.85)' : 'scale(1.05)';
+      i++;
+      phaseTimer = setTimeout(stage, per*1000);
     }
-  }, { once: true });
-}
-
-function closeGmailModal() {
-  document.getElementById('gmail-modal').style.display = 'none';
-  document.getElementById('gmail-import-btn').textContent = 'Import selected';
-  document.getElementById('gmail-import-btn').disabled = false;
-}
-
-// ── Idea View ─────────────────────────────────────────────────────────
-function renderIdeaView() {
-  const space = getIdea(ws().activeList);
-  if (!space) return;
-  const notes = getIdeaNotes(ws().activeList).sort((a,b) => b.createdAt - a.createdAt);
-  setContentHeader({
-    title: space.name,
-    dotColor: space.color,
-    titleOnClick: `handleTitleClick(event,'${space.id}')`,
-    actionsHtml: `<button class="btn btn-ghost btn-sm" onclick="openEditIdeaSpaceModal('${space.id}')" title="Edit idea space" style="padding:4px 7px;display:flex;align-items:center">${ICONS.edit}</button>`,
-  });
-  document.getElementById('content').innerHTML = `
-    <div class="idea-add">
-      <textarea id="idea-input" placeholder="Capture an idea…" onkeydown="handleIdeaEnter(event)"></textarea>
-      <button class="btn btn-primary idea-add-btn" onclick="submitIdea()">Add</button>
-    </div>
-    <div id="idea-list">
-      ${notes.length === 0 ? `<div class="empty"><div class="empty-icon">${ICONS.emptyIdea}</div><div class="empty-title">No ideas yet</div><div class="empty-sub">Start capturing your thoughts above</div></div>` :
-        notes.map(n => `
-          <div class="idea-card" onclick="openIdeaModal('${n.id}')">
-            <div style="flex:1">
-              <div class="idea-text">${esc(n.text)}</div>
-              <div class="idea-date">${new Date(n.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
-            </div>
-            <button class="icon-btn danger" onclick="event.stopPropagation();deleteNote('${n.id}')" style="flex-shrink:0">${ICONS.trash}</button>
-          </div>`).join('')}
-    </div>
-  `;
-  document.getElementById('idea-input')?.focus();
-}
-
-function handleIdeaEnter(e) {
-  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submitIdea(); }
-}
-function submitIdea() {
-  const text = document.getElementById('idea-input')?.value.trim();
-  if (!text) return;
-  if (!ws().notes) ws().notes = [];
-  ws().notes.push({ id: uid(), spaceId: ws().activeList, text, createdAt: Date.now() });
-  save(); renderIdeaView();
-}
-
-let editingNoteId = null;
-function openIdeaModal(id) {
-  editingNoteId = id;
-  const note = (ws().notes||[]).find(n => n.id === id); if (!note) return;
-  document.getElementById('idea-modal-title').textContent = 'Edit idea';
-  document.getElementById('im-text').value = note.text;
-  document.getElementById('idea-modal').style.display = 'flex';
-  document.getElementById('im-text').focus();
-}
-function closeIdeaModal() { document.getElementById('idea-modal').style.display = 'none'; }
-function saveIdea() {
-  const text = document.getElementById('im-text').value.trim(); if (!text) return;
-  const note = (ws().notes||[]).find(n => n.id === editingNoteId);
-  if (note) note.text = text;
-  closeIdeaModal(); save(); renderIdeaView();
-}
-function deleteIdeaFromModal() {
-  if (!confirm('Delete this idea?')) return;
-  deleteNote(editingNoteId); closeIdeaModal();
-}
-function deleteNote(id) {
-  ws().notes = (ws().notes||[]).filter(n => n.id !== id);
-  save(); renderIdeaView();
-}
-
-let editingIdeaSpaceId = null;
-let pickedIdeaColor = LIST_COLORS[2];
-
-function renderIdeaColorPicker() {
-  document.getElementById('ism-colors').innerHTML = LIST_COLORS.map(c =>
-    `<div class="color-dot${pickedIdeaColor===c?' selected':''}" style="background:${c}" onclick="pickIdeaColor('${c}')"></div>`).join('');
-}
-function pickIdeaColor(c) { pickedIdeaColor = c; renderIdeaColorPicker(); }
-
-function openNewIdeaModal() {
-  editingIdeaSpaceId = null; pickedIdeaColor = LIST_COLORS[2];
-  document.getElementById('idea-space-modal-title').textContent = 'New idea space';
-  document.getElementById('ism-name').value = '';
-  document.getElementById('ism-delete-btn').style.display = 'none';
-  renderIdeaColorPicker();
-  document.getElementById('idea-space-modal').style.display = 'flex';
-  document.getElementById('ism-name').focus();
-}
-function openEditIdeaSpaceModal(id) {
-  editingIdeaSpaceId = id;
-  const space = getIdea(id); pickedIdeaColor = space.color;
-  document.getElementById('idea-space-modal-title').textContent = 'Edit idea space';
-  document.getElementById('ism-name').value = space.name;
-  document.getElementById('ism-delete-btn').style.display = 'block';
-  renderIdeaColorPicker();
-  document.getElementById('idea-space-modal').style.display = 'flex';
-  document.getElementById('ism-name').focus();
-}
-function closeIdeaSpaceModal() { document.getElementById('idea-space-modal').style.display = 'none'; }
-function saveIdeaSpace() {
-  const name = document.getElementById('ism-name').value.trim(); if (!name) return;
-  if (!ws().ideas) ws().ideas = [];
-  if (editingIdeaSpaceId) { const s = getIdea(editingIdeaSpaceId); s.name = name; s.color = pickedIdeaColor; }
-  else { ws().ideas.push({ id: uid(), name, color: pickedIdeaColor }); }
-  closeIdeaSpaceModal(); save(); render();
-}
-function deleteIdeaSpaceFromModal() {
-  const space = getIdea(editingIdeaSpaceId);
-  const noteCount = getIdeaNotes(editingIdeaSpaceId).length;
-  if (!confirm(noteCount > 0 ? `Delete "${space.name}"? This will delete ${noteCount} idea${noteCount>1?'s':''}.` : `Delete "${space.name}"?`)) return;
-  ws().ideas = (ws().ideas||[]).filter(s => s.id !== editingIdeaSpaceId);
-  ws().notes = (ws().notes||[]).filter(n => n.spaceId !== editingIdeaSpaceId);
-  if (ws().activeList === editingIdeaSpaceId) ws().activeList = ws().lists[0]?.id || '';
-  closeIdeaSpaceModal(); save(); render();
-}
-
-// ── Workspace Modal ───────────────────────────────────────────────────
-function renderWorkspaceColorPicker() {
-  document.getElementById('wm-colors').innerHTML = LIST_COLORS.map(c =>
-    `<div class="color-dot${pickedWorkspaceColor===c?' selected':''}" style="background:${c}" onclick="pickWorkspaceColor('${c}')"></div>`).join('');
-}
-function pickWorkspaceColor(c) { pickedWorkspaceColor = c; renderWorkspaceColorPicker(); }
-
-function openNewWorkspaceModal() {
-  editingWorkspaceId = null; pickedWorkspaceColor = LIST_COLORS[0];
-  document.getElementById('workspace-modal-title').textContent = 'New workspace';
-  document.getElementById('wm-name').value = '';
-  document.getElementById('wm-delete-btn').style.display = 'none';
-  renderWorkspaceColorPicker();
-  document.getElementById('workspace-modal').style.display = 'flex';
-  document.getElementById('wm-name').focus();
-}
-function openEditWorkspaceModal(id) {
-  editingWorkspaceId = id;
-  const w = state.workspaces[id]; pickedWorkspaceColor = w.color;
-  document.getElementById('workspace-modal-title').textContent = 'Edit workspace';
-  document.getElementById('wm-name').value = w.name;
-  document.getElementById('wm-delete-btn').style.display = Object.keys(state.workspaces).length > 1 ? 'block' : 'none';
-  renderWorkspaceColorPicker();
-  document.getElementById('workspace-modal').style.display = 'flex';
-  document.getElementById('wm-name').focus();
-}
-function closeWorkspaceModal() { document.getElementById('workspace-modal').style.display = 'none'; }
-function saveWorkspace() {
-  const name = document.getElementById('wm-name').value.trim(); if (!name) return;
-  if (editingWorkspaceId) {
-    state.workspaces[editingWorkspaceId].name = name;
-    state.workspaces[editingWorkspaceId].color = pickedWorkspaceColor;
+    stage();
   } else {
-    const id = uid();
-    state.workspaces[id] = { ...makeDefaultWorkspace(id), name, color: pickedWorkspaceColor };
-    state.workspaceOrder.push(id);
-  }
-  closeWorkspaceModal(); save(); render();
-}
-function deleteWorkspaceFromModal() {
-  const w = state.workspaces[editingWorkspaceId];
-  const taskCount = w.tasks?.length || 0;
-  const msg = taskCount > 0
-    ? `Delete "${w.name}"? This will permanently delete ${taskCount} task${taskCount>1?'s':''} and all associated data.`
-    : `Delete workspace "${w.name}"?`;
-  if (!confirm(msg)) return;
-  delete state.workspaces[editingWorkspaceId];
-  state.workspaceOrder = state.workspaceOrder.filter(id => id !== editingWorkspaceId);
-  if (state.activeWorkspace === editingWorkspaceId) state.activeWorkspace = state.workspaceOrder[0];
-  closeWorkspaceModal(); save(); render();
-}
-
-function renderSearch() {
-  const q = searchQuery.toLowerCase();
-  const matches = ws().tasks.filter(t => !t.parentId && (
-    t.name.toLowerCase().includes(q) || (t.category||'').toLowerCase().includes(q) || (t.notes||'').toLowerCase().includes(q)
-  ));
-  const byList = {};
-  matches.forEach(t => { if (!byList[t.listId]) byList[t.listId] = []; byList[t.listId].push(t); });
-  setContentHeader({
-    title: 'Search results',
-    subtitle: `${matches.length} result${matches.length!==1?'s':''} for "${esc(searchQuery)}"`,
-  });
-  document.getElementById('content').innerHTML = `
-    ${matches.length === 0 ? `<div class="empty"><div class="empty-icon">${ICONS.emptySearch}</div><div class="empty-title">No results</div><div class="empty-sub">Try a different search term</div></div>` :
-      Object.entries(byList).map(([listId, tasks]) => {
-        const list = getList(listId);
-        return `<div class="search-group">
-          <div class="search-group-label"><span class="list-dot" style="background:${list?.color||'#999'}"></span>${esc(list?.name||listId)}</div>
-          ${tasks.map(t => renderSingleTaskCard(t, null, null)).join('')}
-        </div>`;
-      }).join('')}
-  `;
-}
-
-function renderInlineAdd() {
-  return `<div class="inline-add" id="inline-add" onclick="expandInlineAdd()">
-    <div class="inline-add-collapsed">
-      <span style="color:var(--text-faint);font-size:16px">+</span>
-      <input class="inline-add-name" id="ia-name" placeholder="Add a task…" oninput="expandInlineAdd()" />
-    </div>
-    <div class="inline-add-fields">
-      <div class="inline-field"><label>Do date</label><input type="date" id="ia-do-date" /></div>
-      <div class="inline-field"><label>Recurrence</label><select id="ia-recurrence"><option value="">None</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>
-      <div class="inline-field"><label>Notes</label><textarea id="ia-notes" placeholder="Any extra context…"></textarea></div>
-      <div class="inline-add-footer">
-        <button class="btn btn-ghost" onclick="collapseInlineAdd()">Cancel</button>
-        <button class="btn btn-primary" onclick="submitInlineAdd()">Add task</button>
-      </div>
-    </div>
-  </div>`;
-}
-
-function renderTaskCards(tasks, listId) {
-  return tasks.map(t => renderSingleTaskCard(t, listId, null)).join('');
-}
-
-function renderSingleTaskCard(t, listId, sourceList) {
-  const subs = getSubtasks(t.id);
-  const doneSubs = subs.filter(s => s.status === 'Done').length;
-  const expanded = expandedTasks.has(t.id);
-  const over = isOverdue(t.deadlineDate, t.status);
-  const progressPct = subs.length > 0 ? Math.round((doneSubs / subs.length) * 100) : 0;
-  const list = sourceList || getList(t.listId);
-
-  return `<div class="task-card${t.status==='Done'?' done':''}" id="tc-${t.id}"
-    style="border-left: 4px solid ${list?.color || 'var(--gold)'}"
-    draggable="true" ondragstart="dragStart(event,'${t.id}')" ondragover="dragOver(event,'${t.id}')" ondrop="dragDrop(event,'${t.id}','${listId||t.listId}')" ondragleave="dragLeave(event)" ondragend="dragEnd(event)">
-    <div class="swipe-hint" aria-hidden="true"><span class="sh-left">Done</span><span class="sh-right">Tomorrow</span></div>
-    <div class="task-row" onclick="openTaskModal('${t.id}')" style="cursor:pointer">
-      <span class="drag-handle" title="Drag to reorder">${ICONS.drag}</span>
-      <div class="check-wrap" onclick="event.stopPropagation()"><div class="check${t.status==='Done'?' checked':''}" onclick="toggleDone('${t.id}')"></div></div>
-      <div class="task-body">
-        <div class="task-name${t.status==='Done'?' done':''}" onclick="handleTaskNameClick(event,'${t.id}')" title="Double-click to rename">${esc(t.name)}</div>
-        ${t.notes ? `<div class="task-note">${esc(t.notes)}</div>` : ''}
-        <div class="task-meta" style="margin-top:5px">
-          ${t.deadlineDate ? `<span class="badge badge-due${over?' overdue':''}" style="display:inline-flex;align-items:center;gap:3px">${ICONS.clock} ${fmtDateTime(t.deadlineDate, t.deadlineTime)}${over?' · overdue':''}</span>` : ''}
-          ${t.doDate ? `<span class="badge badge-dodate" style="display:inline-flex;align-items:center;gap:3px">${ICONS.calSmall} ${fmtDateTime(t.doDate, t.doTime)}</span>` : ''}
-          ${t.recurrence ? `<span class="badge badge-recurring" style="display:inline-flex;align-items:center;gap:3px">${ICONS.repeat} ${t.recurrence}</span>` : ''}
-          ${(ws().activeList === '__today__' || searchQuery) && list ? `<span class="badge badge-list">${esc(list.name)}</span>` : ''}
-          ${subs.length > 0 ? `<span class="badge badge-status">${doneSubs}/${subs.length} subtasks</span>` : ''}
-        </div>
-        ${subs.length > 0 ? `<div class="progress-bar"><div class="progress-fill" style="width:${progressPct}%"></div></div>` : ''}
-      </div>
-      <div class="task-right" onclick="event.stopPropagation()">
-        <button class="icon-btn" aria-label="${expanded ? 'Collapse' : 'Expand'}" onclick="toggleExpand('${t.id}')">${expanded ? ICONS.chevUp : ICONS.chevDown}</button>
-        <button class="icon-btn" aria-label="Edit task" onclick="openTaskModal('${t.id}')">${ICONS.edit}</button>
-        <button class="icon-btn danger" aria-label="Delete task" onclick="deleteTask('${t.id}')">${ICONS.trash}</button>
-      </div>
-    </div>
-    ${expanded ? renderSubtasks(t.id, subs) : ''}
-  </div>`;
-}
-
-function renderSubtasks(parentId, subs) {
-  return `<div class="subtasks">
-    ${subs.map(s => `<div class="subtask-row">
-      <div class="check${s.status==='Done'?' checked':''}" onclick="toggleDone('${s.id}')" style="width:15px;height:15px;border-radius:4px;flex-shrink:0"></div>
-      <span class="subtask-name${s.status==='Done'?' done':''}">${esc(s.name)}</span>
-      <button class="icon-btn danger" style="width:22px;height:22px;font-size:12px" onclick="deleteTask('${s.id}')"><svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="10" y2="10"/><line x1="10" y1="1" x2="1" y2="10"/></svg></button>
-    </div>`).join('')}
-    <div class="subtask-add-wrap">
-      <div style="color:var(--text-faint);font-size:13px">+</div>
-      <input placeholder="Add subtask…" onkeydown="handleSubtaskAdd(event,'${parentId}')" />
-    </div>
-  </div>`;
-}
-
-function renderEmpty() {
-  return `<div class="empty"><div class="empty-icon">${ICONS.emptyCheck}</div><div class="empty-title">All clear</div><div class="empty-sub">Nothing left to do here</div><button class="empty-cta" onclick="expandInlineAdd()">+ Add task</button></div>`;
-}
-
-// ── Drag & Drop ──────────────────────────────────────────────────────
-function initDrag() {}
-function dragStart(e, id) {
-  dragSrcId = id; e.dataTransfer.effectAllowed = 'move';
-  setTimeout(() => { const el = document.getElementById('tc-'+id); if(el) el.classList.add('dragging'); }, 0);
-}
-function dragOver(e, id) {
-  e.preventDefault(); e.dataTransfer.dropEffect = 'move';
-  if (id === dragSrcId) return;
-  document.querySelectorAll('.task-card.drag-over').forEach(el => el.classList.remove('drag-over'));
-  const el = document.getElementById('tc-'+id); if(el) el.classList.add('drag-over');
-}
-function dragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
-function dragDrop(e, targetId, listId) {
-  e.preventDefault();
-  if (!dragSrcId || dragSrcId === targetId) return;
-  const cards = [...document.querySelectorAll('#task-sections .task-card')].map(el => el.id.replace('tc-',''));
-  const srcIdx = cards.indexOf(dragSrcId), tgtIdx = cards.indexOf(targetId);
-  if (srcIdx < 0 || tgtIdx < 0) return;
-  cards.splice(srcIdx, 1); cards.splice(tgtIdx, 0, dragSrcId);
-  ws().manualOrders[listId] = cards;
-  save(); render();
-}
-function dragEnd(e) {
-  document.querySelectorAll('.task-card').forEach(el => el.classList.remove('dragging','drag-over'));
-  dragSrcId = null;
-}
-function resetOrder(listId) { delete ws().manualOrders[listId]; save(); render(); }
-
-// ── Workspace switching ──────────────────────────────────────────────
-function switchWorkspace(id) {
-  workspaceSwitcherOpen = false;
-  if (state.activeWorkspace === id) { renderWorkspaceSwitcher(); return; }
-  state.activeWorkspace = id;
-  searchQuery = '';
-  const searchEl = document.getElementById('global-search'); if (searchEl) searchEl.value = '';
-  closeSidebar(); save(); render();
-}
-
-// ── Actions ──────────────────────────────────────────────────────────
-function setActiveList(id) {
-  ws().activeList = id;
-  searchQuery = ''; document.getElementById('global-search').value = '';
-  closeSidebar(); save(); render();
-}
-function toggleSidebar() {
-  document.querySelector('.sidebar').classList.toggle('open');
-  document.getElementById('sidebar-overlay').classList.toggle('visible');
-}
-function closeSidebar() {
-  document.querySelector('.sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').classList.remove('visible');
-}
-
-function toggleDoneCollapsed(listId) {
-  const cur = ws().completedCollapsed[listId];
-  ws().completedCollapsed[listId] = (cur === false) ? true : false;
-  save(); render();
-}
-
-function toggleDone(id) {
-  const t = ws().tasks.find(x => x.id === id); if (!t) return;
-  const wasDone = t.status === 'Done';
-  t.status = wasDone ? 'To do' : 'Done';
-  if (!wasDone) {
-    t.completedAt = new Date().toISOString();
-    if (t.recurrence && !t.parentId) {
-      ws().tasks.push({ ...t, id: uid(), status: 'To do', completedAt: null,
-        doDate: advanceDate(t.doDate, t.recurrence),
-        deadlineDate: advanceDate(t.deadlineDate, t.recurrence) });
+    document.getElementById('phase-label').textContent = def.mode==='count' ? '1' : '';
+    document.getElementById('phase-sub').textContent = def.mode==='count' ? 'breathing, counted' : 'sit';
+    let count = 1;
+    const breathLen = 5;
+    function pulse() {
+      shape.style.transform = shape.style.transform === 'scale(1.05)' ? 'scale(0.85)' : 'scale(1.05)';
+      if (def.mode === 'count') { document.getElementById('phase-label').textContent = String(count); count = count>=10?1:count+1; }
+      phaseTimer = setTimeout(pulse, breathLen*1000);
     }
-  } else { t.completedAt = null; }
-  save(); render();
-}
-
-function toggleExpand(id) {
-  if (expandedTasks.has(id)) expandedTasks.delete(id); else expandedTasks.add(id);
-  save(); render();
-}
-
-function rescheduleTomorrow(id) {
-  const t = ws().tasks.find(x => x.id === id); if (!t) return;
-  const d = new Date(TODAY + 'T00:00:00'); d.setDate(d.getDate() + 1);
-  t.doDate = d.toISOString().slice(0, 10);
-  save(); render();
-  autoSyncTask(t);
-}
-
-function deleteTask(id) {
-  const task = ws().tasks.find(t => t.id === id);
-  if (task?.calendarEventId) autoRemoveTask(task);
-  ws().tasks = ws().tasks.filter(t => t.id !== id && t.parentId !== id);
-  Object.keys(ws().manualOrders).forEach(listId => {
-    ws().manualOrders[listId] = ws().manualOrders[listId].filter(tid => tid !== id);
-  });
-  save(); render();
-}
-
-function handleSubtaskAdd(e, parentId) {
-  if (e.key !== 'Enter') return;
-  const val = e.target.value.trim(); if (!val) return;
-  const parent = ws().tasks.find(t => t.id === parentId);
-  ws().tasks.push({ id: uid(), name: val, listId: parent.listId, status: 'To do', priority: 'Medium',
-    category: '', deadlineDate: '', deadlineTime: '', doDate: '', doTime: '', recurrence: '', notes: '', parentId });
-  expandedTasks.add(parentId); save(); render();
-}
-
-function handleSearch(val) { searchQuery = val; renderContent(); renderHeaderStats(); }
-
-// ── Inline Add ───────────────────────────────────────────────────────
-function expandInlineAdd() {
-  const el = document.getElementById('inline-add');
-  if (!el || el.classList.contains('expanded')) return;
-  el.classList.add('expanded'); document.getElementById('ia-name').focus();
-}
-function collapseInlineAdd() {
-  const el = document.getElementById('inline-add'); if (!el) return;
-  el.classList.remove('expanded');
-  ['ia-name','ia-do-date','ia-notes'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
-  const r = document.getElementById('ia-recurrence'); if (r) r.value = '';
-}
-function submitInlineAdd() {
-  const name = document.getElementById('ia-name').value.trim();
-  if (!name) { document.getElementById('ia-name').focus(); return; }
-  const newTask = {
-    id: uid(), name,
-    listId: (ws().activeList === '__today__' || ws().activeList === '__thisweek__') ? ws().lists[0]?.id : ws().activeList,
-    status: 'To do',
-    priority: 'Medium',
-    category: '',
-    doDate: document.getElementById('ia-do-date').value || (ws().activeList === '__today__' ? TODAY : ''),
-    recurrence: document.getElementById('ia-recurrence').value,
-    notes: document.getElementById('ia-notes').value.trim(),
-    parentId: null,
-  };
-  ws().tasks.push(newTask);
-  collapseInlineAdd(); save(); render();
-  autoSyncTask(newTask);
-}
-
-// ── Task Modal ───────────────────────────────────────────────────────
-function openTaskModal(id) {
-  collapseInlineAdd();
-  editingTaskId = id;
-  const t = ws().tasks.find(x => x.id === id); if (!t) return;
-  document.getElementById('task-modal-title').textContent = 'Edit task';
-  document.getElementById('tm-name').value = t.name;
-  document.getElementById('tm-do-date').value = t.doDate || '';
-  document.getElementById('tm-recurrence').value = t.recurrence || '';
-  document.getElementById('tm-notes').value = t.notes || '';
-  document.getElementById('tm-list').innerHTML = ws().lists.map(l => `<option value="${l.id}"${t.listId===l.id?' selected':''}>${esc(l.name)}</option>`).join('');
-  document.getElementById('task-modal').style.display = 'flex';
-  document.getElementById('tm-name').focus();
-}
-// The "+" button adds whatever makes sense on the current page: a task on
-// any task-list view, an idea while viewing an idea space, a reflection
-// entry anywhere in Reflect (Goals/Rule of Life/Daily Reflection/Dashboard).
-function handleFabClick() {
-  const active = ws().activeList;
-  if (['__goals__', '__ruleoflife__', '__reflection__', '__dashboard__'].includes(active)) {
-    openNewReflectionModal();
-    return;
+    pulse();
+    phaseTimer2 = setTimeout(finishSession, totalSecs*1000);
   }
-  if (isIdeaSpace(active)) {
-    const el = document.getElementById('idea-input');
-    if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); }
-    return;
-  }
-  openNewTaskModal();
 }
 
-function openNewTaskModal() {
-  collapseInlineAdd();
-  editingTaskId = null;
-  const active = ws().activeList;
-  const defaultListId = (getList(active)) ? active : ws().lists[0]?.id;
-  const defaultDoDate = active === '__today__' ? TODAY : '';
-  document.getElementById('task-modal-title').textContent = 'Add task';
-  document.getElementById('tm-name').value = '';
-  document.getElementById('tm-do-date').value = defaultDoDate;
-  document.getElementById('tm-recurrence').value = '';
-  document.getElementById('tm-notes').value = '';
-  document.getElementById('tm-list').innerHTML = ws().lists.map(l => `<option value="${l.id}"${defaultListId===l.id?' selected':''}>${esc(l.name)}</option>`).join('');
-  document.getElementById('task-modal').style.display = 'flex';
-  document.getElementById('tm-name').focus();
-}
-function closeTaskModal() { document.getElementById('task-modal').style.display = 'none'; }
-function saveTask() {
-  const name = document.getElementById('tm-name').value.trim(); if (!name) return;
-  const fields = {
-    name,
-    doDate: document.getElementById('tm-do-date').value,
-    recurrence: document.getElementById('tm-recurrence').value,
-    notes: document.getElementById('tm-notes').value.trim(),
-    listId: document.getElementById('tm-list').value,
-  };
-  if (editingTaskId === null) {
-    const newTask = { id: uid(), status: 'To do', priority: 'Medium', category: '', parentId: null, ...fields };
-    ws().tasks.push(newTask);
-    closeTaskModal(); save(); render();
-    autoSyncTask(newTask);
-    return;
-  }
-  const i = ws().tasks.findIndex(t => t.id === editingTaskId); if (i < 0) return;
-  const updatedTask = { ...ws().tasks[i], ...fields };
-  ws().tasks[i] = updatedTask;
-  closeTaskModal(); save(); render();
-  autoSyncTask(updatedTask);
+function finishSession() {
+  clearTimeout(phaseTimer); clearTimeout(phaseTimer2); clearInterval(wimhofHoldInterval);
+  playBell();
+  const elapsed = Math.round((Date.now()-sessionStartTime)/1000);
+  const entry = { id: uid(), name: current.def.name, patternId: current.id, startedAt: sessionStartTime, durationSec: elapsed||60 };
+  if (current.kind === 'breathe') state.breatheSessions.push(entry);
+  else state.meditateSessions.push(entry);
+  save();
+  document.getElementById('done-summary').textContent = current.def.name + ' · logged just now';
+  document.getElementById('session-done').classList.add('active');
+  document.getElementById('session-controls').innerHTML = '';
+  renderContent();
 }
 
-// ── List Modal ───────────────────────────────────────────────────────
-function renderColorPicker() {
-  document.getElementById('lm-colors').innerHTML = LIST_COLORS.map(c =>
-    `<div class="color-dot${pickedColor===c?' selected':''}" style="background:${c}" onclick="pickColor('${c}')"></div>`).join('');
-}
-function pickColor(c) { pickedColor = c; renderColorPicker(); }
-function openNewListModal() {
-  editingListId = null; pickedColor = LIST_COLORS[0];
-  document.getElementById('list-modal-title').textContent = 'New list';
-  document.getElementById('lm-name').value = '';
-  document.getElementById('lm-delete-btn').style.display = 'none';
-  renderColorPicker(); document.getElementById('list-modal').style.display = 'flex';
-  document.getElementById('lm-name').focus();
-}
-function openEditListModal(id) {
-  editingListId = id; const l = getList(id); pickedColor = l.color;
-  document.getElementById('list-modal-title').textContent = 'Edit list';
-  document.getElementById('lm-name').value = l.name;
-  document.getElementById('lm-delete-btn').style.display = 'block';
-  renderColorPicker(); document.getElementById('list-modal').style.display = 'flex';
-  document.getElementById('lm-name').focus();
-}
-function deleteListFromModal() { closeListModal(); deleteList(editingListId); }
-function closeListModal() { document.getElementById('list-modal').style.display = 'none'; }
-function saveList() {
-  const name = document.getElementById('lm-name').value.trim(); if (!name) return;
-  if (editingListId) { const l = getList(editingListId); l.name = name; l.color = pickedColor; }
-  else { ws().lists.push({ id: uid(), name, color: pickedColor }); }
-  closeListModal(); save(); render();
-}
-function deleteList(id) {
-  const list = getList(id);
-  const taskCount = ws().tasks.filter(t => t.listId === id).length;
-  if (!confirm(taskCount > 0 ? `Delete "${list.name}"? This will permanently delete ${taskCount} task${taskCount>1?'s':''}.` : `Delete "${list.name}"?`)) return;
-  ws().tasks = ws().tasks.filter(t => t.listId !== id);
-  ws().lists = ws().lists.filter(l => l.id !== id);
-  delete ws().manualOrders[id];
-  if (ws().activeList === id) ws().activeList = ws().lists[0]?.id || '';
-  save(); render();
-}
-
-// ── Inline name editing ──────────────────────────────────────────────
-let titleClickCount = 0, titleClickTimer = null;
-function handleTitleClick(e, listId) {
-  titleClickCount++;
-  clearTimeout(titleClickTimer);
-  titleClickTimer = setTimeout(() => {
-    if (titleClickCount >= 3) startInlineTitleEdit(listId);
-    titleClickCount = 0;
-  }, 300);
-}
-let sidebarClicks = {}, sidebarTimers = {};
-function handleSidebarListClick(e, listId) {
-  sidebarClicks[listId] = (sidebarClicks[listId] || 0) + 1;
-  clearTimeout(sidebarTimers[listId]);
-  sidebarTimers[listId] = setTimeout(() => {
-    const count = sidebarClicks[listId]; sidebarClicks[listId] = 0;
-    if (count >= 3) startInlineSidebarEdit(listId); else setActiveList(listId);
-  }, 300);
-}
-function startInlineTitleEdit(id) {
-  const item = getList(id) || getIdea(id); if (!item) return;
-  const display = document.getElementById('list-title-display'); if (!display) return;
-  const input = document.createElement('input'); input.className = 'list-title-input'; input.value = item.name;
-  display.replaceWith(input); input.focus(); input.select();
-  const commit = () => { const v = input.value.trim(); if (v) { item.name = v; save(); } render(); };
-  input.addEventListener('blur', commit);
-  input.addEventListener('keydown', e => { if (e.key==='Enter') input.blur(); if (e.key==='Escape') { input.value=item.name; input.blur(); } });
-}
-function startInlineSidebarEdit(listId) {
-  const list = getList(listId); const span = document.getElementById(`sidebar-list-name-${listId}`); if (!span) return;
-  const input = document.createElement('input'); input.className = 'list-name-input'; input.value = list.name;
-  span.replaceWith(input); input.focus(); input.select();
-  const commit = () => {
-    const v = input.value.trim(); if (v) { list.name = v; save(); }
-    renderSidebar();
-    const d = document.getElementById('list-title-display'); if (d) d.textContent = list.name;
-  };
-  input.addEventListener('blur', commit);
-  input.addEventListener('keydown', e => { if (e.key==='Enter') input.blur(); if (e.key==='Escape') { input.value=list.name; input.blur(); } });
-}
-
-// Double-click a task name to rename it in place, without opening the full modal.
-// Desktop-only: on mobile a tap should open the task immediately, no debounce delay.
-let taskNameClicks = {}, taskNameTimers = {};
-function handleTaskNameClick(e, id) {
-  e.stopPropagation();
-  if (window.innerWidth <= 640) { openTaskModal(id); return; }
-  taskNameClicks[id] = (taskNameClicks[id] || 0) + 1;
-  clearTimeout(taskNameTimers[id]);
-  taskNameTimers[id] = setTimeout(() => {
-    const count = taskNameClicks[id]; taskNameClicks[id] = 0;
-    if (count >= 2) startInlineTaskEdit(id); else openTaskModal(id);
-  }, 250);
-}
-function startInlineTaskEdit(id) {
-  const t = ws().tasks.find(x => x.id === id); if (!t) return;
-  const nameEl = document.querySelector(`#tc-${id} .task-name`); if (!nameEl) return;
-  const original = t.name;
-  nameEl.textContent = '';
-  nameEl.classList.add('editing');
-  const input = document.createElement('input');
-  input.className = 'task-name-edit-input';
-  input.value = original;
-  nameEl.appendChild(input);
-  input.focus(); input.select();
-  const commit = () => {
-    const val = input.value.trim();
-    if (val && val !== original) { t.name = val; save(); }
-    render();
-  };
-  input.addEventListener('keydown', ev => {
-    if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
-    if (ev.key === 'Escape') { ev.preventDefault(); render(); }
-  });
-  input.addEventListener('blur', commit);
-  input.addEventListener('click', ev => ev.stopPropagation());
-}
-
-// ── Keyboard shortcuts ───────────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeTaskModal(); closeListModal(); closeGmailModal(); collapseInlineAdd(); closeIdeaModal(); closeIdeaSpaceModal(); closeWorkspaceModal(); closeGoalModal(); closeRuleModal(); closeReflectionModal(); closePromptModal(); }
-  if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); expandInlineAdd(); }
-  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-    e.preventDefault();
-    if (document.getElementById('task-modal').style.display !== 'none') { saveTask(); return; }
-    if (document.getElementById('list-modal').style.display !== 'none') { saveList(); return; }
-    if (document.getElementById('workspace-modal').style.display !== 'none') { saveWorkspace(); return; }
-    if (document.getElementById('idea-modal').style.display !== 'none') { saveIdea(); return; }
-    if (document.getElementById('idea-space-modal').style.display !== 'none') { saveIdeaSpace(); return; }
-    const el = document.getElementById('inline-add');
-    if (el && el.classList.contains('expanded')) { submitInlineAdd(); return; }
-  }
-});
-
-document.addEventListener('click', e => {
-  const ctx = document.getElementById('ctx-menu');
-  if (ctx) ctx.style.display = 'none';
-  // Collapse inline-add when clicking outside it
-  const ia = document.getElementById('inline-add');
-  if (ia && ia.classList.contains('expanded') && !ia.contains(e.target)) {
-    collapseInlineAdd();
-  }
-});
-
-// ── Top-level state bootstrap ────────────────────────────────────────
-function ensureTopLevel() {
-  if (!state.goals) state.goals = { personal: [], professional: [] };
-  if (!state.goals.personal) state.goals.personal = [];
-  if (!state.goals.professional) state.goals.professional = [];
-  if (!state.ruleItems) state.ruleItems = [];
-  if (!state.ruleChecks) state.ruleChecks = [];
-  if (!state.reflections) state.reflections = [];
-  if (!state.prompts || !state.prompts.length) state.prompts = DEFAULT_PROMPTS.map(p => ({...p}));
+function endSession() {
+  clearTimeout(phaseTimer); clearTimeout(phaseTimer2); clearInterval(wimhofHoldInterval);
+  document.getElementById('session-overlay').classList.remove('active');
+  document.getElementById('pacer-block').style.display = '';
+  document.getElementById('wimhof-hold-block').style.display = 'none';
+  current = null;
 }
 
 // ── Rule of Life helpers ──────────────────────────────────────────────
@@ -2170,21 +914,17 @@ function getWeekMonday(dateStr) {
 }
 
 function getRulePeriodLabel(cadence) {
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const MONTHS = MONTH_ABBR;
+  const DAYS = DAY_ABBR;
   const today = new Date(TODAY + 'T00:00:00');
-  if (cadence === 'daily') {
-    return `${DAYS[today.getDay()]} ${MONTHS[today.getMonth()]} ${today.getDate()}`;
-  }
+  if (cadence === 'daily') return `${DAYS[today.getDay()]} ${MONTHS[today.getMonth()]} ${today.getDate()}`;
   if (cadence === 'weekly') {
     const mon = new Date(getWeekMonday(TODAY) + 'T00:00:00');
     const sat = new Date(mon); sat.setDate(mon.getDate() + 5);
     const fmt = d => `${MONTHS[d.getMonth()]} ${d.getDate()}`;
     return `${fmt(mon)} – ${fmt(sat)}`;
   }
-  if (cadence === 'monthly') {
-    return `${MONTHS[today.getMonth()]} ${today.getFullYear()}`;
-  }
+  if (cadence === 'monthly') return `${MONTHS[today.getMonth()]} ${today.getFullYear()}`;
   if (cadence === 'quarterly') {
     const q = Math.floor(today.getMonth() / 3);
     const qStart = new Date(today.getFullYear(), q * 3, 1);
@@ -2226,9 +966,7 @@ function toggleRuleCheck(ruleId) {
   renderRuleOfLifeView();
 }
 
-// ── Dashboard helpers ─────────────────────────────────────────────────
-let dashWindow = 'year';
-
+// ── Practice/Dashboard helpers ────────────────────────────────────────
 function getDashWindowStart() {
   if (dashWindow === 'year') {
     const yearStart = new Date().getFullYear() + '-01-01';
@@ -2326,23 +1064,6 @@ function calcLongestStreak(ruleId, cadence) {
   return best;
 }
 
-function renderHeatmapHtml(ruleId, cadence) {
-  const windowStart = getDashWindowStart();
-  const allChecked = (state.ruleChecks||[]).filter(c=>c.ruleId===ruleId&&c.completed);
-  const days=[], d=new Date(windowStart+'T00:00:00'), end=new Date(TODAY+'T00:00:00');
-  while (d<=end) { days.push(d.toISOString().slice(0,10)); d.setDate(d.getDate()+1); }
-  return '<div class="heatmap">'+days.map(ds => {
-    let done=false;
-    if (cadence==='daily') done=allChecked.some(c=>c.date===ds);
-    else if (cadence==='weekly') { const mon=getWeekMonday(ds); const sat=new Date(mon+'T00:00:00'); sat.setDate(sat.getDate()+6); done=allChecked.some(c=>c.date>=mon&&c.date<=sat.toISOString().slice(0,10)); }
-    else if (cadence==='monthly') done=allChecked.some(c=>c.date.startsWith(ds.slice(0,7)));
-    else if (cadence==='quarterly') { const qs=getQuarterStart(ds); const qe=new Date(qs+'T00:00:00'); qe.setMonth(qe.getMonth()+3); qe.setDate(qe.getDate()-1); done=allChecked.some(c=>c.date>=qs&&c.date<=qe.toISOString().slice(0,10)); }
-    else if (cadence==='annually') done=allChecked.some(c=>c.date.startsWith(ds.slice(0,4)));
-    return `<div class="hm-cell${done?' done':''}" title="${ds}"></div>`;
-  }).join('')+'</div>';
-}
-
-// ── Prompt helper ─────────────────────────────────────────────────────
 function getTodayPrompt() {
   const prompts = state.prompts || [];
   if (!prompts.length) return null;
@@ -2374,8 +1095,6 @@ function renderGoalsView() {
 }
 
 // ── Render: Rule of Life ──────────────────────────────────────────────
-let ruleShowAll = true;
-
 function renderRuleOfLifeView() {
   const items = state.ruleItems || [];
   const CADENCE_ORDER = ['daily','weekly','monthly','annually'];
@@ -2420,10 +1139,6 @@ function renderRuleOfLifeView() {
 function toggleRuleShowAll() { ruleShowAll = !ruleShowAll; renderRuleOfLifeView(); }
 
 // ── Render: Reflection ────────────────────────────────────────────────
-let showPromptsSection = false;
-const MONTH_ABBR = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const DAY_ABBR = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-
 function renderReflectionView() {
   const reflections = (state.reflections||[]).sort((a,b)=>b.date.localeCompare(a.date));
   const todayEntry = reflections.find(r=>r.date===TODAY);
@@ -2495,20 +1210,49 @@ function renderRingHtml(pct, size) {
       <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#16233D" stroke-width="${sw}"
         stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
     </svg>
-    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Lora',Georgia,serif;font-weight:700;font-size:${fs}px;color:var(--accent);line-height:1">${pct}%</div>
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:${fs}px;color:var(--accent);line-height:1">${pct}%</div>
   </div>`;
 }
 
-// ── Render: Dashboard ─────────────────────────────────────────────────
-function renderDashboardView() {
+// ── Render: Practice (dashboard) ──────────────────────────────────────
+function renderPracticeView() {
   const items = state.ruleItems||[];
   const goals = state.goals||{personal:[],professional:[]};
   const reflections = state.reflections||[];
+  const breatheSessions = state.breatheSessions||[];
+  const meditateSessions = state.meditateSessions||[];
   const CADENCE_ORDER = ['daily','weekly','monthly','annually'];
   const categories = [...new Set(items.map(r=>r.category||'Other'))].sort();
 
+  // Activity streak across breathe/meditate/reflect/rule-checks
+  const activityDates = new Set([
+    ...breatheSessions.map(s=>new Date(s.startedAt).toISOString().slice(0,10)),
+    ...meditateSessions.map(s=>new Date(s.startedAt).toISOString().slice(0,10)),
+    ...reflections.map(r=>r.date),
+    ...(state.ruleChecks||[]).filter(c=>c.completed).map(c=>c.date),
+  ]);
+  let streak = 0;
+  { const d = new Date(TODAY+'T00:00:00'); while (activityDates.has(d.toISOString().slice(0,10))) { streak++; d.setDate(d.getDate()-1); } }
+
+  const weekMinutes = Math.round(
+    [...breatheSessions, ...meditateSessions]
+      .filter(s => (Date.now() - s.startedAt) < 7*86400000)
+      .reduce((n,s)=>n+s.durationSec,0) / 60
+  );
+
+  const days60 = [];
+  { const d = new Date(TODAY+'T00:00:00'); d.setDate(d.getDate()-59);
+    for (let i=0;i<60;i++){ days60.push(d.toISOString().slice(0,10)); d.setDate(d.getDate()+1); } }
+  const heatmapHtml = days60.map(ds => {
+    const hasBreathe = breatheSessions.some(s=>new Date(s.startedAt).toISOString().slice(0,10)===ds);
+    const hasMeditate = meditateSessions.some(s=>new Date(s.startedAt).toISOString().slice(0,10)===ds);
+    const hasReflect = reflections.some(r=>r.date===ds);
+    const cls = hasBreathe ? 'b' : hasMeditate ? 'm' : hasReflect ? 'r' : '';
+    return `<div class="hm-cell ${cls}" title="${ds}"></div>`;
+  }).join('');
+
   const ruleSections = categories.length===0
-    ? `<div class="empty" style="padding:40px 20px"><div class="empty-icon">${ICONS.emptyChart}</div><div class="empty-title">No Rule of Life items yet</div><div class="empty-sub">Add items in the Rule of Life view</div><button class="empty-cta" onclick="setActiveList('__ruleoflife__')">Go to Rule of Life</button></div>`
+    ? `<div class="empty" style="padding:40px 20px"><div class="empty-icon">${ICONS.emptyChart}</div><div class="empty-title">No Rule of Life items yet</div><div class="empty-sub">Add items in the Rule of Life view</div><button class="empty-cta" onclick="setActiveView('__ruleoflife__')">Go to Rule of Life</button></div>`
     : categories.map(cat=>{
         const catItems = items.filter(r=>(r.category||'Other')===cat).sort((a,b)=>CADENCE_ORDER.indexOf(a.cadence)-CADENCE_ORDER.indexOf(b.cadence));
         const catStats = catItems.map(r=>getRuleStats(r.id,r.cadence));
@@ -2558,8 +1302,20 @@ function renderDashboardView() {
       }).join('')}
     </div>`;
 
-  setContentHeader({ title: 'Dashboard' });
+  setContentHeader({ title: 'Practice' });
   document.getElementById('content').innerHTML = `
+    <div class="stat-row">
+      <div class="stat-tile"><div class="st-num">${streak}</div><div class="st-label">Day streak</div></div>
+      <div class="stat-tile"><div class="st-num">${breatheSessions.length}</div><div class="st-label">Breathe sessions</div></div>
+      <div class="stat-tile"><div class="st-num">${meditateSessions.length}</div><div class="st-label">Meditate sessions</div></div>
+      <div class="stat-tile"><div class="st-num">${weekMinutes}</div><div class="st-label">Minutes this week</div></div>
+    </div>
+    <div class="heatmap">${heatmapHtml}</div>
+    <div class="practice-legend">
+      <span><i class="dot" style="color:var(--gold)"></i>Breathe</span>
+      <span><i class="dot" style="color:var(--accent)"></i>Meditate</span>
+      <span><i class="dot" style="color:var(--green)"></i>Reflect</span>
+    </div>
     ${ruleSections}
     ${goalsSec}
     <div style="margin-top:40px;border-top:1px solid var(--border);padding-top:18px">
@@ -2624,8 +1380,6 @@ async function restoreBackup() {
 }
 
 // ── Goal CRUD ─────────────────────────────────────────────────────────
-let editingGoalId = null, editingGoalGroup = null;
-
 function openNewGoalModal(group) {
   editingGoalId = null; editingGoalGroup = group||'personal';
   document.getElementById('goal-modal-title').textContent = 'New goal';
@@ -2675,8 +1429,6 @@ function deleteGoalFromModal() {
 }
 
 // ── Rule CRUD ─────────────────────────────────────────────────────────
-let editingRuleId = null;
-
 function openNewRuleModal() {
   editingRuleId = null;
   document.getElementById('rule-modal-title').textContent = 'New commitment';
@@ -2727,8 +1479,6 @@ function deleteRuleFromModal() {
 }
 
 // ── Reflection CRUD ───────────────────────────────────────────────────
-let editingReflectionId = null, pickedEnergy = 0;
-
 function pickEnergy(val) {
   pickedEnergy = val;
   document.querySelectorAll('.energy-btn').forEach((b,i)=>b.classList.toggle('selected',i+1===val));
@@ -2795,8 +1545,6 @@ function deleteReflectionFromModal() {
 }
 
 // ── Prompt CRUD ───────────────────────────────────────────────────────
-let editingPromptId = null;
-
 function openNewPromptModal() {
   editingPromptId = null;
   document.getElementById('pm-title').textContent = 'New prompt';
@@ -2845,147 +1593,20 @@ function deletePromptFromModal() {
   closePromptModal(); save(); renderReflectionView();
 }
 
-// ── Calendar auto-sync helpers ────────────────────────────────────────
-async function autoSyncTask(task) {
-  const wsId = state.activeWorkspace;
-  if (!SYNC_WORKSPACES.includes(wsId)) return;
-  if (!calendarConnected[wsId]) return;
-  if (!task.doDate && !task.deadlineDate) return;
-  if (task.status === 'Done') return;
-  try {
-    const res = await fetch('/api/calendar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'sync', workspaceId: wsId, tasks: [task] })
-    });
-    const data = await res.json();
-    if (data.tasks && data.tasks[0]) {
-      const updated = data.tasks[0];
-      const idx = ws().tasks.findIndex(t => t.id === updated.id);
-      if (idx >= 0) { ws().tasks[idx] = updated; save(); }
-    }
-  } catch(e) { showCalendarToast('⚠️ Calendar sync failed — check connection.'); }
-}
-
-async function autoRemoveTask(task) {
-  if (!task.calendarEventId) return;
-  const wsId = state.activeWorkspace;
-  if (!calendarConnected[wsId]) return;
-  try {
-    await fetch('/api/calendar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete', workspaceId: wsId, eventId: task.calendarEventId })
-    });
-  } catch(e) {}
-}
-
-// ── Google Calendar Sync ─────────────────────────────────────────────
-async function handleCalendarSync() {
-  const wsId = state.activeWorkspace;
-  if (!calendarConnected[wsId]) {
-    await connectGoogleCalendar(wsId);
-  } else {
-    await runCalendarSync(wsId);
+// ── Keyboard shortcuts ───────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.getElementById('session-overlay').classList.contains('active') ? endSession() : null;
+    closeGoalModal(); closeRuleModal(); closeReflectionModal(); closePromptModal();
   }
-}
-
-async function connectGoogleCalendar(wsId) {
-  const btn = document.getElementById('cal-sync-btn');
-  if (btn) { btn.textContent = 'Connecting…'; btn.disabled = true; }
-
-  try {
-    const res = await fetch('/api/calendar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'auth_url', workspaceId: wsId, origin: window.location.origin })
-    });
-    const { url } = await res.json();
-    const popup = window.open(url, 'google_calendar_auth', 'width=500,height=620');
-    if (!popup) { alert('Please allow popups for this site, then try again.'); return; }
-
-    window.addEventListener('message', async (e) => {
-      if (typeof e.data === 'string' && e.data.startsWith('calendar_authed:')) {
-        const connectedWsId = e.data.split(':')[1];
-        popup && popup.close();
-        calendarConnected[connectedWsId] = true;
-        await runCalendarSync(connectedWsId);
-      } else if (e.data === 'calendar_auth_error') {
-        popup && popup.close();
-        alert('Google Calendar connection failed. Please try again.');
-        if (btn) { btn.innerHTML = ICONS.calendar + ' Connect Calendar'; btn.disabled = false; }
-      }
-    }, { once: true });
-  } catch(e) {
-    alert('Could not reach the server. Try again.');
-    if (btn) { btn.disabled = false; }
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+    e.preventDefault();
+    if (document.getElementById('goal-modal').style.display !== 'none') { saveGoal(); return; }
+    if (document.getElementById('rule-modal').style.display !== 'none') { saveRule(); return; }
+    if (document.getElementById('reflection-modal').style.display !== 'none') { saveReflection(); return; }
+    if (document.getElementById('prompt-modal').style.display !== 'none') { savePrompt(); return; }
   }
-}
-
-async function runCalendarSync(wsId) {
-  const btn = document.getElementById('cal-sync-btn');
-  if (btn) { btn.innerHTML = ICONS.calendar + ' Syncing…'; btn.disabled = true; }
-
-  const tasks = state.workspaces[wsId].tasks.filter(t =>
-    !t.parentId && t.status !== 'Done' && (t.doDate || t.deadlineDate)
-  );
-
-  if (tasks.length === 0) {
-    showCalendarToast('No tasks with dates to sync.');
-    if (btn) { btn.innerHTML = ICONS.calendar + ' Sync Calendar'; btn.disabled = false; }
-    return;
-  }
-
-  try {
-    const res = await fetch('/api/calendar', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'sync', workspaceId: wsId, tasks })
-    });
-
-    if (res.status === 401) {
-      calendarConnected[wsId] = false;
-      if (btn) { btn.innerHTML = ICONS.calendar + ' Connect Calendar'; btn.disabled = false; }
-      alert('Calendar session expired. Please reconnect.');
-      return;
-    }
-
-    const data = await res.json();
-
-    if (data.tasks) {
-      data.tasks.forEach(updated => {
-        const idx = state.workspaces[wsId].tasks.findIndex(t => t.id === updated.id);
-        if (idx >= 0) state.workspaces[wsId].tasks[idx] = updated;
-      });
-      save();
-    }
-
-    const msg = [
-      data.created > 0 ? `${data.created} created` : '',
-      data.updated > 0 ? `${data.updated} updated` : '',
-      data.errors > 0 ? `${data.errors} failed` : '',
-    ].filter(Boolean).join(', ');
-    showCalendarToast(`Calendar synced: ${msg || 'nothing to do'}`);
-  } catch(e) {
-    showCalendarToast('Sync failed — check your connection.');
-  } finally {
-    if (btn) { btn.innerHTML = ICONS.calendar + ' Sync Calendar'; btn.disabled = false; }
-  }
-}
-
-function showCalendarToast(msg) {
-  let toast = document.getElementById('cal-toast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'cal-toast';
-    toast.style.cssText = 'position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#16233D;color:white;padding:10px 18px;border-radius:24px;font-size:13px;font-weight:500;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,0.25);pointer-events:none;transition:opacity 0.3s;font-family:var(--font-body)';
-    document.body.appendChild(toast);
-  }
-  toast.textContent = msg;
-  toast.style.opacity = '1';
-  clearTimeout(toast._timer);
-  toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 3500);
-}
+});
 
 // Scroll focused input above keyboard on iOS PWA
 if (window.visualViewport) {
@@ -3002,20 +1623,17 @@ load();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js').then(reg => {
-      // When app comes to foreground: check for new code AND refresh data from cloud
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState !== 'visible') return;
         reg.update();
-        // Skip data refresh if user has a modal open or is typing a new task
         const modalOpen = [...document.querySelectorAll('.modal')].some(m => m.style.display === 'flex');
-        const inlineOpen = document.getElementById('inline-add')?.classList.contains('expanded');
-        if (!modalOpen && !inlineOpen) load();
+        const sessionOpen = document.getElementById('session-overlay').classList.contains('active');
+        if (!modalOpen && !sessionOpen) load();
       });
     }).catch(err => {
       console.warn('SW registration failed:', err);
     });
 
-    // When a new service worker takes control, reload once to get fresh code
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (refreshing) return;
