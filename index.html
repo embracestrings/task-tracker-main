@@ -159,6 +159,7 @@
     display: flex; flex-direction: column; gap: 9px; font-family: inherit;
   }
   .tcard:hover { border-color: var(--gold); transform: translateY(-2px); }
+  .continue-card { background: var(--accent-light); border-color: var(--card-border); }
   .tcard .tc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
   .tcard h3 { font-size: 18px; color: var(--accent); font-weight: 600; }
   .tcard .tc-tag {
@@ -215,6 +216,8 @@
   .sbtn:hover { border-color: var(--gold); color: var(--gold); }
   .sbtn.primary { background: var(--gold-deep); border-color: var(--gold-deep); color: #fff; }
   .sbtn.primary:hover { background: var(--gold); border-color: var(--gold); color: var(--accent); }
+  .session-rating { display: none; flex-direction: column; align-items: center; }
+  .session-rating.active { display: flex; }
   .session-done { display: none; flex-direction: column; align-items: center; }
   .session-done.active { display: flex; }
   .session-done .check-big { width: 56px; height: 56px; border-radius: 50%; border: 1px solid var(--green); color: var(--green); display: flex; align-items: center; justify-content: center; margin-bottom: 18px; font-size: 24px; }
@@ -444,6 +447,14 @@
     <div class="rate-picker" id="rate-picker"></div>
   </div>
 
+  <div id="duration-picker-block" style="display:none">
+    <div class="rate-picker" id="duration-picker"></div>
+  </div>
+
+  <div id="sound-picker-block" style="display:none">
+    <div class="rate-picker" id="sound-picker"></div>
+  </div>
+
   <div id="pacer-block">
     <div class="pacer-wrap">
       <div class="pacer-ring"></div>
@@ -462,6 +473,12 @@
   </div>
 
   <div class="safety-note" id="safety-note" style="display:none">Do this seated or lying down. Never while driving, swimming, or in water — breath-holds like this can cause you to pass out.</div>
+
+  <div class="session-rating" id="session-rating">
+    <h2 style="color:#fff;font-size:22px;margin-bottom:16px">How do you feel?</h2>
+    <div class="rate-picker" id="rating-picker"></div>
+    <div class="session-controls" style="margin-top:6px"><button class="sbtn" onclick="logSession(null)">Skip</button></div>
+  </div>
 
   <div class="session-done" id="session-done">
     <div class="check-big">✓</div>
@@ -541,6 +558,7 @@ let state = {
   reflections: [],
   prompts: DEFAULT_PROMPTS.map(p => ({...p})),
   activeView: '__breathe__',
+  settings: { ambientSound: 'none', haptics: true },
 };
 
 let resonanceRate = 5.5;
@@ -592,6 +610,7 @@ function mergeLoaded(saved) {
   if (saved.ruleChecks !== undefined) state.ruleChecks = saved.ruleChecks;
   if (saved.reflections !== undefined) state.reflections = saved.reflections;
   if (saved.prompts !== undefined) state.prompts = saved.prompts;
+  if (saved.settings !== undefined) state.settings = saved.settings;
   if (saved.activeView && VALID_VIEWS.includes(saved.activeView)) state.activeView = saved.activeView;
   ensureTopLevel();
 }
@@ -606,6 +625,9 @@ function ensureTopLevel() {
   if (!state.ruleChecks) state.ruleChecks = [];
   if (!state.reflections) state.reflections = [];
   if (!state.prompts || !state.prompts.length) state.prompts = DEFAULT_PROMPTS.map(p => ({...p}));
+  if (!state.settings) state.settings = { ambientSound: 'none', haptics: true };
+  if (state.settings.haptics === undefined) state.settings.haptics = true;
+  if (!state.settings.ambientSound) state.settings.ambientSound = 'none';
 }
 
 function save() {
@@ -666,17 +688,37 @@ function renderContent() {
 }
 
 // ── Render: Breathe ────────────────────────────────────────────────────
+function avgRating(sessions, id) {
+  const rated = sessions.filter(s => s.patternId === id && s.feltRating);
+  if (!rated.length) return null;
+  return +(rated.reduce((n,s)=>n+s.feltRating,0) / rated.length).toFixed(1);
+}
+
+function renderContinueCard(kind, sessions, lib) {
+  if (!sessions.length) return '';
+  const last = sessions[sessions.length-1];
+  const def = lib.find(x=>x.id===last.patternId);
+  if (!def) return '';
+  return `<button class="tcard continue-card" onclick="openSession('${kind}','${def.id}')" style="margin-bottom:18px;width:100%">
+    <div class="tc-top"><h3>Continue with ${esc(def.name)}</h3><span class="tc-tag">Last used</span></div>
+    <div class="tc-desc">Pick up where you left off — one tap to start again.</div>
+  </button>`;
+}
+
 function renderBreatheView() {
   setContentHeader({ title: 'Breathe', subtitle: `${state.breatheSessions.length} SESSIONS LOGGED` });
   document.getElementById('content').innerHTML = `
     <p class="view-intro">Each pattern is timed to its actual protocol — pick one and the pacer guides you through it. Try a few and see what actually changes how you feel.</p>
-    <div class="grid">${BREATH_PATTERNS.map(p => `
-      <button class="tcard" onclick="openSession('breathe','${p.id}')">
+    ${renderContinueCard('breathe', state.breatheSessions, BREATH_PATTERNS)}
+    <div class="grid">${BREATH_PATTERNS.map(p => {
+      const avg = avgRating(state.breatheSessions, p.id);
+      return `<button class="tcard" onclick="openSession('breathe','${p.id}')">
         <div class="tc-top"><h3>${esc(p.name)}</h3><span class="tc-tag">${esc(p.tag)}</span></div>
         <div class="tc-pattern">${esc(p.pattern)}</div>
         <div class="tc-desc">${esc(p.desc)}</div>
-        <div class="tc-evidence ${evidenceClass[p.evidence]}"><span class="dot"></span>${evidenceLabel[p.evidence]}</div>
-      </button>`).join('')}</div>
+        <div class="tc-evidence ${evidenceClass[p.evidence]}"><span class="dot"></span>${evidenceLabel[p.evidence]}${avg?` · your avg ${avg}/5`:''}</div>
+      </button>`;
+    }).join('')}</div>
     <div class="log-section">
       <div class="section-label">Recent sessions</div>
       ${renderLogRows(state.breatheSessions)}
@@ -689,12 +731,16 @@ function renderMeditateView() {
   setContentHeader({ title: 'Meditate', subtitle: `${state.meditateSessions.length} SESSIONS LOGGED` });
   document.getElementById('content').innerHTML = `
     <p class="view-intro">Not a breathing pattern — a way of holding attention. Pick a style and the timer (and a bell) does the rest.</p>
-    <div class="grid">${MEDITATE_STYLES.map(m => `
-      <button class="tcard" onclick="openSession('meditate','${m.id}')">
+    ${renderContinueCard('meditate', state.meditateSessions, MEDITATE_STYLES)}
+    <div class="grid">${MEDITATE_STYLES.map(m => {
+      const avg = avgRating(state.meditateSessions, m.id);
+      return `<button class="tcard" onclick="openSession('meditate','${m.id}')">
         <div class="tc-top"><h3>${esc(m.name)}</h3><span class="tc-tag">${esc(m.tag)}</span></div>
         <div class="tc-pattern">${esc(m.pattern)} · ${m.minutes} min</div>
         <div class="tc-desc">${esc(m.desc)}</div>
-      </button>`).join('')}</div>
+        ${avg?`<div class="tc-evidence"><span class="dot"></span>your avg ${avg}/5</div>`:''}
+      </button>`;
+    }).join('')}</div>
     <div class="log-section">
       <div class="section-label">Recent sessions</div>
       ${renderLogRows(state.meditateSessions)}
@@ -708,7 +754,7 @@ function renderLogRows(sessions) {
   return rows.map(r => `
     <div class="log-row">
       <span class="lr-dot" style="background:var(--gold)"></span>
-      <span class="lr-name">${esc(r.name)}</span>
+      <span class="lr-name">${esc(r.name)}${r.feltRating?` <span style="color:var(--text-faint)">· felt ${r.feltRating}/5</span>`:''}</span>
       <span class="lr-time">${fmtSessionTime(r)}</span>
     </div>`).join('');
 }
@@ -744,25 +790,113 @@ function playBell() {
   } catch(e) {}
 }
 
+// ── Ambient sound bed (synthesized — no external assets) ──────────────
+let ambientNodes = null;
+function startAmbientSound(kind) {
+  stopAmbientSound();
+  if (!kind || kind === 'none') return;
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const master = audioCtx.createGain();
+    master.gain.setValueAtTime(0, audioCtx.currentTime);
+    master.gain.linearRampToValueAtTime(kind === 'drone' ? 0.05 : 0.035, audioCtx.currentTime + 1.5);
+    master.connect(audioCtx.destination);
+    const nodes = [master];
+
+    if (kind === 'drone') {
+      [110, 165, 220].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sine'; osc.frequency.value = freq;
+        const g = audioCtx.createGain(); g.gain.value = i === 0 ? 1 : 0.35;
+        osc.connect(g); g.connect(master); osc.start();
+        nodes.push(osc);
+      });
+    } else if (kind === 'noise') {
+      const bufferSize = 2 * audioCtx.sampleRate;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      let lastOut = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        lastOut = (lastOut + 0.02 * white) / 1.02;
+        data[i] = lastOut * 3.5;
+      }
+      const src = audioCtx.createBufferSource();
+      src.buffer = buffer; src.loop = true;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass'; filter.frequency.value = 900;
+      src.connect(filter); filter.connect(master); src.start();
+      nodes.push(src);
+    }
+    ambientNodes = nodes;
+  } catch(e) {}
+}
+function stopAmbientSound() {
+  if (!ambientNodes) return;
+  const [master, ...sources] = ambientNodes;
+  try {
+    const t = audioCtx.currentTime;
+    master.gain.linearRampToValueAtTime(0, t + 0.6);
+    setTimeout(() => sources.forEach(n => { try { n.stop(); } catch(e){} }), 700);
+  } catch(e) {}
+  ambientNodes = null;
+}
+
+// ── Haptics ─────────────────────────────────────────────────────────
+function tapHaptic(ms) {
+  if (state.settings?.haptics === false) return;
+  try { navigator.vibrate && navigator.vibrate(ms || 25); } catch(e) {}
+}
+
+// ── Toast ───────────────────────────────────────────────────────────
+function showToast(msg) {
+  let toast = document.getElementById('app-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'app-toast';
+    toast.style.cssText = 'position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#16233D;color:white;padding:10px 18px;border-radius:24px;font-size:13px;font-weight:500;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,0.25);pointer-events:none;transition:opacity 0.3s;font-family:var(--font-body);max-width:86vw;text-align:center';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => { toast.style.opacity = '0'; }, 3800);
+}
+
+const STREAK_MILESTONES = [3, 7, 14, 30, 60, 100, 200, 365];
+function maybeCelebrateStreak(streak) {
+  if (STREAK_MILESTONES.includes(streak)) {
+    showToast(`🔥 ${streak}-day streak — keep it up`);
+  }
+}
+
+let sessionMinutes = null;
+
 function openSession(kind, id) {
   current = { kind, id, def: (kind==='breathe' ? BREATH_PATTERNS : MEDITATE_STYLES).find(x=>x.id===id) };
   cycleCount = 0; wimhofRound = 1;
+  sessionMinutes = current.kind === 'meditate' ? current.def.minutes : null;
   document.getElementById('session-overlay').classList.add('active');
+  document.getElementById('session-rating').classList.remove('active');
   document.getElementById('session-done').classList.remove('active');
   document.getElementById('pacer-block').style.display = '';
   document.getElementById('wimhof-hold-block').style.display = 'none';
   document.getElementById('rate-picker-block').style.display = current.def.adjustable ? 'block' : 'none';
+  document.getElementById('duration-picker-block').style.display = current.kind === 'meditate' ? 'block' : 'none';
+  document.getElementById('sound-picker-block').style.display = 'block';
   document.getElementById('safety-note').style.display = current.def.special === 'wimhof' ? 'block' : 'none';
   document.getElementById('s-name').textContent = current.def.name;
   document.getElementById('s-round').textContent = '';
   document.getElementById('phase-label').textContent = 'Ready';
   document.getElementById('phase-sub').textContent = current.kind==='breathe'
     ? (current.def.special ? '3 rounds · tap Begin' : current.def.adjustable ? 'Pick a rate below' : `${current.def.cycles} cycles · about ${Math.round(current.def.phases.reduce((n,p)=>n+p.secs,0)*current.def.cycles/60)} min`)
-    : `${current.def.minutes} minutes`;
+    : `${sessionMinutes} minutes`;
   document.getElementById('pacer-shape').style.transition = 'none';
   document.getElementById('pacer-shape').style.transform = 'scale(0.72)';
   document.getElementById('session-controls').innerHTML = '<button class="sbtn primary" onclick="startPhaseSession()">Begin</button>';
   if (current.def.adjustable) renderRatePicker();
+  if (current.kind === 'meditate') renderDurationPicker();
+  renderSoundPicker();
 }
 
 function renderRatePicker() {
@@ -773,10 +907,37 @@ function renderRatePicker() {
 }
 function pickResonanceRate(r) { resonanceRate = r; renderRatePicker(); }
 
+function renderDurationPicker() {
+  const opts = [3, 5, 10, 15, 20, 30];
+  document.getElementById('duration-picker').innerHTML = opts.map(m => `
+    <button class="rate-chip${m===sessionMinutes?' selected':''}" onclick="pickSessionMinutes(${m})">${m} min</button>
+  `).join('');
+}
+function pickSessionMinutes(m) {
+  sessionMinutes = m;
+  document.getElementById('phase-sub').textContent = `${m} minutes`;
+  renderDurationPicker();
+}
+
+function renderSoundPicker() {
+  const opts = [ ['none','Silence'], ['drone','Soft drone'], ['noise','Gentle noise'] ];
+  document.getElementById('sound-picker').innerHTML = opts.map(([id,label]) => `
+    <button class="rate-chip${id===state.settings.ambientSound?' selected':''}" onclick="pickAmbientSound('${id}')">${label}</button>
+  `).join('');
+}
+function pickAmbientSound(id) {
+  state.settings.ambientSound = id;
+  save();
+  renderSoundPicker();
+}
+
 function startPhaseSession() {
   sessionStartTime = Date.now();
   document.getElementById('session-controls').innerHTML = '<button class="sbtn" onclick="endSession()">Stop</button>';
   document.getElementById('rate-picker-block').style.display = 'none';
+  document.getElementById('duration-picker-block').style.display = 'none';
+  document.getElementById('sound-picker-block').style.display = 'none';
+  startAmbientSound(state.settings.ambientSound);
   if (current.def.special === 'wimhof') { runWimHofRound(); return; }
   if (current.kind === 'meditate') { runMeditateSession(); return; }
   const phases = current.def.adjustable
@@ -792,6 +953,7 @@ function runBreathPhase(i, phases) {
   document.getElementById('phase-label').textContent = phase.label;
   document.getElementById('phase-sub').textContent = `cycle ${cycleCount+1} of ${current.def.cycles}`;
   shape.style.transition = `transform ${phase.secs}s cubic-bezier(0.45,0,0.55,1)`;
+  tapHaptic(20);
   const l = phase.label.toLowerCase();
   if (l.includes('inhale')) shape.style.transform = 'scale(2.15)';
   else if (l.includes('exhale')) shape.style.transform = 'scale(0.5)';
@@ -809,6 +971,7 @@ function runWimHofRound() {
     document.getElementById('phase-label').textContent = 'Breath ' + breath;
     shape.style.transition = 'transform 1.2s ease-in-out';
     shape.style.transform = 'scale(1.9)';
+    tapHaptic(15);
     phaseTimer = setTimeout(() => {
       shape.style.transform = 'scale(0.5)';
       phaseTimer = setTimeout(powerBreath, 1200);
@@ -852,7 +1015,7 @@ function endWimHofHold() {
 function runMeditateSession() {
   playBell();
   const def = current.def;
-  const totalSecs = def.minutes * 60;
+  const totalSecs = (sessionMinutes || def.minutes) * 60;
   const shape = document.getElementById('pacer-shape');
   shape.style.transition = 'transform 4s ease-in-out';
 
@@ -864,6 +1027,7 @@ function runMeditateSession() {
       document.getElementById('phase-label').textContent = def.stages[i];
       document.getElementById('phase-sub').textContent = `stage ${i+1} of ${def.stages.length}`;
       shape.style.transform = shape.style.transform === 'scale(1.05)' ? 'scale(0.85)' : 'scale(1.05)';
+      tapHaptic(15);
       i++;
       phaseTimer = setTimeout(stage, per*1000);
     }
@@ -883,23 +1047,55 @@ function runMeditateSession() {
   }
 }
 
+let pendingElapsed = 0;
 function finishSession() {
   clearTimeout(phaseTimer); clearTimeout(phaseTimer2); clearInterval(wimhofHoldInterval);
+  stopAmbientSound();
   playBell();
-  const elapsed = Math.round((Date.now()-sessionStartTime)/1000);
-  const entry = { id: uid(), name: current.def.name, patternId: current.id, startedAt: sessionStartTime, durationSec: elapsed||60 };
+  tapHaptic(40);
+  pendingElapsed = Math.round((Date.now()-sessionStartTime)/1000);
+  document.getElementById('pacer-block').style.display = 'none';
+  document.getElementById('session-controls').innerHTML = '';
+  renderRatingPicker();
+  document.getElementById('session-rating').classList.add('active');
+}
+
+function renderRatingPicker() {
+  document.getElementById('rating-picker').innerHTML = [1,2,3,4,5].map(n => `
+    <button class="rate-chip" onclick="logSession(${n})">${n}</button>
+  `).join('');
+}
+
+function logSession(rating) {
+  const entry = { id: uid(), name: current.def.name, patternId: current.id, startedAt: sessionStartTime, durationSec: pendingElapsed||60, feltRating: rating||null };
   if (current.kind === 'breathe') state.breatheSessions.push(entry);
   else state.meditateSessions.push(entry);
   save();
+  document.getElementById('session-rating').classList.remove('active');
   document.getElementById('done-summary').textContent = current.def.name + ' · logged just now';
   document.getElementById('session-done').classList.add('active');
-  document.getElementById('session-controls').innerHTML = '';
+  checkActivityStreak();
   renderContent();
+}
+
+function checkActivityStreak() {
+  const activityDates = new Set([
+    ...state.breatheSessions.map(s=>new Date(s.startedAt).toISOString().slice(0,10)),
+    ...state.meditateSessions.map(s=>new Date(s.startedAt).toISOString().slice(0,10)),
+    ...state.reflections.map(r=>r.date),
+    ...(state.ruleChecks||[]).filter(c=>c.completed).map(c=>c.date),
+  ]);
+  let streak = 0;
+  const d = new Date(TODAY+'T00:00:00');
+  while (activityDates.has(d.toISOString().slice(0,10))) { streak++; d.setDate(d.getDate()-1); }
+  maybeCelebrateStreak(streak);
 }
 
 function endSession() {
   clearTimeout(phaseTimer); clearTimeout(phaseTimer2); clearInterval(wimhofHoldInterval);
+  stopAmbientSound();
   document.getElementById('session-overlay').classList.remove('active');
+  document.getElementById('session-rating').classList.remove('active');
   document.getElementById('pacer-block').style.display = '';
   document.getElementById('wimhof-hold-block').style.display = 'none';
   current = null;
@@ -961,8 +1157,10 @@ function toggleRuleCheck(ruleId) {
   const rule = (state.ruleItems || []).find(r => r.id === ruleId);
   if (!rule) return;
   if (!state.ruleChecks) state.ruleChecks = [];
-  state.ruleChecks.push({ ruleId, date: TODAY, completed: !isRuleChecked(ruleId, rule.cadence) });
+  const nowChecked = !isRuleChecked(ruleId, rule.cadence);
+  state.ruleChecks.push({ ruleId, date: TODAY, completed: nowChecked });
   save();
+  if (nowChecked) checkActivityStreak();
   renderRuleOfLifeView();
 }
 
@@ -1302,6 +1500,8 @@ function renderPracticeView() {
       }).join('')}
     </div>`;
 
+  const bestFitHtml = renderBestFit(breatheSessions, meditateSessions);
+
   setContentHeader({ title: 'Practice' });
   document.getElementById('content').innerHTML = `
     <div class="stat-row">
@@ -1316,9 +1516,17 @@ function renderPracticeView() {
       <span><i class="dot" style="color:var(--accent)"></i>Meditate</span>
       <span><i class="dot" style="color:var(--green)"></i>Reflect</span>
     </div>
+    ${bestFitHtml}
     ${ruleSections}
     ${goalsSec}
     <div style="margin-top:40px;border-top:1px solid var(--border);padding-top:18px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);margin-bottom:12px">Settings</div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-muted);cursor:pointer">
+        <input type="checkbox" id="haptics-toggle" ${state.settings.haptics?'checked':''} onchange="toggleHaptics()" style="width:16px;height:16px;accent-color:var(--accent)">
+        Haptic feedback during sessions (mobile)
+      </label>
+    </div>
+    <div style="margin-top:24px;border-top:1px solid var(--border);padding-top:18px">
       <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-faint);margin-bottom:12px">Data Recovery</div>
       <div id="backup-status" style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Check if a cloud backup is available to restore.</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -1327,6 +1535,38 @@ function renderPracticeView() {
       </div>
     </div>
   `;
+}
+
+function renderBestFit(breatheSessions, meditateSessions) {
+  function topPick(sessions, lib) {
+    const byPattern = {};
+    sessions.forEach(s => { if (s.feltRating) (byPattern[s.patternId] = byPattern[s.patternId]||[]).push(s.feltRating); });
+    let best = null;
+    Object.entries(byPattern).forEach(([id, ratings]) => {
+      if (ratings.length < 2) return;
+      const avg = ratings.reduce((a,b)=>a+b,0)/ratings.length;
+      if (!best || avg > best.avg) best = { id, avg: +avg.toFixed(1), count: ratings.length };
+    });
+    if (!best) return null;
+    const def = lib.find(x=>x.id===best.id);
+    return def ? { name: def.name, avg: best.avg, count: best.count } : null;
+  }
+  const breatheBest = topPick(breatheSessions, BREATH_PATTERNS);
+  const meditateBest = topPick(meditateSessions, MEDITATE_STYLES);
+  if (!breatheBest && !meditateBest) return '';
+  return `<div style="margin:8px 0 32px">
+    <div class="goals-group-label">Best fit so far</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      ${breatheBest?`<div class="stat-tile" style="flex:1;min-width:180px"><div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:4px">${esc(breatheBest.name)}</div><div class="st-label" style="margin-top:0">BREATHE · AVG ${breatheBest.avg}/5 OVER ${breatheBest.count} SESSIONS</div></div>`:''}
+      ${meditateBest?`<div class="stat-tile" style="flex:1;min-width:180px"><div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:4px">${esc(meditateBest.name)}</div><div class="st-label" style="margin-top:0">MEDITATE · AVG ${meditateBest.avg}/5 OVER ${meditateBest.count} SESSIONS</div></div>`:''}
+    </div>
+  </div>`;
+}
+
+function toggleHaptics() {
+  state.settings.haptics = document.getElementById('haptics-toggle').checked;
+  save();
+  if (state.settings.haptics) tapHaptic(30);
 }
 
 async function checkBackup() {
@@ -1535,7 +1775,7 @@ function saveReflection() {
     const prompt = date===TODAY ? getTodayPrompt() : null;
     state.reflections.push({id:uid(), date, energy:pickedEnergy||null, wentWell, tomorrow, freeText, goalId:prompt?.goalId||null});
   }
-  closeReflectionModal(); save(); renderReflectionView();
+  closeReflectionModal(); save(); checkActivityStreak(); renderReflectionView();
 }
 
 function deleteReflectionFromModal() {
