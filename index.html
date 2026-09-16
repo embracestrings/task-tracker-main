@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Abiding</title>
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#EFEAE0">
+<meta name="theme-color" content="#EFEAE0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#11182A" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,7 +16,8 @@
 <style>
   :root {
     /* Manuscript palette — ink, paper, brass */
-    --accent: #16233D;
+    --ink: #16233D;          /* always-dark chrome — rail, bottom nav, session overlay */
+    --accent: #16233D;       /* theme-aware emphasis text/border — flips to brass in dark mode */
     --accent-light: #E9E3D3;
     --accent-text: #0d1526;
     --gold: #B99A6C;
@@ -49,6 +51,35 @@
   }
 
   html { background: #EFEAE0; }
+
+  /* Dark mode — ink becomes the page, brass becomes the accent. Chrome
+     (--ink, used for rail/bottom-nav/session-overlay) stays put, since
+     it's already dark and self-contained in both themes. This block
+     comes after the light defaults so its overrides win when active. */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --accent: #D2B78F;
+      --accent-light: #2A3550;
+      --gold-bg: rgba(185,154,108,0.16);
+      --card-border: rgba(185,154,108,0.4);
+
+      --bg: #11182A;
+      --surface: #172137;
+      --surface2: #1D2A44;
+      --border: #2B3A56;
+      --border-strong: #3A4A6B;
+      --text: #EDE7D9;
+      --text-muted: #ABA495;
+      --text-faint: #877F70;
+
+      --red: #E08A6A; --red-bg: rgba(224,138,106,0.15);
+      --amber: #D9A24E; --amber-bg: rgba(217,162,78,0.15);
+      --green: #7FB699; --green-bg: rgba(127,182,153,0.15);
+      --blue: #7C9BC2; --blue-bg: rgba(124,155,194,0.15);
+      --purple: #A594C9; --purple-bg: rgba(165,148,201,0.15);
+    }
+    html { background: #11182A; }
+  }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: var(--font-body);
@@ -66,7 +97,7 @@
 
   /* ── Nav rail (desktop) ─────────────────── */
   .rail {
-    width: var(--rail-w); flex-shrink: 0; background: var(--accent); color: #EDE7D9;
+    width: var(--rail-w); flex-shrink: 0; background: var(--ink); color: #EDE7D9;
     display: flex; flex-direction: column; align-items: center; padding: 20px 0 16px; gap: 2px;
     overflow-y: auto;
   }
@@ -113,7 +144,7 @@
 
   /* ── Buttons ───────────────────────────── */
   .btn { padding: 7px 14px; border-radius: 5px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all 0.1s; font-family: var(--font-body); }
-  .btn-primary { background: var(--accent); color: white; border-color: var(--accent); }
+  .btn-primary { background: var(--ink); color: white; border-color: var(--ink); }
   .btn-primary:hover { background: var(--gold); color: var(--accent-text); border-color: var(--gold); }
   .btn-ghost { background: transparent; color: var(--text-muted); border-color: var(--border); }
   .btn-ghost:hover { background: transparent; color: var(--gold-deep); border-color: var(--gold); }
@@ -132,8 +163,8 @@
   .empty-icon { margin: 0 auto 16px; width: 64px; height: 64px; background: var(--gold-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--gold); }
   .empty-title { font-size: 15px; font-weight: 500; color: var(--text-muted); margin-bottom: 6px; }
   .empty-sub { font-size: 13px; margin-bottom: 18px; }
-  .empty-cta { display: inline-block; margin-top: 4px; padding: 8px 20px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 500; font-family: inherit; letter-spacing: 0.04em; cursor: pointer; transition: background 0.15s, color 0.15s; }
-  .empty-cta:hover { background: var(--gold); color: var(--accent); }
+  .empty-cta { display: inline-block; margin-top: 4px; padding: 8px 20px; background: var(--ink); color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: 500; font-family: inherit; letter-spacing: 0.04em; cursor: pointer; transition: background 0.15s, color 0.15s; }
+  .empty-cta:hover { background: var(--gold); color: var(--ink); }
 
   :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
   input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; }
@@ -183,7 +214,7 @@
 
   /* ── Session overlay (pacer) ───────────── */
   .session-overlay {
-    position: fixed; inset: 0; background: var(--accent); z-index: 300;
+    position: fixed; inset: 0; background: var(--ink); z-index: 300;
     display: none; flex-direction: column; align-items: center; justify-content: center;
     color: #EDE7D9; text-align: center; padding: 24px;
   }
@@ -215,7 +246,7 @@
   }
   .sbtn:hover { border-color: var(--gold); color: var(--gold); }
   .sbtn.primary { background: var(--gold-deep); border-color: var(--gold-deep); color: #fff; }
-  .sbtn.primary:hover { background: var(--gold); border-color: var(--gold); color: var(--accent); }
+  .sbtn.primary:hover { background: var(--gold); border-color: var(--gold); color: var(--accent-text); }
   .session-rating { display: none; flex-direction: column; align-items: center; }
   .session-rating.active { display: flex; }
   .session-done { display: none; flex-direction: column; align-items: center; }
@@ -312,7 +343,7 @@
     .bottom-nav {
       display: grid; grid-template-columns: repeat(6, 1fr); align-items: center;
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 90;
-      background: var(--accent);
+      background: var(--ink);
       padding: 8px 2px calc(6px + var(--safe-bottom));
       box-shadow: 0 -2px 14px rgba(0,0,0,0.22);
     }
@@ -1404,8 +1435,8 @@ function renderRingHtml(pct, size) {
   const fs = size >= 80 ? 18 : 14;
   return `<div style="position:relative;width:${size}px;height:${size}px;flex-shrink:0">
     <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)">
-      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#E1D8C2" stroke-width="${sw}"/>
-      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#16233D" stroke-width="${sw}"
+      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--border)" stroke-width="${sw}"/>
+      <circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--accent)" stroke-width="${sw}"
         stroke-dasharray="${circ}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
     </svg>
     <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:${fs}px;color:var(--accent);line-height:1">${pct}%</div>
