@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="robots" content="noindex, nofollow">
-<title>Atlas</title>
+<title>Rey Family Travel Map</title>
 <meta name="theme-color" content="#EFEAE0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Atlas">
+<meta name="apple-mobile-web-app-title" content="Travel Map">
 <link rel="manifest" href="/trips/manifest.webmanifest">
 <link rel="icon" href="/trips/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/trips/icon-180.png">
@@ -72,7 +72,7 @@
     padding: 34px 30px 18px; display: flex; flex-direction: column;
   }
   .home-panel.off { transform: translateX(-30px); }
-  .masthead { font-family: var(--font-display); font-weight: 500; font-size: clamp(64px, 8.4vw, 104px); line-height: 0.88; margin: 6px 0 0; letter-spacing: -0.015em; }
+  .masthead { font-family: var(--font-display); font-weight: 500; font-size: clamp(44px, 6vw, 76px); line-height: 0.92; margin: 6px 0 0; letter-spacing: -0.015em; }
   .masthead em { font-style: italic; font-weight: 400; color: var(--gold-deep); }
   .rule { height: 1px; background: linear-gradient(90deg, var(--gold), rgba(185,154,108,0)); margin: 22px 0; }
   .totals { display: grid; grid-template-columns: repeat(4, auto); gap: 4px 20px; margin-top: 22px; justify-content: start; }
@@ -363,7 +363,7 @@
 <div class="amb-catcher" id="amb-catcher"></div>
 <div class="amb-layer collage" id="collage"></div>
 <div class="amb-layer spot" id="spot"></div>
-<div class="ui amb amb-brand"><div class="kicker" id="amb-family"></div><div>Atlas</div></div>
+<div class="ui amb amb-brand"><div class="kicker" id="amb-family"></div><div id="amb-name"></div></div>
 <div class="ui amb amb-clock"><div class="tm" id="clock-time"></div><div class="kicker" id="clock-date"></div></div>
 <div class="ui amb amb-caption out" id="amb-caption"></div>
 <div class="amb-hint">Tap anywhere to explore</div>
@@ -681,7 +681,7 @@
       el.style.setProperty("--c", t.color);
       el.innerHTML = `<div class="k">${esc(A.fmt(t.startDate, { month: "short", year: "numeric" }))}</div><div class="t"><i></i>${esc(t.title)}</div>`;
       el.addEventListener("click", (e) => { e.stopPropagation(); if (!S.ambient) openTrip(t); });
-      tagMarkers.push(new maplibregl.Marker({ element: el, anchor: "bottom-left", offset: [14, -18] }).setLngLat(best).addTo(map));
+      tagMarkers.push(new maplibregl.Marker({ element: el, anchor: "bottom-right", offset: [-14, -18] }).setLngLat(best).addTo(map));
     }
   }
 
@@ -715,7 +715,7 @@
     const tot = trips.reduce((a, t) => { const s = A.tripStats(t); a.miles += s.miles; a.nights += s.nights; (t.states || []).forEach((x) => a.states.add(x)); return a; }, { miles: 0, nights: 0, states: new Set() });
     $("home-panel").innerHTML = `
       <div class="kicker">${esc(A.BRAND.family)}</div>
-      <h1 class="masthead">Atlas</h1>
+      <h1 class="masthead">${esc(A.BRAND.name)}</h1>
       <div class="totals">
         <div><b>${trips.length}</b><span>${trips.length === 1 ? "Journey" : "Journeys"}</span></div>
         <div><b>${fmtNum(tot.miles)}</b><span>Miles</span></div>
@@ -1076,6 +1076,7 @@
     tickClock();
     document.body.classList.add("ambient");
     $("amb-family").textContent = A.BRAND.family;
+    $("amb-name").textContent = A.BRAND.name;
     setSheet(false);
     const me = ++run;
     try { await ambientLoop(me); } catch (e) { if (e !== "stop") console.error(e); }
@@ -1103,6 +1104,11 @@
   $("btn-play").addEventListener("click", (e) => { e.stopPropagation(); startAmbient(); });
 
   const guard = (me) => { if (me !== run) throw "stop"; };
+  // Slideshow map margins were tuned on an iPad (1180×820); scale them to the screen.
+  const ambPad = (top, bottom, side) => {
+    const ky = Math.min(1, innerHeight / 820), kx = Math.min(1, innerWidth / 1180);
+    return { top: Math.round(top * ky), bottom: Math.round(bottom * ky), left: Math.round(side * kx), right: Math.round(side * kx) };
+  };
   const wait = async (ms, me) => {
     const end = Date.now() + ms;
     while (Date.now() < end) { await sleep(Math.min(250, end - Date.now())); guard(me); }
@@ -1140,7 +1146,7 @@
     if (b) map.jumpTo({ center: [(b[0][0] + b[1][0]) / 2 - 30, (b[0][1] + b[1][1]) / 2 - 8], zoom: 1.7, pitch: 0, bearing: 0 });
     await caption(`<div class="kicker">${S.trips.length} ${S.trips.length === 1 ? "journey" : "journeys"} · ${fmtNum(tot.miles)} miles · ${tot.nights} nights</div><h2>Where we've been</h2><div class="line"></div>`);
     guard(me);
-    if (b) map.fitBounds(b, { padding: { top: 120, bottom: 220, left: 120, right: 120 }, duration: 5200, maxZoom: 5, essential: true, curve: 1.2 });
+    if (b) map.fitBounds(b, { padding: ambPad(120, 220, 120), duration: 5200, maxZoom: 5, essential: true, curve: 1.2 });
     await wait(5600, me);
     const c = map.getCenter();
     map.easeTo({ center: [c.lng + 9, c.lat], bearing: 0, duration: 9000, easing: (x) => x });
@@ -1158,7 +1164,7 @@
     const s = A.tripStats(t);
     await caption(`<div class="kicker">${esc(A.dateRange(t.startDate, t.endDate))}</div><h2>${esc(t.title)}</h2><p>${fmtNum(s.miles)} miles · ${s.nights} nights · ${s.stops} stops${s.photos ? ` · ${s.photos} photos` : ""}</p><div class="line"></div>`);
     guard(me);
-    map.fitBounds(tripBounds(t), { padding: { top: 120, bottom: 260, left: 140, right: 140 }, pitch: 0, bearing: 0, duration: 2600, essential: true });
+    map.fitBounds(tripBounds(t), { padding: ambPad(120, 260, 140), pitch: 0, bearing: 0, duration: 2600, essential: true });
     await wait(2700, me);
     await drawRoute(t, null, 6500, me);
     buildPins(t);
@@ -1188,7 +1194,7 @@
       guard(me);
       const b = tripBounds(t, d.n);
       const bearing = (Math.random() - 0.5) * 24;
-      map.fitBounds(b, { padding: { top: 130, bottom: 300, left: 160, right: 160 }, maxZoom: 10.5, pitch: 42, bearing, duration: 3400, essential: true });
+      map.fitBounds(b, { padding: ambPad(130, 300, 160), maxZoom: 10.5, pitch: 42, bearing, duration: 3400, essential: true });
       await wait(2600, me);
       await drawRoute(t, d.n, 3200, me);
       map.easeTo({ bearing: bearing + 6, duration: 7000, easing: (x) => x });
@@ -1421,7 +1427,7 @@
       const others = photosForPlace(t, where.place).filter((x) => x !== p).slice(0, 4);
       await caption(`<div class="kicker">${d ? `Day ${d.n} · ${esc(A.dayLong(d))}` : ""}</div><h2>${esc((where.place && where.place.name) || "")}</h2><p>${esc((where.place && where.place.area) || "")}${d && d.title ? ` · ${esc(d.title)}` : ""}</p>${others.length ? `<div class="amb-thumbs">${others.map((x) => `<img src="${A.photoUrl(x, "t")}" alt="">`).join("")}</div>` : ""}`, { card: true });
       const db = where.day ? tripBounds(t, where.day) : null;
-      if (db) map.fitBounds(db, { padding: { top: 140, bottom: 320, left: 180, right: 180 }, maxZoom: 11, pitch: 35, duration: 4200, essential: true });
+      if (db) map.fitBounds(db, { padding: ambPad(140, 320, 180), maxZoom: 11, pitch: 35, duration: 4200, essential: true });
       await wait(7500, me);
     }
     await caption("");

@@ -1,7 +1,7 @@
 // trips/atlas.js — shared by the display (index.html) and admin (admin.html):
 // API calls, the sign-in screen, the editorial map style, and trip geometry helpers.
 (function () {
-  const BRAND = { family: "The Rey Family", name: "Atlas" };
+  const BRAND = { family: "The Rey Family", name: "Travel Map" };
 
   // Embrace Strings palette, extended with a few muted route colors that sit well on paper.
   const C = {
@@ -53,7 +53,7 @@
           <div class="signin-rule"></div>
           <label class="signin-label" for="signin-pw">Family password</label>
           <input id="signin-pw" name="password" type="password" autocomplete="current-password" required>
-          <button type="submit">Open the atlas</button>
+          <button type="submit">Open the map</button>
           <p class="signin-error" role="alert"></p>
         </form>`;
       document.body.appendChild(el);

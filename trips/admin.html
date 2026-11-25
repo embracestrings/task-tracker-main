@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<title>Atlas · Admin</title>
+<title>Travel Map · Admin</title>
 <meta name="theme-color" content="#EFEAE0">
 <link rel="icon" href="/trips/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/trips/icon-180.png">
@@ -147,8 +147,8 @@
 <body>
 <div class="wrap">
   <header class="top">
-    <div><div class="kicker" id="fam"></div><h1>Atlas admin</h1></div>
-    <div style="display:flex;gap:16px;align-items:center"><a href="/" id="view-link">View the atlas →</a></div>
+    <div><div class="kicker" id="fam"></div><h1>Travel Map admin</h1></div>
+    <div style="display:flex;gap:16px;align-items:center"><a href="/" id="view-link">View the map →</a></div>
   </header>
   <div class="layout">
     <aside>
@@ -260,7 +260,7 @@
       <div class="card"><h3>Journey</h3>
         <div class="fields">
           <label class="f s8"><span>Title</span><input type="text" data-k="title" value="${esc(t.title)}"></label>
-          <label class="f s4"><span>Hidden from the atlas</span><select data-k="hidden"><option value="">No</option><option value="1" ${t.hidden ? "selected" : ""}>Yes, hide it</option></select></label>
+          <label class="f s4"><span>Hidden from the map</span><select data-k="hidden"><option value="">No</option><option value="1" ${t.hidden ? "selected" : ""}>Yes, hide it</option></select></label>
           <label class="f s12"><span>Subtitle</span><input type="text" data-k="subtitle" value="${esc(t.subtitle)}"></label>
           <label class="f s3"><span>Starts</span><input type="date" data-k="startDate" value="${esc(t.startDate)}"></label>
           <label class="f s3"><span>Ends</span><input type="date" data-k="endDate" value="${esc(t.endDate)}"></label>
@@ -602,7 +602,7 @@
               <span style="display:flex;gap:4px">
                 <button class="ib ${p.featured ? "on" : ""}" data-feat title="Feature in the slideshow">★</button>
                 <button class="ib ${t.coverPhotoId === p.id ? "on" : ""}" data-cover title="Use as the journey's cover">▣</button>
-                <button class="ib ${p.hidden ? "on" : ""}" data-hide title="Hide from the atlas">◌</button>
+                <button class="ib ${p.hidden ? "on" : ""}" data-hide title="Hide from the map">◌</button>
                 <button class="ib" data-del title="Delete">✕</button>
               </span>
             </div>

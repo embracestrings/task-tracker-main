@@ -1,6 +1,6 @@
 {
-  "name": "Atlas",
-  "short_name": "Atlas",
+  "name": "Rey Family Travel Map",
+  "short_name": "Travel Map",
   "description": "The family's journeys, on a map.",
   "start_url": "/",
   "scope": "/",

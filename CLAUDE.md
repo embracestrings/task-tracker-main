@@ -98,9 +98,9 @@ Vercel serverless functions. All use ES module syntax (`import/export`). No shar
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
 
-## Trips atlas (`trips.embracestrings.com`)
+## Rey Family Travel Map (`trips.embracestrings.com`)
 
-A separate, password-protected family travel map that shares this Vercel project. It doesn't touch the main app.
+A password-protected family travel map ("trips atlas" in code) that shares this Vercel project. It doesn't touch the main app.
 
 - **Pages:** `trips/index.html` (display: map, day rail, lightbox, idle slideshow) and `trips/admin.html` (itinerary editor + bulk photo upload). Shared code lives in `trips/atlas.js` and `trips/atlas.css`. MapLibre and exifr are vendored in `trips/vendor/`.
 - **Routing:** `vercel.json` `routes` maps `/` and `/admin` on the `trips.embracestrings.com` host to those pages. On any other host they are at `/trips/` and `/trips/admin`.
