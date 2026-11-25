@@ -143,7 +143,7 @@
   /* ── Side sheet ──────────────────────────────────────────────────────── */
   :root { --sheet-w: min(410px, 36vw); }
   .sheet {
-    top: var(--top); right: var(--pad); bottom: max(22px, env(safe-area-inset-bottom)); width: var(--sheet-w);
+    top: calc(var(--top) + 60px); right: var(--pad); bottom: max(22px, env(safe-area-inset-bottom)); width: var(--sheet-w);
     display: flex; flex-direction: column; overflow: hidden;
   }
   .sheet.off { transform: translateX(40px); }
