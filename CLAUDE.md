@@ -97,3 +97,18 @@ Vercel serverless functions. All use ES module syntax (`import/export`). No shar
 | `KV_REST_API_TOKEN` | Upstash Redis token (auto-set) |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
+
+## Trips atlas (`trips.embracestrings.com`)
+
+A separate, password-protected family travel map that shares this Vercel project. It doesn't touch the main app.
+
+- **Pages:** `trips/index.html` (display: map, day rail, lightbox, idle slideshow) and `trips/admin.html` (itinerary editor + bulk photo upload). Shared code lives in `trips/atlas.js` and `trips/atlas.css`. MapLibre and exifr are vendored in `trips/vendor/`.
+- **Routing:** `vercel.json` `routes` maps `/` and `/admin` on the `trips.embracestrings.com` host to those pages. On any other host they are at `/trips/` and `/trips/admin`.
+- **API:** `api/trips.js` is one function with an `action` query param (login, data, saveTrip, upload, photo, geocode, …). It uses an HMAC-signed HttpOnly cookie checked against the `TRIPS_PASSWORD` env var.
+- **Storage:**
+  - KV `trips:list` holds the itineraries.
+  - KV `trips:route:{id}` holds cached road geometry from OSRM.
+  - KV `trips:photos:{id}` is a hash of photo metadata.
+  - Photos are in a **private** Vercel Blob store (`trips-photos`) and are only served through `?action=photo` to signed-in browsers.
+- **Privacy:** this repo is public. Never commit itinerary data or photos. The first itinerary was loaded from the `TRIPS_SEED` env var, which is only read when `trips:list` is empty.
+- **Map tiles:** OpenFreeMap (free, no key). The custom editorial style is `Atlas.mapStyle()` in `trips/atlas.js`.

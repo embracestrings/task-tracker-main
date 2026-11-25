@@ -1,0 +1,16 @@
+{
+  "name": "Atlas",
+  "short_name": "Atlas",
+  "description": "The family's journeys, on a map.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#EFEAE0",
+  "theme_color": "#EFEAE0",
+  "icons": [
+    { "src": "/trips/icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/trips/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/trips/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
