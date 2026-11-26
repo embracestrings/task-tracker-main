@@ -97,8 +97,7 @@
     .stop-more > div { grid-column: 2; flex-wrap: wrap; }
     .stop-more select { flex: 1; }
   }
-  .stop .dot { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 600 13px var(--font-display); background: var(--surface); border: 1.5px solid var(--ink); }
-  .stop .dot.stay { background: var(--ink); color: var(--paper); }
+  .stop .dot { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 600 13px var(--font-display); background: var(--ink); color: var(--paper); border: 1.5px solid var(--ink); }
   .stop .dot.none { border-style: dashed; border-color: var(--ink-faint); color: var(--ink-faint); }
   .acts { display: flex; gap: 4px; }
   .ib { width: 32px; height: 32px; border-radius: 9px; border: 1px solid var(--line-soft); background: #fff; display: grid; place-items: center; cursor: pointer; font-size: 14px; color: var(--ink-soft); }
@@ -169,8 +168,8 @@
   .pl span { font-size: 12px; color: var(--ink-soft); }
   .empty { padding: 26px; text-align: center; color: var(--ink-soft); border: 1px dashed var(--line); border-radius: 16px; }
   details summary { cursor: pointer; font: 500 10.5px var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); }
-  .mk { width: 22px; height: 22px; border-radius: 50%; background: var(--surface); border: 1.5px solid var(--ink); display: grid; place-items: center; font: 600 12px var(--font-display); cursor: grab; box-shadow: 0 4px 10px -4px rgba(0,0,0,0.4); }
-  .mk.stay { background: var(--ink); color: var(--paper); }
+  .mk { width: 24px; height: 24px; border-radius: 50%; background: var(--ink); color: var(--paper); border: 2px solid #fff; display: grid; place-items: center; font: 600 12px var(--font-display); cursor: grab; box-shadow: 0 0 0 1px rgba(22,35,61,0.3), 0 4px 10px -4px rgba(0,0,0,0.4); }
+  .mk.airport { background: var(--surface); color: var(--ink); }
   .mk.home { background: var(--gold); border-color: #fff; color: #fff; }
   /* ── Steps ─────────────────────────────────────────────────────────────── */
   .tabs.steps button { display: inline-flex; align-items: center; gap: 8px; }
@@ -187,23 +186,32 @@
   .day-title { font-size: 16px !important; font-weight: 500 !important; }
   .stops { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
   .stop2 { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; background: #fff; border: 1px solid var(--line-soft); }
-  .s-top { display: grid; grid-template-columns: 28px 1fr auto; gap: 8px; align-items: start; }
+  .s-top { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 8px; align-items: start; }
+  .s-top .acts { gap: 4px; }
+  @media (max-width: 640px) {
+    /* phones: the place box gets the full width; its buttons sit just under it */
+    .s-top { grid-template-columns: 26px minmax(0, 1fr); gap: 6px 8px; }
+    .s-top .acts { grid-column: 2; grid-row: 2; justify-content: flex-end; margin-top: 0; }
+    .s-top .ib { width: 34px; height: 30px; }
+  }
   .s-top .s-n { margin-top: 12px; }
   .s-top .acts { margin-top: 6px; }
-  .place { display: flex; flex-direction: column; border: 1px solid rgba(22,35,61,0.14); border-radius: 12px; background: #fff; padding: 7px 11px 8px; transition: border-color 0.2s, box-shadow 0.2s; }
+  .place { display: flex; flex-direction: column; min-width: 0; border: 1px solid rgba(22,35,61,0.14); border-radius: 12px; background: #fff; padding: 7px 11px 8px; transition: border-color 0.2s, box-shadow 0.2s; }
   .place:focus-within { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(185,154,108,0.16); }
-  .place input { border: 0 !important; padding: 0 !important; box-shadow: none !important; font-size: 16px !important; font-weight: 500; background: transparent; }
-  .place-sub { font-size: 12.5px; color: var(--ink-soft); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .place input { min-width: 0; width: 100%; text-overflow: ellipsis; border: 0 !important; padding: 0 !important; box-shadow: none !important; font-size: 16px !important; font-weight: 500; background: transparent; }
+  .place-sub { font-size: 12.5px; line-height: 1.35; color: var(--ink-soft); margin-top: 3px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
   .place.unset .place-sub { color: #9A4E3E; }
   .place.searching::after { content: ""; position: absolute; right: 12px; top: 14px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--ink); animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .results button.on { background: var(--paper-2); }
   .results .none { padding: 12px; font-size: 14px; color: var(--ink-soft); }
+  .undo-btn { position: absolute; left: 12px; top: 12px; z-index: 4; height: 38px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: rgba(250,247,240,0.95); box-shadow: var(--shadow); cursor: pointer; font: 500 12px var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); }
+  .undo-btn[hidden] { display: none; }
+  .picking .undo-btn { display: none; }
   .mapbox.tracing::after { content: "Tracing roads…"; position: absolute; left: 12px; bottom: 12px; z-index: 3; padding: 6px 10px; border-radius: 8px; background: rgba(22,35,61,0.85); color: var(--paper); font: 500 10px var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; }
-  .s-n { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 600 13px var(--font-display); border: 1.5px solid var(--ink); }
-  .s-n.stay { background: var(--ink); color: var(--paper); }
+  .s-n { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 600 13px var(--font-display); border: 1.5px solid var(--ink); background: var(--ink); color: var(--paper); }
   .s-n.home { background: var(--gold); border-color: var(--gold); color: #fff; }
-  .s-n.airport { border-color: var(--ink-faint); }
+  .s-n.airport { background: transparent; color: var(--ink); border-color: var(--ink-faint); }
   .s-loc { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
   .loc-line { font-size: 12.5px; color: var(--ink-soft); margin-top: -2px; }
   .loc-line.missing { color: #9A4E3E; }
@@ -569,7 +577,7 @@
           <p class="hint" style="margin-top:14px">States and countries are worked out from your stops and the roads you drove when you save.</p>
           <div class="next-row"><button class="btn dark" id="next-2">${t._new ? "Save and add photos →" : "Next: Photos →"}</button></div>
         </div>
-        <div class="mapbox" id="mapbox"><div id="emap"></div><div class="pickbar"><span id="pick-msg">Tap the map to place this stop</span><button class="btn sm" style="color:var(--paper);border-color:rgba(239,234,224,0.4);background:transparent" id="pick-cancel">Cancel</button></div></div>
+        <div class="mapbox" id="mapbox"><div id="emap"></div><button type="button" class="undo-btn" id="undo-move" hidden>↶ Undo move</button><div class="pickbar"><span id="pick-msg">Tap the map to place this stop</span><button class="btn sm" style="color:var(--paper);border-color:rgba(239,234,224,0.4);background:transparent" id="pick-cancel">Cancel</button></div></div>
       </div>`;
     if (keptMap && emap && emap.__tripId === t.id) $("mapbox").replaceWith(keptMap);
     const P = $("pane");
@@ -629,6 +637,7 @@
     $("pick-cancel").onclick = () => { picking = null; $("mapbox").classList.remove("picking"); };
     if (emap && emap.__tripId === t.id && $("emap") === emap.getContainer()) { emap.resize(); drawEditorMarkers(false); }
     else mountEditorMap();
+    syncUndo();
     markDirty();
   }
 
@@ -656,6 +665,7 @@
     emap.__tripId = cur.id;
     previewSig = routeSig(cur);
     emap.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
+    emap.once("idle", () => { const at = host.querySelector(".maplibregl-ctrl-attrib"); if (at) at.classList.remove("maplibregl-compact-show"); });
     emap.on("load", () => {
       emap._ready = true;
       emap.addSource("r", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
@@ -665,6 +675,7 @@
     });
     emap.on("click", (e) => {
       if (!picking) return;
+      rememberPositions([picking], false);
       picking.lat = +e.lngLat.lat.toFixed(5);
       picking.lng = +e.lngLat.lng.toFixed(5);
       picking.area = "";
@@ -675,6 +686,40 @@
       renderItinerary();
       scrollTo(0, y);
     });
+  }
+
+  // ─── Undo for moves on the map ─────────────────────────────────────────────
+  // Every drag or map-pick saves where the stops were, so an accidental move can be undone.
+  let moveHistory = [];
+  function rememberPositions(stops, includeOrigin) {
+    moveHistory.push({
+      tripId: cur.id,
+      stops: stops.map((x) => ({ id: x.id, lat: x.lat, lng: x.lng, area: x.area })),
+      origin: includeOrigin && cur.origin ? { lat: cur.origin.lat, lng: cur.origin.lng } : null,
+    });
+    if (moveHistory.length > 50) moveHistory.shift();
+    syncUndo();
+  }
+  function syncUndo() {
+    const b = $("undo-move");
+    if (!b) return;
+    const n = moveHistory.filter((h) => cur && h.tripId === cur.id).length;
+    b.hidden = !n;
+    b.onclick = undoMove;
+  }
+  function undoMove() {
+    let h;
+    while ((h = moveHistory.pop()) && h.tripId !== cur.id) {}
+    if (!h) return syncUndo();
+    for (const was of h.stops) {
+      const x = cur.stops.find((y) => y.id === was.id);
+      if (x) Object.assign(x, { lat: was.lat, lng: was.lng, area: was.area });
+    }
+    if (h.origin && cur.origin) Object.assign(cur.origin, h.origin);
+    markDirty();
+    const y = scrollY; renderItinerary(); scrollTo(0, y);
+    syncUndo();
+    toast("Move undone");
   }
 
   // ─── Live route preview ────────────────────────────────────────────────────
@@ -719,6 +764,7 @@
       el.textContent = p.kind === "home" ? "⌂" : p.kind === "airport" ? "✈" : p.num;
       el.title = p.name;
       const m = new maplibregl.Marker({ element: el, draggable: true }).setLngLat([p.lng, p.lat]).addTo(emap);
+      m.on("dragstart", () => rememberPositions(p.stops, p.kind === "home" && !p.stops.length));
       m.on("dragend", () => {
         const ll = m.getLngLat();
         const targets = p.stops.length ? p.stops : [];
