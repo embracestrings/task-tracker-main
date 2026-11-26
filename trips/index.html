@@ -1738,6 +1738,10 @@
     poke();
     if (params.get("trip")) { const t = S.trips.find((x) => x.id === params.get("trip")); if (t) openTrip(t, { day: params.get("day") ? Number(params.get("day")) : null, duration: 0 }); }
     if (params.get("play")) setTimeout(startAmbient, 800);
+    // older trips get their states/countries worked out in the background, then the totals refresh
+    if (S.trips.some((t) => !t.regionsAt)) setTimeout(async () => {
+      try { const r = await A.api("fillRegions", { method: "POST", body: {} }); if (r.changed && (await loadData()) && !S.ambient) refreshView(); } catch {}
+    }, 1500);
     setInterval(async () => {
       if (S.ambient || $("lightbox").classList.contains("on")) return; // ambient refreshes itself between loops
       try { if (await loadData()) refreshView(); } catch {}

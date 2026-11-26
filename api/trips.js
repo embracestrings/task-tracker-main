@@ -443,7 +443,7 @@ async function placeAt(lat, lng) {
   if (hit) return hit;
   let out = null;
   try {
-    const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}&lang=en&limit=1`, { headers: { "User-Agent": "family-trips-atlas/1.0" }, signal: AbortSignal.timeout(5000) });
+    const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}&lang=en&limit=1`, { headers: { "User-Agent": "family-trips-atlas/1.0" }, signal: AbortSignal.timeout(3500) });
     if (r.ok) {
       const f = ((await r.json()).features || [])[0];
       if (f) out = { cc: (f.properties.countrycode || "").toUpperCase(), country: f.properties.country || "", state: f.properties.state || "" };
@@ -452,7 +452,7 @@ async function placeAt(lat, lng) {
   } catch {}
   if (!out) {
     try {
-      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=5&accept-language=en&lat=${lat}&lon=${lng}`, { headers: { "User-Agent": "family-trips-atlas/1.0" }, signal: AbortSignal.timeout(6000) });
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=5&accept-language=en&lat=${lat}&lon=${lng}`, { headers: { "User-Agent": "family-trips-atlas/1.0" }, signal: AbortSignal.timeout(3500) });
       if (r.ok) { const j = await r.json(); const a = j.address || {}; out = { cc: (a.country_code || "").toUpperCase(), country: a.country || "", state: a.state || "" }; }
     } catch {}
   }
@@ -481,8 +481,11 @@ async function deriveRegions(trip, route, budgetMs = 9000) {
   const states = new Set(), countries = new Set();
   let complete = true;
   for (let i = 0; i < cells.length; i += 6) {
-    if (Date.now() - started > budgetMs) { complete = false; break; }
-    const res = await Promise.all(cells.slice(i, i + 6).map(([a, b]) => placeAt(a, b)));
+    const left = budgetMs - (Date.now() - started);
+    if (left < 500) { complete = false; break; }
+    const batch = Promise.all(cells.slice(i, i + 6).map(([a, b]) => placeAt(a, b)));
+    const res = await Promise.race([batch, new Promise((ok) => setTimeout(() => ok(null), left))]);
+    if (!res) { complete = false; break; }
     for (const r of res) {
       if (!r) { complete = false; continue; }
       if (r.cc) countries.add(COUNTRY_NAMES[r.cc] || r.country);
@@ -611,23 +614,30 @@ export default async function handler(req, res) {
     if (action === "data") {
       const trips = await getTrips();
       await linkTravelers(trips, people);
-      const out = [];
-      const started = Date.now();
-      let regionsChanged = false;
-      for (const t of trips) {
+      const out = await Promise.all(trips.map(async (t) => {
         const [route, photos] = await Promise.all([routeFor(t, 8000), getPhotos(t.id)]);
-        // trips saved before states/countries were automatic get them filled in once
-        if (!t.regionsAt && Date.now() - started < 14000) {
-          const reg = await deriveRegions(t, route, 6000);
-          if (reg.complete || reg.states.length >= (t.states || []).length) t.states = reg.states;
-          if (reg.complete || reg.countries.length >= (t.countries || []).length) t.countries = reg.countries;
-          if (reg.complete) t.regionsAt = Date.now();
-          regionsChanged = true;
-        }
-        out.push({ ...t, route, photos, canEdit: canEditTrip(me, t) });
-      }
-      if (regionsChanged) await kv.set(LIST_KEY, trips);
+        return { ...t, route, photos, canEdit: canEditTrip(me, t) };
+      }));
       return res.status(200).json({ trips: out, people: people.map(publicPerson), me: meOut, now: Date.now() });
+    }
+
+    // Fill in states/countries for trips saved before they were automatic. Called by the page
+    // after it has loaded, so it never holds up the map. Hard 20 s deadline.
+    if (action === "fillRegions") {
+      const trips = await getTrips();
+      const deadline = Date.now() + 20000;
+      let changed = 0;
+      for (const t of trips) {
+        if (t.regionsAt || Date.now() > deadline - 3000) continue;
+        const route = parseMaybe(await kv.get(routeKey(t.id))) || { segments: [] };
+        const reg = await deriveRegions(t, route, Math.min(8000, deadline - Date.now() - 2000));
+        if (reg.complete || reg.states.length >= (t.states || []).length) t.states = reg.states;
+        if (reg.complete || reg.countries.length >= (t.countries || []).length) t.countries = reg.countries;
+        if (reg.complete) t.regionsAt = Date.now();
+        changed++;
+      }
+      if (changed) await kv.set(LIST_KEY, trips);
+      return res.status(200).json({ changed, pending: trips.filter((t) => !t.regionsAt).length });
     }
 
     if (action === "avatar") {
@@ -746,8 +756,8 @@ export default async function handler(req, res) {
       if (i >= 0) trips[i] = trip;
       else trips.push(trip);
       await kv.set(LIST_KEY, trips);
-      const route = await buildRoute(trip, 18000);
-      const reg = await deriveRegions(trip, route);
+      const route = await buildRoute(trip, 17000);
+      const reg = await deriveRegions(trip, route, 6000);
       // never shrink the lists because a lookup failed part way
       if (reg.complete || reg.states.length >= trip.states.length) trip.states = reg.states;
       if (reg.complete || reg.countries.length >= trip.countries.length) trip.countries = reg.countries;
