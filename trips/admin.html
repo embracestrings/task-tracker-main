@@ -187,7 +187,19 @@
   .day-title { font-size: 16px !important; font-weight: 500 !important; }
   .stops { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
   .stop2 { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; background: #fff; border: 1px solid var(--line-soft); }
-  .s-top { display: grid; grid-template-columns: 28px 1fr auto; gap: 8px; align-items: center; }
+  .s-top { display: grid; grid-template-columns: 28px 1fr auto; gap: 8px; align-items: start; }
+  .s-top .s-n { margin-top: 12px; }
+  .s-top .acts { margin-top: 6px; }
+  .place { display: flex; flex-direction: column; border: 1px solid rgba(22,35,61,0.14); border-radius: 12px; background: #fff; padding: 7px 11px 8px; transition: border-color 0.2s, box-shadow 0.2s; }
+  .place:focus-within { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(185,154,108,0.16); }
+  .place input { border: 0 !important; padding: 0 !important; box-shadow: none !important; font-size: 16px !important; font-weight: 500; background: transparent; }
+  .place-sub { font-size: 12.5px; color: var(--ink-soft); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .place.unset .place-sub { color: #9A4E3E; }
+  .place.searching::after { content: ""; position: absolute; right: 12px; top: 14px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--line); border-top-color: var(--ink); animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .results button.on { background: var(--paper-2); }
+  .results .none { padding: 12px; font-size: 14px; color: var(--ink-soft); }
+  .mapbox.tracing::after { content: "Tracing roads…"; position: absolute; left: 12px; bottom: 12px; z-index: 3; padding: 6px 10px; border-radius: 8px; background: rgba(22,35,61,0.85); color: var(--paper); font: 500 10px var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; }
   .s-n { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 600 13px var(--font-display); border: 1.5px solid var(--ink); }
   .s-n.stay { background: var(--ink); color: var(--paper); }
   .s-n.home { background: var(--gold); border-color: var(--gold); color: #fff; }
@@ -368,6 +380,7 @@
   const dirty = () => cur && JSON.stringify(strip(cur)) !== saved;
   let onProfile = false;
   function markDirty() {
+    schedulePreview();
     $("savebar").classList.toggle("on", !onProfile && dirty());
     $("save-msg").textContent = "Unsaved changes";
   }
@@ -507,6 +520,7 @@
 
   function renderItinerary() {
     const t = cur;
+    const keptMap = $("mapbox");
     syncDays(t);
     for (const d of t.days) if (!t.stops.some((x) => x.day === d.n)) t.stops.push(newStop(d.n));
     reorderStops();
@@ -533,14 +547,12 @@
                 return `<div class="stop2" data-stop="${esc(x.id)}">
                   <div class="s-top">
                     <span class="s-n ${x.kind === "home" || x.kind === "airport" ? x.kind : k}">${n}</span>
-                    <input type="text" data-sk="name" value="${esc(x.name)}" placeholder="Place name">
-                    <div class="acts"><button class="ib" data-up title="Move up">↑</button><button class="ib" data-sdel title="Remove stop">✕</button></div>
+                    <div class="search-pop place ${has ? "" : "unset"}">
+                      <input type="text" data-sk="name" data-ssearch value="${esc(x.name)}" placeholder="Search for a place…" autocomplete="off" autocapitalize="words" enterkeyhint="search">
+                      <span class="place-sub">${has ? `📍 ${esc(x.area || `${x.lat.toFixed(3)}, ${x.lng.toFixed(3)}`)}` : "Type to search, or ◎ to pick it on the map"}</span>
+                    </div>
+                    <div class="acts"><button class="ib" data-pick title="Pick on the map">◎</button><button class="ib" data-up title="Move up">↑</button><button class="ib" data-sdel title="Remove stop">✕</button></div>
                   </div>
-                  <div class="s-loc">
-                    <div class="search-pop"><input type="search" placeholder="${has ? "Change location…" : "Search for the location…"}" data-ssearch></div>
-                    <button class="ib" data-pick title="Pick on the map">◎</button>
-                  </div>
-                  <div class="loc-line ${has ? "" : "missing"}">${has ? `📍 ${esc(x.area || `${x.lat.toFixed(3)}, ${x.lng.toFixed(3)}`)}` : "No location yet. Search above or pick it on the map."}</div>
                   <input type="text" data-sk="note" value="${esc(x.note)}" placeholder="Note (optional)">
                   <div class="opts">
                     ${seg("kind", STOP_KINDS, k, "Did you")}
@@ -559,6 +571,7 @@
         </div>
         <div class="mapbox" id="mapbox"><div id="emap"></div><div class="pickbar"><span id="pick-msg">Tap the map to place this stop</span><button class="btn sm" style="color:var(--paper);border-color:rgba(239,234,224,0.4);background:transparent" id="pick-cancel">Cancel</button></div></div>
       </div>`;
+    if (keptMap && emap && emap.__tripId === t.id) $("mapbox").replaceWith(keptMap);
     const P = $("pane");
     const dayOfEl = (el) => Number(el.closest("[data-day]").dataset.day);
     const stopOfEl = (el) => t.stops.find((x) => x.id === el.closest("[data-stop]").dataset.stop);
@@ -570,7 +583,7 @@
       if (el.dataset.sk === "name") autoKind(t, x, true);
       markDirty();
     });
-    P.querySelectorAll("[data-sk=name]").forEach((el) => el.onchange = () => keepScroll(renderItinerary));
+    P.querySelectorAll("[data-sk=name]").forEach((el) => el.onchange = () => { const x = stopOfEl(el); if (/\bairport\b/i.test(x.name)) keepScroll(renderItinerary); });
     P.querySelectorAll(".chips button").forEach((b) => b.onclick = () => {
       const x = stopOfEl(b);
       const key = b.closest("[data-opt]").dataset.opt;
@@ -608,14 +621,14 @@
     };
     P.querySelectorAll("[data-ssearch]").forEach((el) => wireSearch(el, (r) => {
       const x = stopOfEl(el);
-      x.lat = r.lat; x.lng = r.lng; x.area = r.area;
-      if (!x.name) x.name = r.name;
+      x.lat = r.lat; x.lng = r.lng; x.area = r.area; x.name = r.name;
       autoKind(t, x, false);
       markDirty(); keepScroll(renderItinerary);
-    }));
+    }, () => { const x = stopOfEl(el); const near = t.stops.slice(0, t.stops.indexOf(x)).reverse().find((y) => A.hasXY(y)) || t.stops.find((y) => A.hasXY(y)) || t.origin; return near && A.hasXY(near) ? [near.lat, near.lng] : null; }));
     P.querySelectorAll("[data-pick]").forEach((b) => b.onclick = () => { picking = stopOfEl(b); $("mapbox").classList.add("picking"); $("pick-msg").textContent = `Tap the map to place “${picking.name || "this stop"}”`; $("mapbox").scrollIntoView({ behavior: "smooth", block: "center" }); });
     $("pick-cancel").onclick = () => { picking = null; $("mapbox").classList.remove("picking"); };
-    mountEditorMap();
+    if (emap && emap.__tripId === t.id && $("emap") === emap.getContainer()) { emap.resize(); drawEditorMarkers(false); }
+    else mountEditorMap();
     markDirty();
   }
 
@@ -640,17 +653,21 @@
     const host = $("emap");
     if (emap) { emap.remove(); emap = null; }
     emap = new maplibregl.Map({ container: host, style: A.mapStyle({ relief: true }), center: [-88, 30], zoom: 4, attributionControl: { compact: true } });
+    emap.__tripId = cur.id;
+    previewSig = routeSig(cur);
     emap.addControl(new maplibregl.NavigationControl({ showCompass: false }), "bottom-right");
     emap.on("load", () => {
       emap._ready = true;
       emap.addSource("r", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-      emap.addLayer({ id: "r", type: "line", source: "r", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": ["get", "color"], "line-width": 3, "line-opacity": 0.85 } });
+      emap.addLayer({ id: "r", type: "line", source: "r", filter: ["!", ["get", "dashed"]], layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": ["get", "color"], "line-width": 3, "line-opacity": 0.85 } });
+      emap.addLayer({ id: "r-dash", type: "line", source: "r", filter: ["get", "dashed"], layout: { "line-cap": "round" }, paint: { "line-color": ["get", "color"], "line-width": 2, "line-dasharray": [0.3, 2.2] } });
       drawEditorMarkers(true);
     });
     emap.on("click", (e) => {
       if (!picking) return;
       picking.lat = +e.lngLat.lat.toFixed(5);
       picking.lng = +e.lngLat.lng.toFixed(5);
+      picking.area = "";
       picking = null;
       $("mapbox").classList.remove("picking");
       markDirty();
@@ -658,6 +675,36 @@
       renderItinerary();
       scrollTo(0, y);
     });
+  }
+
+  // ─── Live route preview ────────────────────────────────────────────────────
+  // Whenever a stop's place, order or "got there by" changes, re-trace the roads for the
+  // editor map (nothing is saved until you press Save).
+  let previewSig = "", previewTimer = null, previewSeq = 0;
+  const routeSig = (t) => JSON.stringify([t.origin && [t.origin.lat, t.origin.lng], t.stops.filter((x) => A.hasXY(x)).map((x) => [x.day, x.lat, x.lng, x.travel, x.route, x.group])]);
+  function schedulePreview() {
+    if (!cur || !emap || tab !== "itinerary") return;
+    const sig = routeSig(cur);
+    if (sig === previewSig) return;
+    previewSig = sig;
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(async () => {
+      const seq = ++previewSeq;
+      $("mapbox").classList.add("tracing");
+      try {
+        const j = await A.api("previewRoute", { method: "POST", body: { trip: strip(cur) } });
+        if (seq !== previewSeq || !cur) return;
+        cur.route = j.route;
+        drawRouteLines();
+      } catch {} finally { if (seq === previewSeq) $("mapbox").classList.remove("tracing"); }
+    }, 350);
+  }
+  function drawRouteLines() {
+    if (!emap || !emap._ready) return;
+    const t = cur;
+    const segs = (t.route && t.route.segments) || [];
+    const colorOf = (s) => s.groups && s.groups.length === 1 ? ((t.groups.find((g) => g.id === s.groups[0]) || {}).color || t.color) : t.color;
+    emap.getSource("r").setData({ type: "FeatureCollection", features: segs.map((s) => ({ type: "Feature", properties: { color: colorOf(s), dashed: (s.mode || "drive") !== "drive" }, geometry: { type: "LineString", coordinates: s.coords } })) });
   }
 
   function drawEditorMarkers(fitIt) {
@@ -675,42 +722,97 @@
       m.on("dragend", () => {
         const ll = m.getLngLat();
         const targets = p.stops.length ? p.stops : [];
-        targets.forEach((s) => { s.lat = +ll.lat.toFixed(5); s.lng = +ll.lng.toFixed(5); });
+        targets.forEach((s) => { s.lat = +ll.lat.toFixed(5); s.lng = +ll.lng.toFixed(5); s.area = s.area || ""; });
         if (p.kind === "home" && !p.stops.length && t.origin) { t.origin.lat = +ll.lat.toFixed(5); t.origin.lng = +ll.lng.toFixed(5); }
+        const label = () => { for (const s of targets) {
+          const sub = document.querySelector(`[data-stop="${CSS.escape(s.id)}"] .place-sub`);
+          if (sub) { sub.textContent = `📍 ${s.area || `${s.lat.toFixed(3)}, ${s.lng.toFixed(3)}`}`; sub.parentElement.classList.remove("unset"); }
+        } };
+        label();
         markDirty();
-        const y = scrollY; renderItinerary(); scrollTo(0, y);
+        // name the new spot's town
+        fetch(`https://photon.komoot.io/reverse?lat=${ll.lat}&lon=${ll.lng}&lang=en&limit=1`).then((r) => r.json()).then((j) => {
+          const q = ((j.features || [])[0] || {}).properties;
+          if (!q) return;
+          const town = q.city || q.town || q.village || q.county || q.name;
+          const area = [town, q.state, q.countrycode === "US" ? "" : q.country].filter(Boolean).join(", ");
+          if (area) { targets.forEach((s) => { s.area = area; }); label(); markDirty(); }
+        }).catch(() => {});
       });
       emarkers.push(m);
     }
-    const segs = (t.route && t.route.segments) || [];
-    emap.getSource("r").setData({ type: "FeatureCollection", features: segs.map((s) => ({ type: "Feature", properties: { color: s.groups && s.groups.length === 1 ? ((t.groups.find((g) => g.id === s.groups[0]) || {}).color || t.color) : t.color }, geometry: { type: "LineString", coordinates: s.coords } })) });
-    const b = A.bounds([...pl.list.map((p) => [p.lng, p.lat])]);
-    if (b && fitIt !== false) emap.fitBounds(b, { padding: 40, duration: 0, maxZoom: 11 });
+    drawRouteLines();
+    const b = A.bounds(A.focusPoints(t, focusDay != null && t.days.some((d) => d.n === focusDay) ? focusDay : null)) || A.bounds(pl.list.map((p) => [p.lng, p.lat]));
+    if (b && fitIt !== false) { try { emap.fitBounds(b, { padding: 40, duration: 0, maxZoom: 11 }); } catch {} }
   }
 
-  // Place search (server proxies Photon / OpenStreetMap)
-  function wireSearch(input, onPick) {
+  // Place search: asks Photon (OpenStreetMap) directly from the browser so it's quick, as you
+  // type from 2 letters, preferring places near the trip; falls back to the server.
+  const geoCache = new Map();
+  async function searchPlaces(q, near, signal) {
+    const key = `${q}|${near ? near.map((v) => v.toFixed(1)).join(",") : ""}`;
+    if (geoCache.has(key)) return geoCache.get(key);
+    let results;
+    try {
+      const bias = near ? `&lat=${near[0]}&lon=${near[1]}&location_bias_scale=0.3&zoom=7` : "";
+      const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=7&lang=en${bias}`, { signal });
+      if (!r.ok) throw new Error();
+      const j = await r.json();
+      const seen = new Set();
+      results = (j.features || []).map((f) => {
+        const p = f.properties || {};
+        const town = p.city || p.town || p.village || p.district || p.county;
+        const area = [town !== p.name ? town : "", p.state, p.countrycode === "US" ? "" : p.country].filter(Boolean).join(", ");
+        return { name: p.name || [p.housenumber, p.street].filter(Boolean).join(" ") || q, area, lat: f.geometry.coordinates[1], lng: f.geometry.coordinates[0], kind: p.osm_value };
+      }).filter((x) => { const k = `${x.name}|${x.area}`; if (seen.has(k)) return false; seen.add(k); return true; });
+    } catch (e) {
+      if (signal && signal.aborted) throw e;
+      const j = await A.api("geocode", { query: { q, ...(near ? { lat: near[0].toFixed(3), lng: near[1].toFixed(3) } : {}) } });
+      results = j.results;
+    }
+    geoCache.set(key, results);
+    return results;
+  }
+
+  function wireSearch(input, onPick, nearFn) {
     if (!input) return;
-    let h, box;
-    const close = () => { if (box) { box.remove(); box = null; } };
+    let h, box, ctrl, results = [], active = -1;
+    const host = input.parentElement;
+    const close = () => { if (box) { box.remove(); box = null; } active = -1; };
+    const show = (q) => {
+      close();
+      box = document.createElement("div");
+      box.className = "results";
+      box.innerHTML = results.length
+        ? results.map((r, i) => `<button type="button" data-i="${i}" class="${i === active ? "on" : ""}">${esc(r.name)}<small>${esc(r.area)}</small></button>`).join("")
+        : `<div class="none">No places match “${esc(q)}”</div>`;
+      host.appendChild(box);
+      box.querySelectorAll("[data-i]").forEach((b) => b.onmousedown = (e) => { e.preventDefault(); pick(results[b.dataset.i]); });
+    };
+    const pick = (r) => { close(); if (ctrl) ctrl.abort(); input.blur(); onPick(r); };
     input.addEventListener("input", () => {
       clearTimeout(h);
       const q = input.value.trim();
-      if (q.length < 3) return close();
+      if (q.length < 2) { if (ctrl) ctrl.abort(); return close(); }
+      host.classList.add("searching");
       h = setTimeout(async () => {
+        if (ctrl) ctrl.abort();
+        ctrl = new AbortController();
         try {
-          const c = emap ? emap.getCenter() : null;
-          const j = await A.api("geocode", { query: { q, ...(c ? { lat: c.lat.toFixed(3), lng: c.lng.toFixed(3) } : {}) } });
-          close();
-          box = document.createElement("div");
-          box.className = "results";
-          box.innerHTML = j.results.length ? j.results.map((r, i) => `<button data-i="${i}">${esc(r.name)}<small>${esc(r.area)}</small></button>`).join("") : `<button disabled>No matches</button>`;
-          input.parentElement.appendChild(box);
-          box.querySelectorAll("[data-i]").forEach((b) => b.onclick = () => { const r = j.results[b.dataset.i]; close(); input.value = ""; onPick(r); });
-        } catch (e) { toast(e.message); }
-      }, 350);
+          results = await searchPlaces(q, nearFn ? nearFn() : emap ? [emap.getCenter().lat, emap.getCenter().lng] : null, ctrl.signal);
+          if (input.value.trim() !== q || document.activeElement !== input) return;
+          active = -1;
+          show(q);
+        } catch {} finally { host.classList.remove("searching"); }
+      }, 160);
     });
-    input.addEventListener("blur", () => setTimeout(close, 200));
+    input.addEventListener("keydown", (e) => {
+      if (!box || !results.length) return;
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); active = (active + (e.key === "ArrowDown" ? 1 : results.length - 1)) % results.length; show(input.value.trim()); }
+      if (e.key === "Enter") { e.preventDefault(); pick(results[Math.max(0, active)]); }
+      if (e.key === "Escape") close();
+    });
+    input.addEventListener("blur", () => setTimeout(close, 150));
   }
 
   // ─── Save ──────────────────────────────────────────────────────────────────

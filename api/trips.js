@@ -382,13 +382,24 @@ async function osrm(wps) {
 
 // Recomputes only the legs whose waypoints changed. Legs the router can't solve fall back
 // to straight lines (flagged), so a flaky router never blocks the page.
-async function buildRoute(trip, budgetMs = 20000) {
+const LEGS_KEY = "trips:legs"; // hash: leg key → traced road, shared by previews and saves
+
+async function buildRoute(trip, budgetMs = 20000, { persist = true } = {}) {
   const started = Date.now();
   const prev = parseMaybe(await kv.get(routeKey(trip.id))) || { segments: [] };
   const cache = new Map(prev.segments.filter((s) => !s.straight && (s.mode || "drive") === "drive").map((s) => [s.key, s]));
+  const plan = routePlan(trip);
+  const missing = plan.filter((p) => p.mode === "drive" && !cache.has(p.key)).map((p) => p.key);
+  if (missing.length) {
+    try {
+      const got = await kv.hmget(LEGS_KEY, ...missing);
+      (Array.isArray(got) ? got : missing.map((k) => got && got[k])).forEach((v, i) => { const seg = parseMaybe(v); if (seg && seg.coords) cache.set(missing[i], seg); });
+    } catch {}
+  }
+  const fresh = {};
   const segments = [];
   let incomplete = false;
-  for (const p of routePlan(trip)) {
+  for (const p of plan) {
     if (p.mode === "fly" || p.mode === "boat") {
       const f = arc(p.wps[0], p.wps[1], p.mode === "boat" ? 12 : 64);
       segments.push({ key: p.key, day: p.day, mode: p.mode, groups: p.groups, coords: f.coords, distance: f.distance, duration: null });
@@ -397,7 +408,7 @@ async function buildRoute(trip, budgetMs = 20000) {
     let hit = cache.get(p.key);
     if (!hit && Date.now() - started < budgetMs) {
       const r = await osrm(p.wps);
-      if (r) hit = { key: p.key, ...r };
+      if (r) { hit = { key: p.key, ...r }; fresh[p.key] = hit; }
     }
     if (!hit) incomplete = true;
     segments.push(
@@ -407,7 +418,8 @@ async function buildRoute(trip, budgetMs = 20000) {
     );
   }
   const route = { segments, incomplete, builtAt: Date.now() };
-  await kv.set(routeKey(trip.id), route);
+  if (Object.keys(fresh).length) { try { await kv.hset(LEGS_KEY, fresh); } catch {} }
+  if (persist) await kv.set(routeKey(trip.id), route);
   return route;
 }
 
@@ -756,6 +768,12 @@ export default async function handler(req, res) {
     if (["deleteTrip", "upload", "updatePhotos", "deletePhotos"].includes(action)) {
       const t = await tripForWrite(action === "deleteTrip" ? body.id : body.tripId);
       if (t && !canEditTrip(me, t)) return res.status(403).json({ error: "Only the people on this trip can change it." });
+    }
+
+    // Trace roads for an itinerary that is still being edited, without saving anything.
+    if (action === "previewRoute") {
+      const trip = cleanTrip(body.trip || {});
+      return res.status(200).json({ route: await buildRoute(trip, 15000, { persist: false }) });
     }
 
     if (action === "saveTrip") {
