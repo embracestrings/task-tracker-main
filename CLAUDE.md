@@ -108,6 +108,7 @@ A password-protected family travel map ("trips atlas" in code) that shares this 
 - **Accounts:** everyone signs in with email + password; everyone can see every trip. Accounts exist so trips show who went (`trip.travelers` = person ids, `trip.family` = whole family). You can edit trips you were on; admins edit everything; anyone can add a trip.
   - People live in KV `trips:people` (name, email, role, scrypt password hash, invite token hash, avatar timestamp). Avatars are private blobs at `trips/people/{id}.jpg`.
   - The shared `TRIPS_PASSWORD` only signs in (as "family") until the first person sets up an account.
+  - `TRIPS_ADMIN_KEY` in the `x-trips-admin-key` header also acts as an admin for any action (used to import itineraries).
   - **Inviting someone** (also resets a forgotten password): `TRIPS_ADMIN_KEY=… node scripts/trips-invite.mjs email "Name" [--admin]` prints a one-time link (7 days) to `/welcome`. `TRIPS_ADMIN_KEY` is in Vercel env. There is deliberately no invite button in the UI.
 - **Storage:**
   - KV `trips:list` holds the itineraries.

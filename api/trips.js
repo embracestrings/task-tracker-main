@@ -118,6 +118,12 @@ const bootstrapMode = (people) => !people.some((p) => p.pw && p.pw.hash);
 
 // Who is asking: a person, or the shared "family" sign-in during setup.
 async function whoIs(req) {
+  // TRIPS_ADMIN_KEY (already able to mint invite links) also acts as an admin for scripted
+  // edits such as importing an itinerary.
+  const key = req.headers["x-trips-admin-key"];
+  if (key && process.env.TRIPS_ADMIN_KEY && safeEqual(key, process.env.TRIPS_ADMIN_KEY)) {
+    return { id: "admin-key", name: "Admin", admin: true, family: true, people: await getPeople() };
+  }
   const sub = readSession(req);
   if (!sub) return null;
   const people = await getPeople();
