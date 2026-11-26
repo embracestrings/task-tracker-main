@@ -207,6 +207,7 @@ function cleanTrip(t) {
       ? { name: str(t.origin.name, 120), area: str(t.origin.area, 120), lat: num(t.origin.lat), lng: num(t.origin.lng) }
       : null,
     coverPhotoId: isId(t.coverPhotoId) ? t.coverPhotoId : null,
+    regionsAt: null,
     hidden: !!t.hidden,
     days: (Array.isArray(t.days) ? t.days : []).slice(0, 120).map((d, i) => ({
       n: Number.isInteger(d.n) ? d.n : i + 1,
@@ -611,10 +612,21 @@ export default async function handler(req, res) {
       const trips = await getTrips();
       await linkTravelers(trips, people);
       const out = [];
+      const started = Date.now();
+      let regionsChanged = false;
       for (const t of trips) {
         const [route, photos] = await Promise.all([routeFor(t, 8000), getPhotos(t.id)]);
+        // trips saved before states/countries were automatic get them filled in once
+        if (!t.regionsAt && Date.now() - started < 14000) {
+          const reg = await deriveRegions(t, route, 6000);
+          if (reg.complete || reg.states.length >= (t.states || []).length) t.states = reg.states;
+          if (reg.complete || reg.countries.length >= (t.countries || []).length) t.countries = reg.countries;
+          if (reg.complete) t.regionsAt = Date.now();
+          regionsChanged = true;
+        }
         out.push({ ...t, route, photos, canEdit: canEditTrip(me, t) });
       }
+      if (regionsChanged) await kv.set(LIST_KEY, trips);
       return res.status(200).json({ trips: out, people: people.map(publicPerson), me: meOut, now: Date.now() });
     }
 
@@ -739,6 +751,7 @@ export default async function handler(req, res) {
       // never shrink the lists because a lookup failed part way
       if (reg.complete || reg.states.length >= trip.states.length) trip.states = reg.states;
       if (reg.complete || reg.countries.length >= trip.countries.length) trip.countries = reg.countries;
+      if (reg.complete) trip.regionsAt = Date.now();
       await kv.set(LIST_KEY, trips);
       return res.status(200).json({ trip: { ...trip, route, photos: await getPhotos(trip.id), canEdit: canEditTrip(me, trip) } });
     }
