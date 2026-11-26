@@ -93,9 +93,9 @@
     background: radial-gradient(ellipse at 50% 40%, #F4EFE4, #E3DACA);
     box-shadow: 0 14px 30px -18px rgba(22,35,61,0.45);
   }
-  .tc-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; transition: transform 0.8s var(--ease-out); }
-  .tc-media svg { position: absolute; inset: 14px 28px; width: calc(100% - 56px); height: calc(100% - 28px); }
-  .trip-card:active .tc-media img { transform: scale(1.04); }
+  .tc-media > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; transition: transform 0.8s var(--ease-out); }
+  .tc-media > svg { position: absolute; inset: 14px 28px; width: calc(100% - 56px); height: calc(100% - 28px); }
+  .trip-card:active .tc-media > img { transform: scale(1.04); }
   .trip-card:active .tc-media { box-shadow: 0 8px 20px -14px rgba(22,35,61,0.5); }
   .tc-pill {
     position: absolute; left: 10px; top: 10px; display: inline-flex; align-items: center; gap: 6px;
@@ -103,6 +103,13 @@
     font: 500 9px var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: #9A4E3E;
   }
   .tc-pill i { width: 6px; height: 6px; border-radius: 50%; background: #C0654A; animation: ping 2s infinite; }
+  .tc-who { position: absolute; right: 10px; bottom: 10px; display: flex; }
+  .tc-who .av { box-shadow: 0 0 0 2px rgba(250,247,240,0.95), 0 4px 10px -4px rgba(0,0,0,0.4); }
+  .who-row { margin-top: 12px; }
+  body.sheet-open .trip-head .who-row { display: none; }
+  .amb-who { margin-top: 16px; }
+  .amb-who .who-n { font: italic 400 20px var(--font-display); color: var(--ink-2); }
+  .amb-who .av { font-size: 15px; }
   .tc-text { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 2px 0; }
   .tc-text h3 { font: 500 21px/1.1 var(--font-display); margin: 0; }
   .tc-meta { flex: 0 0 auto; font: 500 9.5px var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); text-align: right; }
@@ -368,7 +375,7 @@
     .trip-head { right: calc(var(--pad) + 152px); max-width: none; padding: 10px 14px 11px; border-radius: 16px; }
     .trip-head h1 { font-size: 21px; margin: 2px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .trip-head .back { font-size: 9px; padding: 0; }
-    .trip-head .sub, .trip-head .stats, .trip-head .legend { display: none; }
+    .trip-head .sub, .trip-head .stats, .trip-head .legend, .trip-head .who-row { display: none; }
     body.sheet-open .trip-head h1 { font-size: 21px; }
     body.sheet-open .trip-head { padding: 10px 14px 11px; }
 
@@ -553,6 +560,7 @@
     const sig = JSON.stringify(j.trips.map((t) => [t.id, t.updatedAt, (t.photos || []).length, (t.photos || []).map((p) => p.caption + p.stopId + p.hidden).join(""), t.route && t.route.builtAt]));
     if (sig === dataSig) return false;
     dataSig = sig;
+    A.setPeople(j.people, j.me);
     S.trips = j.trips.filter((t) => !t.hidden).sort((a, b) => (b.startDate || "").localeCompare(a.startDate || ""));
     S.trips.forEach((t, i) => { if (!t.color) t.color = A.ROUTE_COLORS[i % A.ROUTE_COLORS.length]; });
     if (S.trip) S.trip = S.trips.find((t) => t.id === S.trip.id) || null;
@@ -882,6 +890,13 @@
     return `<svg viewBox="-4 -4 ${(W * k + 8).toFixed(1)} ${(H * k + 8).toFixed(1)}" preserveAspectRatio="xMidYMid meet">${segs.map((s) => `<polyline points="${pts(s.coords)}" fill="none" stroke="${s.groups && s.groups.length === 1 ? routeColor(trip, s) : stroke}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>`).join("")}</svg>`;
   }
 
+  // Small faces in the corner of a postcard: the family mark, or each traveler.
+  function faces(t) {
+    if (t.family) return `<span class="tc-who">${A.familyBadge(26)}</span>`;
+    const list = A.travelersOf(t);
+    return list.length ? `<span class="tc-who"><span class="stack">${list.slice(0, 5).map((p) => A.avatar(p, 26)).join("")}</span></span>` : "";
+  }
+
   function tripCard(t) {
     const s = A.tripStats(t);
     const td = today(t);
@@ -890,6 +905,7 @@
     const when = A.fmt(t.startDate, { month: "short", year: "numeric" });
     return `<button class="trip-card" data-trip="${esc(t.id)}">
       <div class="tc-media">${cover ? `<img src="${A.photoUrl(cover, "t")}" alt="" loading="lazy">` : routeSvg(t, t.color, 1.8)}
+        ${faces(t)}
         ${td ? `<span class="tc-pill"><i></i>Day ${td.dayIndex} of ${td.totalDays}</span>` : ""}</div>
       <div class="tc-text"><h3>${esc(t.title)}</h3><div class="tc-meta">${esc(when)}<br>${s.nights} nights</div></div>
     </button>`;
@@ -899,7 +915,7 @@
   function syncButtons() {
     const t = S.view === "trip" && S.trip;
     $("btn-add").hidden = !!t;
-    $("btn-edit").hidden = !t;
+    $("btn-edit").hidden = !t || t.canEdit === false;
     $("btn-add").href = `${A.adminHome}?new=1`;
     if (t) $("btn-edit").href = `${A.adminHome}?trip=${encodeURIComponent(t.id)}&tab=itinerary${S.day != null ? `&day=${S.day}` : ""}`;
   }
@@ -987,6 +1003,7 @@
       <button class="back kicker" id="hd-back">${ICON.back}All journeys</button>
       <h1>${esc(t.title)}</h1>
       <div class="sub">${esc(A.dateRange(t.startDate, t.endDate))}${t.subtitle ? ` · ${esc(t.subtitle)}` : ""}</div>
+      ${t.family || (t.travelers || []).length ? `<div class="who-row">${A.whoWent(t, 26)}</div>` : ""}
       <div class="stats">
         <span><b>${fmtNum(s.miles)}</b>miles driven</span>${s.flown ? `<span><b>${fmtNum(s.flown)}</b>flown</span>` : ""}<span><b>${s.nights}</b>nights</span><span><b>${s.stops}</b>stops</span>${s.countries > 1 ? `<span><b>${s.countries}</b>countries</span>` : s.states ? `<span><b>${s.states}</b>states</span>` : ""}${s.photos ? `<span><b>${s.photos}</b>photos</span>` : ""}
       </div>
@@ -1175,8 +1192,8 @@
       ${p.caption ? `<div class="cap">${esc(p.caption)}</div>` : ""}
       <div id="lb-mini-slot"></div>
       <div class="lb-count">${LB.i + 1} of ${LB.list.length} · ${esc(t.title)}</div>
-      <div class="lb-btns"><button id="lb-show">Show on map</button><button id="lb-edit">Edit photo</button></div>`;
-    $("lb-edit").onclick = () => { location.href = `${A.adminHome}?trip=${encodeURIComponent(t.id)}&tab=photos&photo=${encodeURIComponent(p.id)}`; };
+      <div class="lb-btns"><button id="lb-show">Show on map</button>${t.canEdit === false ? "" : `<button id="lb-edit">Edit photo</button>`}</div>`;
+    if ($("lb-edit")) $("lb-edit").onclick = () => { location.href = `${A.adminHome}?trip=${encodeURIComponent(t.id)}&tab=photos&photo=${encodeURIComponent(p.id)}`; };
     $("lb-show").onclick = () => {
       LB.resume = false;
       $("lightbox").classList.remove("on");
@@ -1352,7 +1369,7 @@
     styleRoutes();
     setRouteVisibility(t.id, false);
     const s = A.tripStats(t);
-    await caption(`<div class="kicker">${esc(A.dateRange(t.startDate, t.endDate))}</div><h2>${esc(t.title)}</h2><p>${fmtNum(s.miles)} miles driven${s.flown ? ` · ${fmtNum(s.flown)} flown` : ""} · ${s.nights} nights · ${s.stops} stops${s.photos ? ` · ${s.photos} photos` : ""}</p><div class="line"></div>`);
+    await caption(`<div class="kicker">${esc(A.dateRange(t.startDate, t.endDate))}</div><h2>${esc(t.title)}</h2><p>${fmtNum(s.miles)} miles driven${s.flown ? ` · ${fmtNum(s.flown)} flown` : ""} · ${s.nights} nights · ${s.stops} stops${s.photos ? ` · ${s.photos} photos` : ""}</p>${t.family || (t.travelers || []).length ? `<div class="amb-who">${A.whoWent(t, 40)}</div>` : ""}<div class="line"></div>`);
     guard(me);
     map.fitBounds(tripBounds(t), { padding: ambPad(120, 260, 140), pitch: 0, bearing: 0, duration: 2600, essential: true });
     await wait(2700, me);

@@ -104,7 +104,11 @@ A password-protected family travel map ("trips atlas" in code) that shares this 
 
 - **Pages:** `trips/index.html` (display: map, day rail, lightbox, idle slideshow) and `trips/admin.html` (itinerary editor + bulk photo upload). Shared code lives in `trips/atlas.js` and `trips/atlas.css`. MapLibre and exifr are vendored in `trips/vendor/`.
 - **Routing:** `vercel.json` `routes` maps `/` and `/admin` on the `trips.embracestrings.com` host to those pages. On any other host they are at `/trips/` and `/trips/admin`.
-- **API:** `api/trips.js` is one function with an `action` query param (login, data, saveTrip, upload, photo, geocode, …). It uses an HMAC-signed HttpOnly cookie checked against the `TRIPS_PASSWORD` env var.
+- **API:** `api/trips.js` is one function with an `action` query param (login, data, saveTrip, upload, photo, geocode, invite, acceptInvite, updateProfile, avatar, …). Sessions are HMAC-signed HttpOnly cookies (`<personId>.<expiry>.<sig>`, keyed off `TRIPS_PASSWORD`).
+- **Accounts:** everyone signs in with email + password; everyone can see every trip. Accounts exist so trips show who went (`trip.travelers` = person ids, `trip.family` = whole family). You can edit trips you were on; admins edit everything; anyone can add a trip.
+  - People live in KV `trips:people` (name, email, role, scrypt password hash, invite token hash, avatar timestamp). Avatars are private blobs at `trips/people/{id}.jpg`.
+  - The shared `TRIPS_PASSWORD` only signs in (as "family") until the first person sets up an account.
+  - **Inviting someone** (also resets a forgotten password): `TRIPS_ADMIN_KEY=… node scripts/trips-invite.mjs email "Name" [--admin]` prints a one-time link (7 days) to `/welcome`. `TRIPS_ADMIN_KEY` is in Vercel env. There is deliberately no invite button in the UI.
 - **Storage:**
   - KV `trips:list` holds the itineraries.
   - KV `trips:route:{id}` holds cached road geometry from OSRM.

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Welcome · Rey Family Travel Map</title>
+<meta name="theme-color" content="#EFEAE0">
+<link rel="icon" href="/trips/icon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/trips/icon-180.png">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/trips/atlas.css">
+<style>
+  .signin { position: static; min-height: 100vh; min-height: 100dvh; }
+  .signin-card p.lead { color: var(--ink-soft); font-size: 15px; line-height: 1.5; margin: 0 0 24px; }
+  .signin input + .signin-label { margin-top: 14px; }
+</style>
+</head>
+<body>
+<div class="signin">
+  <form class="signin-card" id="f" autocomplete="on">
+    <div class="signin-kicker">The Rey Family</div>
+    <h1 class="signin-title">Travel Map</h1>
+    <div class="signin-rule"></div>
+    <p class="lead" id="lead">Checking your invite…</p>
+    <input type="email" id="email" name="email" autocomplete="username" hidden>
+    <label class="signin-label" for="name">Your name</label>
+    <input id="name" type="text" autocomplete="given-name" required>
+    <label class="signin-label" for="pw">Choose a password</label>
+    <input id="pw" type="password" autocomplete="new-password" minlength="8" required>
+    <button type="submit" id="go" disabled>Open the map</button>
+    <p class="signin-error" id="err" role="alert"></p>
+  </form>
+</div>
+<script src="/trips/atlas.js"></script>
+<script>
+(async () => {
+  const A = window.Atlas;
+  const $ = (id) => document.getElementById(id);
+  const token = new URLSearchParams(location.search).get("token") || "";
+  try {
+    const r = await fetch(`/api/trips?action=inviteInfo&token=${encodeURIComponent(token)}`);
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error);
+    $("lead").textContent = `You'll sign in with ${j.email}. Pick a password (at least 8 characters).`;
+    $("email").value = j.email;
+    $("name").value = j.name || "";
+    $("go").disabled = false;
+    $("pw").focus();
+  } catch (e) {
+    $("lead").textContent = (e && e.message) || "This link has expired or was already used.";
+    $("f").querySelectorAll("input, button").forEach((x) => (x.disabled = true));
+  }
+  $("f").addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    $("err").textContent = "";
+    const r = await fetch("/api/trips?action=acceptInvite", {
+      method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, password: $("pw").value, name: $("name").value }),
+    });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { $("err").textContent = j.error || "Something went wrong."; return; }
+    location.href = A.home;
+  });
+})();
+</script>
+</body>
+</html>

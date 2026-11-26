@@ -51,21 +51,24 @@
           <div class="signin-kicker">${BRAND.family}</div>
           <h1 class="signin-title">${BRAND.name}</h1>
           <div class="signin-rule"></div>
-          <label class="signin-label" for="signin-pw">Family password</label>
+          <label class="signin-label" for="signin-email">Email</label>
+          <input id="signin-email" name="email" type="email" autocomplete="username" inputmode="email" autocapitalize="off" spellcheck="false">
+          <label class="signin-label" for="signin-pw">Password</label>
           <input id="signin-pw" name="password" type="password" autocomplete="current-password" required>
           <button type="submit">Open the map</button>
           <p class="signin-error" role="alert"></p>
         </form>`;
       document.body.appendChild(el);
       const form = el.querySelector("form");
-      const input = el.querySelector("input");
+      const emailIn = el.querySelector("#signin-email");
+      const input = el.querySelector("#signin-pw");
       const err = el.querySelector(".signin-error");
-      setTimeout(() => input.focus(), 50);
+      setTimeout(() => emailIn.focus(), 50);
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         err.textContent = "";
         try {
-          await api("login", { method: "POST", body: { password: input.value } });
+          await api("login", { method: "POST", body: { email: emailIn.value.trim(), password: input.value } });
           el.classList.add("leaving");
           setTimeout(() => el.remove(), 500);
           signing = null;
@@ -502,6 +505,34 @@
     return { date: t, day, dayIndex, totalDays, where };
   }
 
+  // ─── People ────────────────────────────────────────────────────────────────
+  const people = { list: [], me: null, byId: new Map() };
+  function setPeople(list, me) {
+    people.list = list || [];
+    people.me = me || null;
+    people.byId = new Map(people.list.map((p) => [p.id, p]));
+  }
+  const initials = (name) => String(name || "?").trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+  const avatarUrl = (p) => `/api/trips?action=avatar&id=${encodeURIComponent(p.id)}&v=${p.avatarAt}`;
+  // A round face: the person's photo, or their initials on their color.
+  function avatar(p, size = 28, extraClass = "") {
+    if (!p) return "";
+    const st = `width:${size}px;height:${size}px;font-size:${Math.round(size * 0.42)}px;--pc:${p.color || "#1F3A5F"}`;
+    return p.avatarAt
+      ? `<span class="av ${extraClass}" style="${st}" title="${esc(p.name)}"><img src="${avatarUrl(p)}" alt="${esc(p.name)}"></span>`
+      : `<span class="av ${extraClass}" style="${st}" title="${esc(p.name)}">${esc(initials(p.name))}</span>`;
+  }
+  const familyBadge = (size = 28) => `<span class="av fam" style="width:${size}px;height:${size}px" title="The whole family"><img src="/trips/icon-180.png" alt=""></span>`;
+  const travelersOf = (trip) => (trip.travelers || []).map((id) => people.byId.get(id)).filter(Boolean);
+  const namesOf = (list) => list.length <= 2 ? list.map((p) => p.name).join(" & ") : `${list.slice(0, -1).map((p) => p.name).join(", ")} & ${list[list.length - 1].name}`;
+  // "Who went" as faces: the family mark for whole-family trips, otherwise overlapping avatars.
+  function whoWent(trip, size = 26) {
+    if (trip.family) return `<span class="who">${familyBadge(size)}<span class="who-n">The whole family</span></span>`;
+    const list = travelersOf(trip);
+    if (!list.length) return "";
+    return `<span class="who"><span class="stack">${list.map((p) => avatar(p, size)).join("")}</span><span class="who-n">${esc(namesOf(list))}</span></span>`;
+  }
+
   const esc = (s) =>
     String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
@@ -536,5 +567,12 @@
     focusPoints,
     today,
     esc,
+    people,
+    setPeople,
+    avatar,
+    familyBadge,
+    whoWent,
+    travelersOf,
+    namesOf,
   };
 })();

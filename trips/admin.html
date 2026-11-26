@@ -151,6 +151,22 @@
   .bulk .btn { height: 32px; background: transparent; color: var(--paper); border-color: rgba(239,234,224,0.35); }
   .toast { position: fixed; left: 50%; top: 18px; transform: translate(-50%, calc(-100% - 40px)); z-index: 100; background: var(--ink); color: var(--paper); padding: 12px 18px; border-radius: 12px; font-size: 14px; box-shadow: var(--shadow); transition: transform 0.35s var(--ease-out); }
   .toast.on { transform: translate(-50%, 0); }
+  .ro-note { padding: 12px 16px; border-radius: 12px; background: rgba(185,154,108,0.14); color: var(--ink-2); font-size: 14px; margin-bottom: 14px; }
+  body.read-only #pane input, body.read-only #pane select, body.read-only #pane textarea { pointer-events: none; background: transparent; }
+  body.read-only #pane .acts, body.read-only #pane .drop, body.read-only #pane [data-addstop], body.read-only #pane #add-day,
+  body.read-only #pane .ck, body.read-only #pane #sel-all, body.read-only #pane .who-pick button:not(.on), body.read-only .savebar { display: none !important; }
+  .who-pick { display: flex; flex-wrap: wrap; gap: 8px; }
+  .wp { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px 5px 5px; border-radius: 999px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-size: 14px; color: var(--ink-soft); }
+  .wp.on { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+  .wp:disabled { opacity: 0.45; cursor: default; }
+  .me-btn { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border-radius: 999px; border: 1px solid var(--line); background: rgba(255,255,255,0.6); cursor: pointer; font: 500 13px var(--font-body); color: var(--ink); }
+  .me-btn[hidden] { display: none; }
+  .profile-top { display: flex; gap: 20px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .profile-photo { display: flex; flex-direction: column; align-items: center; gap: 8px; border: 0; background: none; cursor: pointer; font: 500 10px var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); }
+  .people-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .pl { display: flex; gap: 10px; align-items: center; }
+  .pl b { display: block; font: 500 18px var(--font-display); }
+  .pl span { font-size: 12px; color: var(--ink-soft); }
   .empty { padding: 26px; text-align: center; color: var(--ink-soft); border: 1px dashed var(--line); border-radius: 16px; }
   details summary { cursor: pointer; font: 500 10.5px var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); }
   .mk { width: 22px; height: 22px; border-radius: 50%; background: var(--surface); border: 1.5px solid var(--ink); display: grid; place-items: center; font: 600 12px var(--font-display); cursor: grab; box-shadow: 0 4px 10px -4px rgba(0,0,0,0.4); }
@@ -162,12 +178,13 @@
 <div class="wrap">
   <header class="top">
     <div><div class="kicker" id="fam"></div><h1>Travel Map admin</h1></div>
-    <div style="display:flex;gap:16px;align-items:center"><a href="/" id="view-link">View on the map →</a></div>
+    <div style="display:flex;gap:16px;align-items:center"><a href="/" id="view-link">View on the map →</a><button class="me-btn" id="me-btn" hidden></button></div>
   </header>
   <div class="layout">
     <aside>
       <div class="trips-nav" id="trips-nav"></div>
       <button class="btn" style="margin-top:12px;width:100%" id="new-trip">+ New journey</button>
+      <button class="btn ghost" style="margin-top:8px;width:100%" id="profile-btn">Your profile</button>
     </aside>
     <main id="main"><div class="empty">Loading…</div></main>
   </div>
@@ -214,6 +231,8 @@
 
   async function load(selectId) {
     const j = await A.api("data");
+    A.setPeople(j.people, j.me);
+    renderMe();
     trips = j.trips.sort((a, b) => (b.startDate || "").localeCompare(a.startDate || ""));
     renderNav();
     if (!selectId && !cur && params.get("new")) return newTrip();
@@ -253,7 +272,8 @@
     const y = new Date().getFullYear();
     cur = {
       id: `trip-${uid()}`, title: "New journey", subtitle: "", startDate: A.ymd(new Date()), endDate: A.ymd(new Date(Date.now() + 3 * 864e5)),
-      color: A.ROUTE_COLORS[trips.length % A.ROUTE_COLORS.length], people: [], states: [], groups: [],
+      color: A.ROUTE_COLORS[trips.length % A.ROUTE_COLORS.length], states: [], groups: [], family: false,
+      travelers: A.people.me && !A.people.me.family ? [A.people.me.id] : [], people: A.people.me && !A.people.me.family ? [A.people.me.name] : [],
       origin: { name: "Home", area: "Boerne, TX", lat: 29.7947, lng: -98.732 },
       days: [{ n: 1, date: A.ymd(new Date()), title: "", summary: "" }], stops: [], photos: [], route: { segments: [] }, _new: true,
     };
@@ -263,18 +283,23 @@
     render();
   }
 
-  const strip = (t) => { const { photos, route, updatedAt, _new, ...rest } = t; return rest; };
+  const strip = (t) => { const { photos, route, updatedAt, _new, canEdit, ...rest } = t; return rest; };
   const dirty = () => cur && JSON.stringify(strip(cur)) !== saved;
+  let onProfile = false;
   function markDirty() {
-    $("savebar").classList.toggle("on", dirty());
+    $("savebar").classList.toggle("on", !onProfile && dirty());
     $("save-msg").textContent = "Unsaved changes";
   }
 
   // ─── Main render ───────────────────────────────────────────────────────────
   function render() {
+    onProfile = false;
     const t = cur;
     const np = (t.photos || []).length;
+    const ro = t.canEdit === false;
+    document.body.classList.toggle("read-only", ro);
     $("main").innerHTML = `
+      ${ro ? `<div class="ro-note">You can look, but only ${esc(A.namesOf(A.travelersOf(t)) || "the people on this trip")} can change this journey.</div>` : ""}
       <div class="tabs">
         <button data-tab="photos" class="${tab === "photos" ? "on" : ""}">Photos${np ? ` · ${np}` : ""}</button>
         <button data-tab="itinerary" class="${tab === "itinerary" ? "on" : ""}">Itinerary & map</button>
@@ -302,7 +327,12 @@
           <label class="f s3"><span>Starts</span><input type="date" data-k="startDate" value="${esc(t.startDate)}"></label>
           <label class="f s3"><span>Ends</span><input type="date" data-k="endDate" value="${esc(t.endDate)}"></label>
           <label class="f s6"><span>Route color</span><div class="swatches">${A.ROUTE_COLORS.map((c) => `<button type="button" style="--c:${c}" data-color="${c}" class="${t.color === c ? "on" : ""}"></button>`).join("")}</div></label>
-          <label class="f s6"><span>Who went (comma separated)</span><input type="text" data-k="people" value="${esc((t.people || []).join(", "))}"></label>
+          <div class="f s12"><span>Who went</span>
+            <div class="who-pick">
+              <button type="button" class="wp ${t.family ? "on" : ""}" data-family>${A.familyBadge(30)}<span>The whole family</span></button>
+              ${A.people.list.map((p) => `<button type="button" class="wp ${!t.family && (t.travelers || []).includes(p.id) ? "on" : ""}" data-person="${esc(p.id)}" ${t.family ? "disabled" : ""}>${A.avatar(p, 30)}<span>${esc(p.name)}</span></button>`).join("")}
+            </div>
+          </div>
           <label class="f s6"><span>States (two-letter, comma separated)</span><input type="text" data-k="states" value="${esc((t.states || []).join(", "))}"></label>
           <label class="f s6"><span>Countries (comma separated)</span><input type="text" data-k="countries" value="${esc((t.countries || []).join(", "))}"></label>
         </div>
@@ -338,6 +368,17 @@
       else t[k] = el.value;
       markDirty();
     });
+    P.querySelectorAll("[data-person]").forEach((b) => b.onclick = () => {
+      const id = b.dataset.person;
+      t.travelers = (t.travelers || []).includes(id) ? t.travelers.filter((x) => x !== id) : [...(t.travelers || []), id];
+      t.people = t.travelers.map((x) => (A.people.byId.get(x) || {}).name).filter(Boolean);
+      renderDetails(); markDirty();
+    });
+    P.querySelector("[data-family]").onclick = () => {
+      t.family = !t.family;
+      if (t.family) { t.travelers = A.people.list.map((p) => p.id); t.people = A.people.list.map((p) => p.name); }
+      renderDetails(); markDirty();
+    };
     P.querySelectorAll("[data-o]").forEach((el) => el.oninput = () => { t.origin = t.origin || {}; t.origin[el.dataset.o] = el.value; markDirty(); });
     P.querySelectorAll("[data-color]:not([data-gc])").forEach((b) => b.onclick = () => { t.color = b.dataset.color; renderDetails(); markDirty(); });
     P.querySelectorAll("[data-gc]").forEach((b) => b.onclick = () => { t.groups[b.dataset.gc].color = b.dataset.color; renderDetails(); markDirty(); });
@@ -873,6 +914,86 @@
     }
     if (!out.day && dayByDate) { out.day = dayByDate.n; if (out.placed === "none") out.placed = "date"; }
     return out;
+  }
+
+  // ─── You ───────────────────────────────────────────────────────────────────
+  function renderMe() {
+    const me = A.people.me;
+    const b = $("me-btn");
+    if (!me) return;
+    b.hidden = false;
+    b.innerHTML = me.family ? `${A.familyBadge(30)}<span>Family</span>` : `${A.avatar(A.people.byId.get(me.id) || me, 30)}<span>${esc(me.name)}</span>`;
+    b.onclick = renderProfile;
+  }
+  $("profile-btn").onclick = () => { if (dirty() && !confirm("Discard unsaved changes?")) return; renderProfile(); };
+
+  function renderProfile() {
+    onProfile = true;
+    const me = A.people.me;
+    document.body.classList.remove("read-only");
+    $("savebar").classList.remove("on");
+    if (!me || me.family) {
+      $("main").innerHTML = `<div class="card"><h3>Your profile</h3><p class="hint">You're signed in with the shared family password. Once you open your invite link and choose a password, you'll sign in with your email instead and can add your photo here.</p><button class="btn" id="signout">Sign out</button></div>`;
+      $("signout").onclick = signOut;
+      return;
+    }
+    const p = A.people.byId.get(me.id) || me;
+    $("main").innerHTML = `
+      <div class="card"><h3>Your profile</h3>
+        <div class="profile-top">
+          <button class="profile-photo" id="ph-pick" title="Change photo">${A.avatar(p, 96)}<span>Change photo</span></button>
+          <div class="fields" style="flex:1">
+            <label class="f s12"><span>Name</span><input type="text" id="pf-name" value="${esc(p.name)}"></label>
+            <div class="f s12"><span>Email</span><div style="padding:9px 0;color:var(--ink-soft)">${esc(p.email)}</div></div>
+          </div>
+        </div>
+        <button class="btn dark" id="pf-save">Save name</button>
+      </div>
+      <div class="card"><h3>Password</h3>
+        <div class="fields">
+          <label class="f s6"><span>Current password</span><input type="password" id="pf-cur" autocomplete="current-password"></label>
+          <label class="f s6"><span>New password (8+ characters)</span><input type="password" id="pf-new" autocomplete="new-password"></label>
+        </div>
+        <button class="btn" id="pf-pw" style="margin-top:12px">Change password</button>
+      </div>
+      <div class="card"><h3>Family</h3>
+        <div class="people-list">${A.people.list.map((x) => `<div class="pl">${A.avatar(x, 34)}<div><b>${esc(x.name)}</b><span>${x.active ? esc(x.email) : x.email ? "Invited, not set up yet" : "No account yet"}${x.admin ? " · admin" : ""}</span></div></div>`).join("")}</div>
+        <p class="hint" style="margin-top:12px">To add someone, ask Claude to invite them by email. They'll get a link to choose their own password.</p>
+      </div>
+      <button class="btn ghost" id="signout">Sign out</button>
+      <input type="file" id="ph-file" accept="image/*" hidden>`;
+    $("pf-save").onclick = async () => {
+      const j = await A.api("updateProfile", { method: "POST", body: { name: $("pf-name").value } });
+      Object.assign(p, j.me); Object.assign(me, { name: j.me.name }); renderMe(); toast("Saved");
+    };
+    $("pf-pw").onclick = async () => {
+      try {
+        await A.api("updateProfile", { method: "POST", body: { currentPassword: $("pf-cur").value, newPassword: $("pf-new").value } });
+        $("pf-cur").value = $("pf-new").value = ""; toast("Password changed");
+      } catch (e) { toast(e.message); }
+    };
+    $("ph-pick").onclick = () => $("ph-file").click();
+    $("ph-file").onchange = async () => {
+      const f = $("ph-file").files[0];
+      if (!f) return;
+      try {
+        const bmp = await decode(f);
+        // square crop from the center, 400px
+        const w0 = bmp.width || bmp.naturalWidth, h0 = bmp.height || bmp.naturalHeight, side = Math.min(w0, h0);
+        const c = document.createElement("canvas"); c.width = c.height = 400;
+        c.getContext("2d").drawImage(bmp, (w0 - side) / 2, (h0 - side) / 3, side, side, 0, 0, 400, 400);
+        const blob = await new Promise((ok) => c.toBlob(ok, "image/jpeg", 0.86));
+        const buf = new Uint8Array(await blob.arrayBuffer());
+        let bin = ""; for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+        const j = await A.api("updateProfile", { method: "POST", body: { avatar: btoa(bin) } });
+        Object.assign(p, j.me); renderMe(); renderProfile(); renderNav(); toast("Photo updated");
+      } catch (e) { toast(e.message || "Couldn't read that photo"); }
+    };
+    $("signout").onclick = signOut;
+  }
+  async function signOut() {
+    await A.api("logout", { method: "POST" }).catch(() => {});
+    location.href = A.home;
   }
 
   // ─── Boot ──────────────────────────────────────────────────────────────────

@@ -5,11 +5,61 @@
     }
   },
   "routes": [
-    { "src": "/", "has": [{ "type": "host", "value": "trips.embracestrings.com" }], "dest": "/trips/index.html" },
-    { "src": "/admin/?", "has": [{ "type": "host", "value": "trips.embracestrings.com" }], "dest": "/trips/admin.html" },
-    { "src": "/trips/?", "dest": "/trips/index.html" },
-    { "src": "/trips/admin/?", "dest": "/trips/admin.html" },
-    { "src": "/trips/vendor/(.*)", "headers": { "Cache-Control": "public, max-age=31536000, immutable" }, "continue": true },
-    { "src": "/trips/(.*)", "headers": { "X-Robots-Tag": "noindex, nofollow" }, "continue": true }
+    {
+      "src": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "trips.embracestrings.com"
+        }
+      ],
+      "dest": "/trips/index.html"
+    },
+    {
+      "src": "/admin/?",
+      "has": [
+        {
+          "type": "host",
+          "value": "trips.embracestrings.com"
+        }
+      ],
+      "dest": "/trips/admin.html"
+    },
+    {
+      "src": "/welcome/?",
+      "has": [
+        {
+          "type": "host",
+          "value": "trips.embracestrings.com"
+        }
+      ],
+      "dest": "/trips/welcome.html"
+    },
+    {
+      "src": "/trips/?",
+      "dest": "/trips/index.html"
+    },
+    {
+      "src": "/trips/admin/?",
+      "dest": "/trips/admin.html"
+    },
+    {
+      "src": "/trips/welcome/?",
+      "dest": "/trips/welcome.html"
+    },
+    {
+      "src": "/trips/vendor/(.*)",
+      "headers": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      },
+      "continue": true
+    },
+    {
+      "src": "/trips/(.*)",
+      "headers": {
+        "X-Robots-Tag": "noindex, nofollow"
+      },
+      "continue": true
+    }
   ]
 }

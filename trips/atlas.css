@@ -90,3 +90,17 @@ button { font: inherit; color: inherit; }
   20% { transform: translateX(-9px); } 40% { transform: translateX(8px); }
   60% { transform: translateX(-5px); } 80% { transform: translateX(3px); }
 }
+
+/* ── Avatars ─────────────────────────────────────────────────────────────── */
+.av {
+  display: inline-grid; place-items: center; flex: 0 0 auto; border-radius: 50%; overflow: hidden;
+  background: var(--pc, var(--ink)); color: #fff; font: 600 12px/1 var(--font-body); letter-spacing: 0.02em;
+  box-shadow: 0 0 0 2px var(--paper-2);
+}
+.av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.av.fam { background: var(--ink); }
+.who { display: inline-flex; align-items: center; gap: 9px; min-width: 0; }
+.stack { display: inline-flex; }
+.stack .av + .av { margin-left: -7px; }
+.who-n { font-size: 13px; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.signin input + .signin-label { margin-top: 14px; }

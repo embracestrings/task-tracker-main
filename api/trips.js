@@ -60,23 +60,73 @@ function readCookie(req, name) {
   return null;
 }
 
-function isAuthed(req) {
-  if (!process.env.TRIPS_PASSWORD) return false;
+// Sessions are "<subject>.<expiry>.<signature>": subject is a person id, or "family" for the
+// shared password, which only works until the first person has set up their own account.
+// Older two-part cookies ("<expiry>.<signature>") count as "family" sessions.
+function readSession(req) {
+  if (!process.env.TRIPS_PASSWORD) return null;
   const c = readCookie(req, COOKIE);
-  if (!c) return false;
-  const [exp, sig] = c.split(".");
-  if (!exp || !sig || Number(exp) < Date.now()) return false;
-  return safeEqual(sig, sign(exp));
+  if (!c) return null;
+  const parts = c.split(".");
+  const [sub, exp, sig] = parts.length === 2 ? ["family", parts[0], parts[1]] : parts;
+  if (!sub || !exp || !sig || Number(exp) < Date.now()) return null;
+  const signed = parts.length === 2 ? exp : `${sub}.${exp}`;
+  return safeEqual(sig, sign(signed)) ? sub : null;
 }
 
-function setSession(res, req) {
+function setSession(res, req, sub) {
   const exp = String(Date.now() + SESSION_DAYS * 864e5);
   const secure = (req.headers["x-forwarded-proto"] || "https") === "https" ? "; Secure" : "";
-  res.setHeader(
-    "Set-Cookie",
-    `${COOKIE}=${exp}.${sign(exp)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_DAYS * 86400}${secure}`
-  );
+  const value = `${sub}.${exp}.${sign(`${sub}.${exp}`)}`;
+  res.setHeader("Set-Cookie", `${COOKIE}=${value}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_DAYS * 86400}${secure}`);
 }
+
+// ─── People ──────────────────────────────────────────────────────────────────
+// KV trips:people → [{ id, name, email, role, color, pw: {salt, hash}, invite: {hash, expires}, avatarAt }]
+
+const PEOPLE_KEY = "trips:people";
+const PERSON_COLORS = ["#1F3A5F", "#B5654A", "#5E7D6B", "#8C6F45", "#6B4E71", "#2F7A7A", "#9A4E5A", "#4F6A8F"];
+const slug = (s) => String(s || "").toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || uid(6);
+
+function hashPassword(pw, salt = crypto.randomBytes(16).toString("base64")) {
+  return { salt, hash: crypto.scryptSync(String(pw), salt, 64).toString("base64") };
+}
+function checkPassword(pw, rec) {
+  if (!rec || !rec.salt || !rec.hash) return false;
+  const h = crypto.scryptSync(String(pw), rec.salt, 64);
+  const want = Buffer.from(rec.hash, "base64");
+  return h.length === want.length && crypto.timingSafeEqual(h, want);
+}
+
+// Profiles are created from the names already on trips the first time they are needed.
+async function getPeople() {
+  let people = parseMaybe(await kv.get(PEOPLE_KEY));
+  if (Array.isArray(people)) return people;
+  const trips = parseMaybe(await kv.get(LIST_KEY)) || [];
+  const names = [];
+  for (const t of trips) for (const n of [...(t.people || []), ...(t.groups || []).flatMap((g) => g.people || [])]) if (n && !names.includes(n)) names.push(n);
+  people = names.map((name, i) => ({ id: slug(name), name, email: "", role: name === "Turner" ? "admin" : "member", color: PERSON_COLORS[i % PERSON_COLORS.length] }));
+  await kv.set(PEOPLE_KEY, people);
+  return people;
+}
+const savePeople = (people) => kv.set(PEOPLE_KEY, people);
+const publicPerson = (p) => ({
+  id: p.id, name: p.name, color: p.color, admin: p.role === "admin", active: !!(p.pw && p.pw.hash),
+  avatarAt: p.avatarAt || null, email: p.email || "",
+});
+const bootstrapMode = (people) => !people.some((p) => p.pw && p.pw.hash);
+
+// Who is asking: a person, or the shared "family" sign-in during setup.
+async function whoIs(req) {
+  const sub = readSession(req);
+  if (!sub) return null;
+  const people = await getPeople();
+  if (sub === "family") return bootstrapMode(people) ? { id: "family", name: "Family", admin: true, family: true, people } : null;
+  const me = people.find((p) => p.id === sub && p.pw && p.pw.hash);
+  return me ? { ...publicPerson(me), people } : null;
+}
+
+const canEditTrip = (me, trip) => !!me && (me.admin || !trip || (trip.travelers || []).includes(me.id));
 
 function clearSession(res) {
   res.setHeader("Set-Cookie", `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
@@ -148,6 +198,8 @@ function cleanTrip(t) {
     endDate: str(t.endDate, 10),
     color: /^#[0-9a-fA-F]{6}$/.test(t.color) ? t.color : "#1F3A5F",
     people: (Array.isArray(t.people) ? t.people : []).map((p) => str(p, 60)).slice(0, 30),
+    travelers: (Array.isArray(t.travelers) ? t.travelers : []).filter(isId).slice(0, 40),
+    family: !!t.family,
     states: (Array.isArray(t.states) ? t.states : []).map((s) => str(s, 4).toUpperCase()).slice(0, 60),
     countries: (Array.isArray(t.countries) ? t.countries : []).map((c) => str(c, 60)).filter(Boolean).slice(0, 60),
     groups,
@@ -359,6 +411,24 @@ async function routeFor(trip, budgetMs) {
   return fresh ? r : buildRoute(trip, budgetMs);
 }
 
+async function personForToken(token, people) {
+  if (!token) return null;
+  people = people || (await getPeople());
+  const h = crypto.createHash("sha256").update(token).digest("hex");
+  return people.find((p) => p.invite && p.invite.expires > Date.now() && safeEqual(p.invite.hash, h)) || null;
+}
+
+// Trips saved before profiles existed list names; give them traveler ids once.
+async function linkTravelers(trips, people) {
+  let changed = false;
+  for (const t of trips) {
+    if (Array.isArray(t.travelers) && t.travelers.length) continue;
+    const ids = (t.people || []).map((n) => (people.find((p) => p.name.toLowerCase() === String(n).toLowerCase()) || {}).id).filter(Boolean);
+    if (ids.length) { t.travelers = ids; changed = true; }
+  }
+  if (changed) await kv.set(LIST_KEY, trips);
+}
+
 // ─── Photos ──────────────────────────────────────────────────────────────────
 
 function cleanPhotoFields(p) {
@@ -394,10 +464,74 @@ export default async function handler(req, res) {
     if (action === "login" && req.method === "POST") {
       if (!process.env.TRIPS_PASSWORD) return res.status(503).json({ error: "TRIPS_PASSWORD is not set in Vercel." });
       if (await tooManyAttempts(req)) return res.status(429).json({ error: "Too many tries. Wait 15 minutes." });
+      const email = str(req.body?.email, 200).trim().toLowerCase();
       const pw = str(req.body?.password, 200);
-      if (!safeEqual(pw.trim(), process.env.TRIPS_PASSWORD)) return res.status(401).json({ error: "That isn't it." });
-      setSession(res, req);
+      const people = await getPeople();
+      if (!email) {
+        // the shared family password only opens the map until someone sets up an account
+        if (bootstrapMode(people) && safeEqual(pw.trim(), process.env.TRIPS_PASSWORD)) {
+          setSession(res, req, "family");
+          return res.status(200).json({ ok: true });
+        }
+        return res.status(401).json({ error: "Enter your email and password." });
+      }
+      const p = people.find((x) => x.email && x.email.toLowerCase() === email);
+      if (!p || !checkPassword(pw, p.pw)) return res.status(401).json({ error: "That email and password don't match." });
+      setSession(res, req, p.id);
       return res.status(200).json({ ok: true });
+    }
+
+    // Invite links: one-time, expire after 7 days. No sign-in needed to read or accept one.
+    if (action === "inviteInfo") {
+      const p = await personForToken(str(req.query.token, 200));
+      if (!p) return res.status(404).json({ error: "This link has expired or was already used." });
+      return res.status(200).json({ name: p.name, email: p.email });
+    }
+    if (action === "acceptInvite" && req.method === "POST") {
+      const token = str(req.body?.token, 200);
+      const password = str(req.body?.password, 200);
+      if (password.length < 8) return res.status(400).json({ error: "Use at least 8 characters." });
+      const people = await getPeople();
+      const p = await personForToken(token, people);
+      if (!p) return res.status(404).json({ error: "This link has expired or was already used." });
+      p.pw = hashPassword(password);
+      delete p.invite;
+      if (req.body?.name) p.name = str(req.body.name, 60).trim() || p.name;
+      await savePeople(people);
+      setSession(res, req, p.id);
+      return res.status(200).json({ ok: true });
+    }
+
+    // Creating invites: an admin who is signed in, or anyone holding TRIPS_ADMIN_KEY
+    // (used by scripts/trips-invite.mjs).
+    if (action === "invite" && req.method === "POST") {
+      const key = req.headers["x-trips-admin-key"];
+      const byKey = !!(process.env.TRIPS_ADMIN_KEY && key && safeEqual(key, process.env.TRIPS_ADMIN_KEY));
+      const me = byKey ? null : await whoIs(req);
+      if (!byKey && !(me && me.admin)) return res.status(403).json({ error: "Only an admin can invite people." });
+      const email = str(req.body?.email, 200).trim().toLowerCase();
+      const name = str(req.body?.name, 60).trim();
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(400).json({ error: "That email doesn't look right." });
+      const people = await getPeople();
+      let p = people.find((x) => (x.email || "").toLowerCase() === email) ||
+        (req.body?.personId && people.find((x) => x.id === req.body.personId)) ||
+        (name && people.find((x) => !x.email && x.name.toLowerCase() === name.toLowerCase()));
+      if (!p) {
+        let id = slug(name || email.split("@")[0]);
+        while (people.some((x) => x.id === id)) id = `${id}-${uid(3)}`.toLowerCase();
+        p = { id, name: name || email.split("@")[0], role: "member", color: PERSON_COLORS[people.length % PERSON_COLORS.length] };
+        people.push(p);
+      }
+      if (people.some((x) => x !== p && (x.email || "").toLowerCase() === email)) return res.status(409).json({ error: "Someone else already uses that email." });
+      p.email = email;
+      if (name) p.name = name;
+      if (req.body?.admin === true) p.role = "admin";
+      const token = crypto.randomBytes(24).toString("base64url");
+      p.invite = { hash: crypto.createHash("sha256").update(token).digest("hex"), expires: Date.now() + 7 * 864e5 };
+      await savePeople(people);
+      const host = str(req.body?.host, 200) || req.headers["x-forwarded-host"] || req.headers.host;
+      const path = /^trips\./.test(host) ? "/welcome" : "/trips/welcome";
+      return res.status(200).json({ person: publicPerson(p), link: `https://${host}${path}?token=${token}`, expires: p.invite.expires });
     }
 
     if (action === "logout") {
@@ -405,19 +539,35 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
-    if (!isAuthed(req)) return res.status(401).json({ error: "Sign in" });
+    const me = await whoIs(req);
+    if (!me) return res.status(401).json({ error: "Sign in" });
     res.setHeader("Cache-Control", "private, no-store");
+    const { people, ...meOut } = me;
 
-    if (action === "session") return res.status(200).json({ ok: true });
+    if (action === "session") return res.status(200).json({ ok: true, me: meOut });
 
     if (action === "data") {
       const trips = await getTrips();
+      await linkTravelers(trips, people);
       const out = [];
       for (const t of trips) {
         const [route, photos] = await Promise.all([routeFor(t, 8000), getPhotos(t.id)]);
-        out.push({ ...t, route, photos });
+        out.push({ ...t, route, photos, canEdit: canEditTrip(me, t) });
       }
-      return res.status(200).json({ trips: out, now: Date.now() });
+      return res.status(200).json({ trips: out, people: people.map(publicPerson), me: meOut, now: Date.now() });
+    }
+
+    if (action === "avatar") {
+      res.removeHeader("Cache-Control");
+      const id = req.query.id;
+      if (!isId(id)) return res.status(400).end();
+      const r = await get(`trips/people/${id}.jpg`, { access: "private" });
+      if (!r || r.statusCode !== 200) return res.status(404).end();
+      res.setHeader("Cache-Control", "private, max-age=31536000, immutable");
+      res.setHeader("Content-Type", "image/jpeg");
+      res.status(200);
+      Readable.fromWeb(r.stream).pipe(res);
+      return;
     }
 
     if (action === "photo") {
@@ -485,15 +635,46 @@ export default async function handler(req, res) {
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });
     const body = req.body || {};
 
+    if (action === "updateProfile") {
+      if (me.family) return res.status(400).json({ error: "Set up your own account first." });
+      const all = await getPeople();
+      const p = all.find((x) => x.id === me.id);
+      if (body.name != null) p.name = str(body.name, 60).trim() || p.name;
+      if (body.newPassword != null) {
+        if (!checkPassword(str(body.currentPassword, 200), p.pw)) return res.status(401).json({ error: "Your current password isn't right." });
+        if (str(body.newPassword, 200).length < 8) return res.status(400).json({ error: "Use at least 8 characters." });
+        p.pw = hashPassword(str(body.newPassword, 200));
+      }
+      if (typeof body.avatar === "string") {
+        const buf = Buffer.from(body.avatar, "base64");
+        if (!(buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8)) return res.status(400).json({ error: "Images must be JPEG" });
+        await put(`trips/people/${p.id}.jpg`, buf, { access: "private", contentType: "image/jpeg", addRandomSuffix: false, allowOverwrite: true });
+        p.avatarAt = Date.now();
+      }
+      await savePeople(all);
+      return res.status(200).json({ me: publicPerson(p) });
+    }
+
+    // Writes to an existing trip need you to have been on it (admins can edit anything).
+    const tripForWrite = async (id) => (await getTrips()).find((t) => t.id === id);
+    if (["deleteTrip", "upload", "updatePhotos", "deletePhotos"].includes(action)) {
+      const t = await tripForWrite(action === "deleteTrip" ? body.id : body.tripId);
+      if (t && !canEditTrip(me, t)) return res.status(403).json({ error: "Only the people on this trip can change it." });
+    }
+
     if (action === "saveTrip") {
       const trip = cleanTrip(body.trip || {});
       const trips = await getTrips();
+      const before = trips.find((t) => t.id === trip.id);
+      if (before && !canEditTrip(me, before)) return res.status(403).json({ error: "Only the people on this trip can change it." });
+      // whoever creates a trip is on it
+      if (!before && !me.family && !trip.travelers.includes(me.id)) trip.travelers.push(me.id);
       const i = trips.findIndex((t) => t.id === trip.id);
       if (i >= 0) trips[i] = trip;
       else trips.push(trip);
       await kv.set(LIST_KEY, trips);
       const route = await buildRoute(trip, 22000);
-      return res.status(200).json({ trip: { ...trip, route, photos: await getPhotos(trip.id) } });
+      return res.status(200).json({ trip: { ...trip, route, photos: await getPhotos(trip.id), canEdit: canEditTrip(me, trip) } });
     }
 
     if (action === "deleteTrip") {
