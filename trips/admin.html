@@ -154,7 +154,7 @@
   .ro-note { padding: 12px 16px; border-radius: 12px; background: rgba(185,154,108,0.14); color: var(--ink-2); font-size: 14px; margin-bottom: 14px; }
   body.read-only #pane input, body.read-only #pane select, body.read-only #pane textarea { pointer-events: none; background: transparent; }
   body.read-only #pane .acts, body.read-only #pane .drop, body.read-only #pane [data-addstop], body.read-only #pane #add-day,
-  body.read-only #pane .ck, body.read-only #pane #sel-all, body.read-only #pane .who-pick button:not(.on), body.read-only .savebar { display: none !important; }
+  body.read-only #pane .ck, body.read-only #pane #sel-all, body.read-only #pane .add-ph, body.read-only #pane .chips button:not(.on), body.read-only #pane .who-pick button:not(.on), body.read-only .savebar { display: none !important; }
   .who-pick { display: flex; flex-wrap: wrap; gap: 8px; }
   .wp { display: inline-flex; align-items: center; gap: 8px; padding: 5px 14px 5px 5px; border-radius: 999px; border: 1px solid var(--line); background: #fff; cursor: pointer; font-size: 14px; color: var(--ink-soft); }
   .wp.on { border-color: var(--ink); background: var(--ink); color: var(--paper); }
@@ -172,6 +172,79 @@
   .mk { width: 22px; height: 22px; border-radius: 50%; background: var(--surface); border: 1.5px solid var(--ink); display: grid; place-items: center; font: 600 12px var(--font-display); cursor: grab; box-shadow: 0 4px 10px -4px rgba(0,0,0,0.4); }
   .mk.stay { background: var(--ink); color: var(--paper); }
   .mk.home { background: var(--gold); border-color: #fff; color: #fff; }
+  /* ── Steps ─────────────────────────────────────────────────────────────── */
+  .tabs.steps button { display: inline-flex; align-items: center; gap: 8px; }
+  .tabs.steps i { font-style: normal; width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; border: 1px solid currentColor; font-size: 10px; letter-spacing: 0; }
+  .tabs.steps button.on i { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .next-row { display: flex; justify-content: flex-end; margin: 18px 0 8px; }
+
+  /* ── Itinerary days and stops ─────────────────────────────────────────── */
+  .day { display: flex; flex-direction: column; gap: 10px; padding: 18px; }
+  .day-top { display: flex; align-items: baseline; gap: 12px; }
+  .day-top b { font: 500 26px/1 var(--font-display); }
+  .day-top span { font: 500 10px var(--font-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold-deep); }
+  .day-title { font-size: 16px !important; font-weight: 500 !important; }
+  .stops { display: flex; flex-direction: column; gap: 10px; margin-top: 4px; }
+  .stop2 { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; background: #fff; border: 1px solid var(--line-soft); }
+  .s-top { display: grid; grid-template-columns: 28px 1fr auto; gap: 8px; align-items: center; }
+  .s-n { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 600 13px var(--font-display); border: 1.5px solid var(--ink); }
+  .s-n.stay { background: var(--ink); color: var(--paper); }
+  .s-n.home { background: var(--gold); border-color: var(--gold); color: #fff; }
+  .s-n.airport { border-color: var(--ink-faint); }
+  .s-loc { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+  .loc-line { font-size: 12.5px; color: var(--ink-soft); margin-top: -2px; }
+  .loc-line.missing { color: #9A4E3E; }
+  .opts { display: flex; flex-direction: column; gap: 6px; }
+  .opt { display: grid; grid-template-columns: 64px 1fr; align-items: center; gap: 8px; }
+  .opt-l { font: 500 9.5px var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); }
+  .chips { justify-self: start; max-width: 100%; overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap !important; }
+  .chips button { white-space: nowrap; }
+  @media (max-width: 640px) {
+    .opt { grid-template-columns: 1fr; gap: 4px; }
+    .chips { flex-wrap: wrap !important; overflow: visible; border-radius: 16px; }
+    .chips button { padding: 6px 10px; font-size: 12.5px; }
+  }
+  .chips { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 3px; border-radius: 999px; background: var(--paper-2); border: 1px solid var(--line-soft); }
+  .chips button { border: 0; background: none; padding: 6px 11px; border-radius: 999px; cursor: pointer; font: 500 12.5px var(--font-body); color: var(--ink-soft); }
+  .chips button.on { background: var(--ink); color: var(--paper); }
+
+  /* ── Photos by day and stop ───────────────────────────────────────────── */
+  .pday { margin-top: 22px; }
+  .pday-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
+  .pday-h b { font: 500 22px var(--font-display); }
+  .pday-h span { font: 500 10px var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold-deep); }
+  .pday.needs .pday-h b { color: #9A4E3E; }
+  .pstop { padding: 10px 12px; border-radius: 14px; margin-bottom: 8px; background: rgba(255,255,255,0.5); border: 1px solid transparent; transition: border-color 0.2s, background 0.2s; }
+  .pstop.over { border-color: var(--ink); background: rgba(185,154,108,0.12); }
+  .pstop.other .pstop-h b { font-size: 15px; color: var(--ink-soft); }
+  .pstop-h { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .pstop-h b { display: block; font: 500 18px var(--font-display); }
+  .pstop-h span { font-size: 12px; color: var(--ink-soft); }
+  .add-ph { flex: 0 0 auto; }
+  .thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; margin-top: 10px; }
+  .th { position: relative; aspect-ratio: 1; border-radius: 10px; overflow: hidden; cursor: pointer; background: #E3DACA; }
+  .th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .th.hid img { opacity: 0.35; }
+  .th.sel { outline: 3px solid var(--ink); outline-offset: -3px; }
+  .th .ck { position: absolute; right: 5px; top: 5px; width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; background: rgba(22,35,61,0.35); color: #fff; font-size: 11px; cursor: pointer; display: grid; place-items: center; padding: 0; }
+  .th.sel .ck { background: var(--ink); }
+  .th .star { position: absolute; left: 6px; top: 4px; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
+  .th .cov { position: absolute; left: 5px; bottom: 5px; font: 500 8.5px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; background: rgba(250,247,240,0.92); padding: 3px 6px; border-radius: 5px; }
+  .pmodal { position: fixed; inset: 0; z-index: 80; background: rgba(15,24,40,0.55); display: grid; place-items: center; padding: 16px; }
+  .pm-card { position: relative; width: min(820px, 100%); max-height: 92vh; overflow: auto; background: var(--surface); border-radius: 20px; display: grid; grid-template-columns: 1.1fr 1fr; box-shadow: var(--shadow); }
+  .pm-img { background: #0F1828; display: grid; place-items: center; min-height: 260px; }
+  .pm-img img { max-width: 100%; max-height: 70vh; display: block; }
+  .pm-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .pm-acts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pm-x { position: absolute; right: 10px; top: 10px; z-index: 2; }
+  .fn { font: 400 11px var(--font-mono); color: var(--ink-faint); }
+  @media (max-width: 640px) {
+    header.top { flex-direction: column; align-items: flex-start; gap: 10px; }
+    header.top > div:last-child { width: 100%; justify-content: space-between; }
+    .pm-card { grid-template-columns: 1fr; }
+    .pm-img img { max-height: 40vh; }
+    .tabs.steps button { margin-right: 4px; }
+  }
   /* Home-screen app on a phone: stay clear of the status bar / Dynamic Island. */
   @media (max-width: 760px) and (display-mode: standalone), (max-width: 760px) and (display-mode: fullscreen) {
     .wrap { padding-top: max(60px, calc(env(safe-area-inset-top) + 6px)); }
@@ -281,7 +354,7 @@
       color: A.ROUTE_COLORS[trips.length % A.ROUTE_COLORS.length], states: [], groups: [], family: false,
       travelers: A.people.me && !A.people.me.family ? [A.people.me.id] : [], people: A.people.me && !A.people.me.family ? [A.people.me.name] : [],
       origin: { name: "Home", area: "Boerne, TX", lat: 29.7947, lng: -98.732 },
-      days: [{ n: 1, date: A.ymd(new Date()), title: "", summary: "" }], stops: [], photos: [], route: { segments: [] }, _new: true,
+      days: [], stops: [], photos: [], route: { segments: [] }, _new: true,
     };
     saved = "";
     tab = "details";
@@ -289,7 +362,8 @@
     render();
   }
 
-  const strip = (t) => { const { photos, route, updatedAt, _new, canEdit, ...rest } = t; return rest; };
+  const blankStop = (s) => !s.name && !A.hasXY(s) && !s.note;
+  const strip = (t) => { const { photos, route, updatedAt, _new, canEdit, ...rest } = t; return { ...rest, stops: (rest.stops || []).filter((x) => !blankStop(x)) }; };
   const dirty = () => cur && JSON.stringify(strip(cur)) !== saved;
   let onProfile = false;
   function markDirty() {
@@ -306,10 +380,10 @@
     document.body.classList.toggle("read-only", ro);
     $("main").innerHTML = `
       ${ro ? `<div class="ro-note">You can look, but only ${esc(A.namesOf(A.travelersOf(t)) || "the people on this trip")} can change this journey.</div>` : ""}
-      <div class="tabs">
-        <button data-tab="photos" class="${tab === "photos" ? "on" : ""}">Photos${np ? ` · ${np}` : ""}</button>
-        <button data-tab="itinerary" class="${tab === "itinerary" ? "on" : ""}">Itinerary & map</button>
-        <button data-tab="details" class="${tab === "details" ? "on" : ""}">Journey details</button>
+      <div class="tabs steps">
+        <button data-tab="details" class="${tab === "details" ? "on" : ""}"><i>1</i>Details</button>
+        <button data-tab="itinerary" class="${tab === "itinerary" ? "on" : ""}"><i>2</i>Itinerary</button>
+        <button data-tab="photos" class="${tab === "photos" ? "on" : ""}"><i>3</i>Photos${np ? ` · ${np}` : ""}</button>
       </div>
       <div id="pane"></div>`;
     $("main").querySelectorAll("[data-tab]").forEach((b) => b.onclick = () => { tab = b.dataset.tab; render(); });
@@ -365,15 +439,18 @@
       <div class="card"><h3>Backup</h3>
         <p class="hint">Download this journey's itinerary as a file, or paste one in to replace it.</p>
         <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sm" id="export">Download itinerary</button><button class="btn sm" id="import">Paste itinerary</button>${t._new ? "" : `<button class="btn sm danger" id="del-trip">Delete journey</button>`}</div>
-      </div>`;
+      </div>
+      <div class="next-row"><button class="btn dark" id="next-1">Next: Itinerary →</button></div>`;
     const P = $("pane");
     P.querySelectorAll("[data-k]").forEach((el) => el.oninput = el.onchange = () => {
       const k = el.dataset.k;
       if (k === "people" || k === "states" || k === "countries") t[k] = el.value.split(",").map((s) => s.trim()).filter(Boolean).map((s) => (k === "states" ? s.toUpperCase() : s));
       else if (k === "hidden") t.hidden = !!el.value;
       else t[k] = el.value;
+      if (k === "startDate" || k === "endDate") syncDays(t);
       markDirty();
     });
+    $("next-1").onclick = () => { tab = "itinerary"; render(); scrollTo(0, 0); };
     P.querySelectorAll("[data-person]").forEach((b) => b.onclick = () => {
       const id = b.dataset.person;
       t.travelers = (t.travelers || []).includes(id) ? t.travelers.filter((x) => x !== id) : [...(t.travelers || []), id];
@@ -420,115 +497,156 @@
   }
 
   // ─── Itinerary tab ─────────────────────────────────────────────────────────
+  // One card per day, made from the journey's dates. Each day has a title, what happened,
+  // and its stops; every day always shows at least one (blank) stop to fill in.
+  const STOP_KINDS = [["visit", "Stop", "A place you went"], ["stay", "Overnight", "Where you slept that night"], ["airport", "Airport", "Shown with a plane; flights draw between airports"], ["home", "Home", "Home"]];
+  const HOW = [["drive", "Drove", "A road route is drawn from the previous stop"], ["fly", "Flew", "A dashed flight line from the previous stop"], ["skip", "Walk/boat", "Pinned, but no line is drawn to it"], ["start", "Joined", "Starts a new line here, e.g. someone joining from elsewhere"]];
+  const newStop = (day) => ({ id: uid(), day, name: "", area: "", lat: null, lng: null, kind: "visit", note: "", time: "", group: null, travel: "drive" });
+
+  function syncDays(t) {
+    if (!t.startDate || !t.endDate || t.endDate < t.startDate) return;
+    const dates = [];
+    for (let d = A.parseDate(t.startDate); A.ymd(d) <= t.endDate; d = new Date(d.getTime() + 864e5 + 3600e3)) {
+      d = A.parseDate(A.ymd(d));
+      dates.push(A.ymd(d));
+    }
+    const covers = (day, ds) => ds >= day.date && ds <= (day.dateEnd || day.date);
+    const hasContent = (day) => day.title || day.summary || t.stops.some((x) => x.day === day.n && !blankStop(x));
+    // drop empty days that fall outside the dates; keep any day you've written something in
+    const gone = new Set(t.days.filter((d) => (d.date < t.startDate || d.date > t.endDate) && !hasContent(d)).map((d) => d.n));
+    t.days = t.days.filter((d) => !gone.has(d.n));
+    t.stops = t.stops.filter((x) => !gone.has(x.day));
+    for (const ds of dates) if (!t.days.some((d) => covers(d, ds))) t.days.push({ n: -1, date: ds, title: "", summary: "" });
+    t.days.sort((a, b) => a.date.localeCompare(b.date));
+    const remap = new Map();
+    t.days.forEach((d, i) => { if (d.n !== -1) remap.set(d.n, i + 1); d.n = i + 1; });
+    t.stops.forEach((x) => { if (remap.has(x.day)) x.day = remap.get(x.day); });
+    reorderStops();
+  }
+
   function renderItinerary() {
     const t = cur;
-    const pl = A.places(t);
-    const groupOpts = (sel) => `<option value="">Everyone</option>${(t.groups || []).map((g) => `<option value="${esc(g.id)}" ${sel === g.id ? "selected" : ""}>${esc(g.name || "Group")}</option>`).join("")}`;
+    syncDays(t);
+    for (const d of t.days) if (!t.stops.some((x) => x.day === d.n)) t.stops.push(newStop(d.n));
+    reorderStops();
     const days = [...t.days].sort((a, b) => a.n - b.n);
+    const seg = (key, list, val, label) => `<div class="opt"><span class="opt-l">${label}</span><div class="chips" data-opt="${key}">${list.map(([k, l, h]) => `<button type="button" data-v="${esc(k)}" title="${esc(h || l)}" class="${val === k ? "on" : ""}">${esc(l)}</button>`).join("")}</div></div>`;
+    const kindChip = (s) => (["visit", "activity", "food"].includes(s.kind) ? "visit" : s.kind);
     $("pane").innerHTML = `
       <div class="editor">
         <div>
-          <p class="hint">Each day lists its stops in the order you went. The road route is drawn through every stop that has a location; set <b>Flew here</b> for flights, <b>Side trip</b> for places reached by boat or on foot, and <b>Start here</b> when someone joins from somewhere else. Saving recalculates the roads.</p>
+          ${days.length ? "" : `<div class="empty">Set the start and end dates in step 1 and the days will appear here.</div>`}
           ${days.map((d) => {
-            const stops = t.stops.filter((s) => s.day === d.n);
+            const stops = t.stops.filter((x) => x.day === d.n);
+            let num = 0;
             return `<div class="day" data-day="${d.n}">
-              <div class="day-head">
-                <div class="day-n">${d.n}</div>
-                <label class="f"><span>Date</span><input type="date" data-dk="date" value="${esc(d.date)}"></label>
-                <label class="f"><span>Through (optional)</span><input type="date" data-dk="dateEnd" value="${esc(d.dateEnd || "")}"></label>
-                <label class="f"><span>Day title</span><input type="text" data-dk="title" value="${esc(d.title)}" placeholder="e.g. Shark Teeth & Barrier Islands"></label>
-                <div class="acts"><button class="ib" data-dayup title="Move day earlier">↑</button><button class="ib" data-daydel title="Delete day">✕</button></div>
-              </div>
-              <label class="f" style="margin-top:10px"><span>What happened</span><textarea data-dk="summary" rows="2">${esc(d.summary)}</textarea></label>
-              <div style="margin-top:8px">
-              ${stops.map((s) => {
-                const p = pl.byStop.get(s.id);
-                return `<div class="stop" data-stop="${esc(s.id)}">
-                  <div class="dot ${!A.hasXY(s) ? "none" : s.kind === "stay" ? "stay" : ""}">${p ? (p.kind === "home" ? "⌂" : p.kind === "airport" ? "✈" : p.num) : "·"}</div>
-                  <select data-sk="kind">${KINDS.map(([k, l]) => `<option value="${k}" ${s.kind === k ? "selected" : ""}>${l}</option>`).join("")}</select>
-                  <input type="text" data-sk="name" value="${esc(s.name)}" placeholder="Place name">
-                  <div class="search-pop"><input type="search" placeholder="${A.hasXY(s) ? "Change location…" : "Find location…"}" data-ssearch></div>
-                  <span class="loc ${A.hasXY(s) ? "" : "missing"}">${A.hasXY(s) ? `${s.lat.toFixed(3)}, ${s.lng.toFixed(3)}` : "No location"}</span>
-                  <div class="acts"><button class="ib" data-pick title="Pick on map">◎</button><button class="ib" data-up title="Move up">↑</button><button class="ib" data-sdel title="Remove">✕</button></div>
-                  <div class="stop-more">
-                    <input type="text" data-sk="area" value="${esc(s.area)}" placeholder="Town, ST">
-                    <input type="text" data-sk="time" value="${esc(s.time || "")}" placeholder="Time (optional)">
-                    <input type="text" data-sk="note" value="${esc(s.note)}" placeholder="Note">
-                    <div style="display:flex;gap:8px;align-items:center">
-                      ${(t.groups || []).length ? `<select data-sk="group" style="width:auto">${groupOpts(s.group)}</select>` : ""}
-                      <select data-sk="travel" style="width:auto">${TRAVEL.map(([k, l]) => `<option value="${k}" ${travelOf(s) === k ? "selected" : ""}>${l}</option>`).join("")}</select>
-                    </div>
+              <div class="day-top"><b>Day ${d.n}</b><span>${esc(A.dayLong(d))}</span></div>
+              <input type="text" class="day-title" data-dk="title" value="${esc(d.title)}" placeholder="Day title, e.g. Shark Teeth & Barrier Islands">
+              <textarea data-dk="summary" rows="2" placeholder="What happened">${esc(d.summary)}</textarea>
+              <div class="stops">
+              ${stops.map((x) => {
+                const k = kindChip(x);
+                const n = k === "home" ? "⌂" : k === "airport" ? "✈" : ++num;
+                const has = A.hasXY(x);
+                return `<div class="stop2" data-stop="${esc(x.id)}">
+                  <div class="s-top">
+                    <span class="s-n ${k}">${n}</span>
+                    <input type="text" data-sk="name" value="${esc(x.name)}" placeholder="Place name">
+                    <div class="acts"><button class="ib" data-up title="Move up">↑</button><button class="ib" data-sdel title="Remove stop">✕</button></div>
+                  </div>
+                  <div class="s-loc">
+                    <div class="search-pop"><input type="search" placeholder="${has ? "Change location…" : "Search for the location…"}" data-ssearch></div>
+                    <button class="ib" data-pick title="Pick on the map">◎</button>
+                  </div>
+                  <div class="loc-line ${has ? "" : "missing"}">${has ? `📍 ${esc(x.area || `${x.lat.toFixed(3)}, ${x.lng.toFixed(3)}`)}` : "No location yet. Search above or pick it on the map."}</div>
+                  <input type="text" data-sk="note" value="${esc(x.note)}" placeholder="Note (optional)">
+                  <div class="opts">
+                    ${seg("kind", STOP_KINDS, k, "Type")}
+                    ${seg("travel", HOW, travelOf(x), "Got here")}
+                    ${(t.groups || []).length ? seg("group", [["", "Everyone"], ...t.groups.map((g) => [g.id, g.name || "Group"])], x.group || "", "Who") : ""}
                   </div>
                 </div>`;
               }).join("")}
               </div>
-              <button class="btn sm" data-addstop style="margin-top:10px">+ Add stop</button>
+              <button class="btn sm" data-addstop>+ Add stop</button>
             </div>`;
           }).join("")}
-          <button class="btn" id="add-day">+ Add day</button>
+          ${days.length ? `<button class="btn" id="add-day">+ Add a day</button>` : ""}
+          <p class="hint" style="margin-top:14px"><b>Overnight</b> marks where you slept. <b>Flew</b> draws a dashed flight line from the stop before. <b>Walk/boat</b> pins a place without a road line. <b>Joined</b> starts a new line, for someone meeting up from somewhere else. Saving traces the roads.</p>
+          <div class="next-row"><button class="btn dark" id="next-2">${t._new ? "Save and add photos →" : "Next: Photos →"}</button></div>
         </div>
         <div class="mapbox" id="mapbox"><div id="emap"></div><div class="pickbar"><span id="pick-msg">Tap the map to place this stop</span><button class="btn sm" style="color:var(--paper);border-color:rgba(239,234,224,0.4);background:transparent" id="pick-cancel">Cancel</button></div></div>
       </div>`;
     const P = $("pane");
     const dayOfEl = (el) => Number(el.closest("[data-day]").dataset.day);
-    const stopOfEl = (el) => t.stops.find((s) => s.id === el.closest("[data-stop]").dataset.stop);
+    const stopOfEl = (el) => t.stops.find((x) => x.id === el.closest("[data-stop]").dataset.stop);
+    const keepScroll = (fn) => { const y = scrollY; fn(); scrollTo(0, y); };
     P.querySelectorAll("[data-dk]").forEach((el) => el.oninput = () => { const d = t.days.find((x) => x.n === dayOfEl(el)); d[el.dataset.dk] = el.value; markDirty(); });
-    P.querySelectorAll("[data-sk]").forEach((el) => el.onchange = el.oninput = () => {
-      const s = stopOfEl(el);
-      const k = el.dataset.sk;
-      if (k === "travel") { s.travel = el.value; delete s.route; }
-      else if (k === "group") s.group = el.value || null;
-      else s[k] = el.value;
+    P.querySelectorAll("[data-sk]").forEach((el) => el.oninput = () => {
+      const x = stopOfEl(el);
+      x[el.dataset.sk] = el.value;
+      if (el.dataset.sk === "name") autoKind(t, x, true);
       markDirty();
-      if (k === "kind" || k === "name") drawEditorMarkers();
     });
-    P.querySelectorAll("[data-addstop]").forEach((b) => b.onclick = () => { t.stops.push({ id: uid(), day: dayOfEl(b), name: "", area: "", lat: null, lng: null, kind: "visit", note: "", time: "", group: null, travel: "drive" }); reorderStops(); renderItinerary(); markDirty(); });
-    P.querySelectorAll("[data-sdel]").forEach((b) => b.onclick = () => { const s = stopOfEl(b); t.stops = t.stops.filter((x) => x !== s); renderItinerary(); markDirty(); });
+    P.querySelectorAll("[data-sk=name]").forEach((el) => el.onchange = () => keepScroll(renderItinerary));
+    P.querySelectorAll(".chips button").forEach((b) => b.onclick = () => {
+      const x = stopOfEl(b);
+      const key = b.closest("[data-opt]").dataset.opt;
+      const v = b.dataset.v;
+      if (key === "kind") x.kind = v === "visit" && ["activity", "food"].includes(x.kind) ? x.kind : v;
+      else if (key === "travel") { x.travel = v; delete x.route; }
+      else if (key === "group") x.group = v || null;
+      markDirty();
+      keepScroll(renderItinerary);
+    });
+    P.querySelectorAll("[data-addstop]").forEach((b) => b.onclick = () => { t.stops.push(newStop(dayOfEl(b))); reorderStops(); keepScroll(renderItinerary); });
+    P.querySelectorAll("[data-sdel]").forEach((b) => b.onclick = () => {
+      const x = stopOfEl(b);
+      if (!blankStop(x) && !confirm(`Remove “${x.name || "this stop"}”?`)) return;
+      t.stops = t.stops.filter((y) => y !== x);
+      markDirty(); keepScroll(renderItinerary);
+    });
     P.querySelectorAll("[data-up]").forEach((b) => b.onclick = () => {
-      const s = stopOfEl(b);
-      const same = t.stops.filter((x) => x.day === s.day);
-      const i = same.indexOf(s);
+      const x = stopOfEl(b);
+      const same = t.stops.filter((y) => y.day === x.day);
+      const i = same.indexOf(x);
       if (i <= 0) return;
-      const a = t.stops.indexOf(same[i - 1]), c = t.stops.indexOf(s);
+      const a = t.stops.indexOf(same[i - 1]), c = t.stops.indexOf(x);
       [t.stops[a], t.stops[c]] = [t.stops[c], t.stops[a]];
-      renderItinerary(); markDirty();
+      markDirty(); keepScroll(renderItinerary);
     });
-    P.querySelectorAll("[data-dayup]").forEach((b) => b.onclick = () => {
-      const n = dayOfEl(b);
-      if (n <= 1) return;
-      t.stops.forEach((s) => { if (s.day === n) s.day = -1; else if (s.day === n - 1) s.day = n; });
-      t.stops.forEach((s) => { if (s.day === -1) s.day = n - 1; });
-      const a = t.days.find((d) => d.n === n), c = t.days.find((d) => d.n === n - 1);
-      a.n = n - 1; c.n = n;
-      [a.date, c.date] = [c.date, a.date];
-      reorderStops(); renderItinerary(); markDirty();
-    });
-    P.querySelectorAll("[data-daydel]").forEach((b) => b.onclick = () => {
-      const n = dayOfEl(b);
-      const count = t.stops.filter((s) => s.day === n).length;
-      if (count && !confirm(`Delete day ${n} and its ${count} stops?`)) return;
-      t.stops = t.stops.filter((s) => s.day !== n);
-      t.days = t.days.filter((d) => d.n !== n);
-      t.days.sort((a, b) => a.n - b.n).forEach((d, i) => { const old = d.n; d.n = i + 1; t.stops.forEach((s) => { if (s.day === old) s.day = -(i + 1); }); });
-      t.stops.forEach((s) => { if (s.day < 0) s.day = -s.day; });
-      renderItinerary(); markDirty();
-    });
-    $("add-day").onclick = () => {
-      const last = [...t.days].sort((a, b) => b.n - a.n)[0];
-      const nd = last ? A.ymd(new Date(A.parseDate(last.dateEnd || last.date).getTime() + 864e5)) : t.startDate;
-      t.days.push({ n: (last ? last.n : 0) + 1, date: nd, title: "", summary: "" });
-      renderItinerary(); markDirty();
+    if ($("add-day")) $("add-day").onclick = () => {
+      t.endDate = A.ymd(new Date(A.parseDate(t.endDate).getTime() + 864e5 + 3600e3));
+      t.endDate = A.ymd(A.parseDate(t.endDate));
+      markDirty(); keepScroll(renderItinerary);
+    };
+    $("next-2").onclick = async () => {
+      if (cur._new || dirty()) { if (!(await doSave())) return; }
+      tab = "photos"; render(); scrollTo(0, 0);
     };
     P.querySelectorAll("[data-ssearch]").forEach((el) => wireSearch(el, (r) => {
-      const s = stopOfEl(el);
-      s.lat = r.lat; s.lng = r.lng;
-      if (!s.name) s.name = r.name;
-      if (!s.area) s.area = r.area;
-      renderItinerary(); markDirty();
+      const x = stopOfEl(el);
+      x.lat = r.lat; x.lng = r.lng; x.area = r.area;
+      if (!x.name) x.name = r.name;
+      autoKind(t, x, false);
+      markDirty(); keepScroll(renderItinerary);
     }));
-    P.querySelectorAll("[data-pick]").forEach((b) => b.onclick = () => { picking = stopOfEl(b); $("mapbox").classList.add("picking"); $("pick-msg").textContent = `Tap the map to place “${picking.name || "this stop"}”`; });
+    P.querySelectorAll("[data-pick]").forEach((b) => b.onclick = () => { picking = stopOfEl(b); $("mapbox").classList.add("picking"); $("pick-msg").textContent = `Tap the map to place “${picking.name || "this stop"}”`; $("mapbox").scrollIntoView({ behavior: "smooth", block: "center" }); });
     $("pick-cancel").onclick = () => { picking = null; $("mapbox").classList.remove("picking"); };
     mountEditorMap();
+    markDirty();
+  }
+
+  // Small guesses so the options are usually right without touching them: a stop named
+  // "… Airport" is an airport, and going from one airport to another is a flight.
+  function autoKind(t, x, typing) {
+    if (/\bairport\b|international\b/i.test(x.name) && x.kind !== "airport") {
+      x.kind = "airport";
+      const i = t.stops.indexOf(x);
+      const prev = t.stops.slice(0, i).reverse().find((y) => A.hasXY(y) && y !== x);
+      if (prev && prev.kind === "airport" && travelOf(x) === "drive") x.travel = "fly";
+      if (typing) { /* re-rendered on change */ }
+    }
   }
 
   function reorderStops() {
@@ -614,10 +732,12 @@
   }
 
   // ─── Save ──────────────────────────────────────────────────────────────────
-  $("save").onclick = async () => {
+  $("save").onclick = () => doSave();
+  async function doSave() {
     const t = cur;
     $("save").disabled = true;
     $("save-msg").textContent = "Saving and tracing the roads…";
+    $("savebar").classList.add("on");
     try {
       const j = await A.api("saveTrip", { method: "POST", body: { trip: strip(t) } });
       cur = clone(j.trip);
@@ -627,13 +747,15 @@
       renderNav();
       render();
       toast(j.trip.route && j.trip.route.incomplete ? "Saved. Some roads couldn't be traced yet; they'll retry on the next load." : "Saved. Routes updated.");
+      return true;
     } catch (e) {
       $("save-msg").textContent = e.message;
+      return false;
     } finally {
       $("save").disabled = false;
       markDirty();
     }
-  };
+  }
   $("discard").onclick = () => { if (cur._new) { cur = null; load(); return; } select(cur.id); };
   $("new-trip").onclick = () => { if (dirty() && !confirm("Discard unsaved changes?")) return; newTrip(); };
   addEventListener("beforeunload", (e) => { if (dirty()) { e.preventDefault(); e.returnValue = ""; } });
@@ -644,127 +766,152 @@
     return `Day ${s.day} · ${s.name}${s.group ? ` (${(t.groups.find((g) => g.id === s.group) || {}).name || ""})` : ""}`;
   }
 
+  // Photos, grouped the way the trip happened: each day, each stop, with its own Add button.
+  // A big batch can still be dropped at the top and is sorted onto stops automatically.
+  let photoTarget = null;   // where the next picked files go: { stopId, day } or null for "sort them"
   function renderPhotos() {
     const t = cur;
-    if (t._new) { $("pane").innerHTML = `<div class="empty">Save the journey first, then add photos to it.</div>`; return; }
+    if (t._new) { $("pane").innerHTML = `<div class="empty">Save the journey first (step 2), then add photos to it.</div>`; return; }
     const all = t.photos || [];
-    const unplaced = all.filter((p) => !p.stopId && !p.day);
-    let list = photoFilter === "unplaced" ? unplaced : photoFilter === "hidden" ? all.filter((p) => p.hidden) : all;
-    list = [...list].sort((a, b) => (a.day || 99) - (b.day || 99) || String(a.takenAt).localeCompare(String(b.takenAt)));
-    const dayOpts = (sel) => `<option value="">No day</option>${t.days.map((d) => `<option value="${d.n}" ${Number(sel) === d.n ? "selected" : ""}>Day ${d.n} · ${esc(A.dayLabel(d))}</option>`).join("")}`;
-    const stopOpts = (sel, day) => `<option value="">No place</option>${t.stops.filter((s) => s.name && (!day || s.day === Number(day))).map((s) => `<option value="${esc(s.id)}" ${sel === s.id ? "selected" : ""}>${esc(day ? s.name : stopLabel(t, s))}</option>`).join("")}`;
-    const tagOf = (p) => p.placed === "gps" ? "Placed by GPS" : p.placed === "filename" ? "Placed by name" : p.placed === "date" ? "Placed by date" : p.placed === "manual" ? "" : "";
+    const byStop = new Map(), byDay = new Map(), loose = [];
+    for (const ph of all) {
+      const st = ph.stopId && t.stops.find((x) => x.id === ph.stopId);
+      if (st) { if (!byStop.has(st.id)) byStop.set(st.id, []); byStop.get(st.id).push(ph); }
+      else if (ph.day) { if (!byDay.has(ph.day)) byDay.set(ph.day, []); byDay.get(ph.day).push(ph); }
+      else loose.push(ph);
+    }
+    const thumbs = (list) => list.length ? `<div class="thumbs">${list.map((ph) => `
+      <div class="th ${selected.has(ph.id) ? "sel" : ""} ${ph.hidden ? "hid" : ""}" data-p="${esc(ph.id)}">
+        <img src="${A.photoUrl(ph, "t")}" alt="" loading="lazy">
+        ${ph.featured ? `<span class="star">★</span>` : ""}${t.coverPhotoId === ph.id ? `<span class="cov">Cover</span>` : ""}
+        <button class="ck" data-ck aria-label="Select">${selected.has(ph.id) ? "✓" : ""}</button>
+      </div>`).join("")}</div>` : "";
+    const add = (stopId, day) => `<button class="btn sm add-ph" data-add-stop="${esc(stopId || "")}" data-add-day="${day || ""}">+ Add photos</button>`;
+    const days = [...t.days].sort((a, b) => a.n - b.n);
     $("pane").innerHTML = `
-      <div class="drop" id="drop"><b>Drop photos here</b><p>Or tap to choose. Add as many as you like at once.<br>Photos are placed on the map from their GPS, their file name, or the day they were taken.</p></div>
+      <div class="drop" id="drop"><b>Drop a batch of photos</b><p>Or tap to choose. They're sorted onto stops by their location, file name or date.<br>To add photos to one stop, use its own “Add photos” button below.</p></div>
       <div id="queue-slot"></div>
-      <div class="toolbar">
-        <div class="seg">
-          <button data-f="all" class="${photoFilter === "all" ? "on" : ""}">All · ${all.length}</button>
-          <button data-f="unplaced" class="${photoFilter === "unplaced" ? "on" : ""}">Needs a place · ${unplaced.length}</button>
-          <button data-f="hidden" class="${photoFilter === "hidden" ? "on" : ""}">Hidden · ${all.filter((p) => p.hidden).length}</button>
-        </div>
-        <button class="btn sm" id="sel-all">${selected.size ? "Clear selection" : "Select all"}</button>
-      </div>
       <div class="bulk ${selected.size ? "on" : ""}" id="bulk">
         <b style="font:500 18px var(--font-display)">${selected.size} selected</b>
-        <select id="bulk-day">${dayOpts("")}</select>
-        <select id="bulk-stop">${stopOpts("", "")}</select>
-        <button class="btn" id="bulk-apply">Apply</button>
+        <select id="bulk-stop"><option value="">Move to…</option>${days.map((d) => `<optgroup label="Day ${d.n} · ${esc(A.dayLabel(d))}">${t.stops.filter((x) => x.day === d.n && x.name).map((x) => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join("")}<option value="day:${d.n}">Day ${d.n}, no particular stop</option></optgroup>`).join("")}</select>
         <button class="btn" id="bulk-hide">Hide</button>
         <button class="btn" id="bulk-del">Delete</button>
+        <button class="btn" id="bulk-clear">Done</button>
       </div>
-      ${list.length ? `<div class="pgrid">${list.map((p) => `
-        <div class="pc ${selected.has(p.id) ? "sel" : ""} ${p.hidden ? "hid" : ""}" data-p="${esc(p.id)}">
-          <div class="im"><img src="${A.photoUrl(p, "t")}" alt="" loading="lazy">
-            ${!p.stopId && !p.day ? `<span class="tag warn">Needs a place</span>` : tagOf(p) ? `<span class="tag">${tagOf(p)}</span>` : ""}
-            <button class="ck" data-ck>${selected.has(p.id) ? "✓" : ""}</button></div>
-          <div class="bd">
-            <div class="row"><select data-pk="day">${dayOpts(p.day)}</select><select data-pk="stopId">${stopOpts(p.stopId, p.day)}</select></div>
-            <input type="text" data-pk="title" value="${esc(p.title)}" placeholder="Title (defaults to the place)">
-            <textarea data-pk="caption" rows="2" placeholder="What was happening?">${esc(p.caption)}</textarea>
-            <div class="acts">
-              <span class="fn" title="${esc(p.fileName)}">${esc(p.fileName || "")}${p.takenAt ? ` · ${esc(p.takenAt.slice(0, 10))}` : ""}</span>
-              <span style="display:flex;gap:4px">
-                <button class="ib ${p.featured ? "on" : ""}" data-feat title="Feature in the slideshow">★</button>
-                <button class="ib ${t.coverPhotoId === p.id ? "on" : ""}" data-cover title="Use as the journey's cover">▣</button>
-                <button class="ib ${p.hidden ? "on" : ""}" data-hide title="Hide from the map">◌</button>
-                <button class="ib" data-del title="Delete">✕</button>
-              </span>
-            </div>
+      ${loose.length ? `<div class="pday needs"><div class="pday-h"><b>Needs a place</b><span>${loose.length} photo${loose.length === 1 ? "" : "s"}. Select them, then “Move to…” a stop.</span></div>${thumbs(loose)}</div>` : ""}
+      ${days.map((d) => {
+        const stops = t.stops.filter((x) => x.day === d.n && (x.name || A.hasXY(x)));
+        const extra = byDay.get(d.n) || [];
+        return `<div class="pday">
+          <div class="pday-h"><b>Day ${d.n}${d.title ? ` · ${esc(d.title)}` : ""}</b><span>${esc(A.dayLong(d))}</span></div>
+          ${stops.map((x) => `<div class="pstop">
+            <div class="pstop-h"><div><b>${esc(x.name || "Unnamed stop")}</b>${x.area ? `<span>${esc(x.area)}</span>` : ""}</div>${add(x.id, d.n)}</div>
+            ${thumbs(byStop.get(x.id) || [])}
+          </div>`).join("")}
+          <div class="pstop other">
+            <div class="pstop-h"><div><b>Other photos from this day</b></div>${add("", d.n)}</div>
+            ${thumbs(extra)}
           </div>
-        </div>`).join("")}</div>` : `<div class="empty">${all.length ? "Nothing in this view." : "No photos yet. Drop some in above."}</div>`}`;
+        </div>`;
+      }).join("")}`;
 
     $("queue-slot").replaceWith(queueEl);
     const P = $("pane");
     const drop = $("drop");
-    drop.onclick = () => $("file").click();
+    drop.onclick = () => { photoTarget = null; $("file").click(); };
     ["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
     ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
-    drop.addEventListener("drop", (e) => queueFiles([...e.dataTransfer.files]));
-    P.querySelectorAll("[data-f]").forEach((b) => b.onclick = () => { photoFilter = b.dataset.f; renderPhotos(); });
-    $("sel-all").onclick = () => { if (selected.size) selected.clear(); else list.forEach((p) => selected.add(p.id)); renderPhotos(); };
-    const photoOf = (el) => t.photos.find((p) => p.id === el.closest("[data-p]").dataset.p);
-    P.querySelectorAll("[data-ck]").forEach((b) => b.onclick = () => { const p = photoOf(b); selected.has(p.id) ? selected.delete(p.id) : selected.add(p.id); renderPhotos(); });
-    P.querySelectorAll("[data-pk]").forEach((el) => {
-      const handler = () => {
-        const p = photoOf(el);
-        const k = el.dataset.pk;
-        const patch = { id: p.id };
-        if (k === "day") {
-          patch.day = el.value ? Number(el.value) : null;
-          const s = t.stops.find((x) => x.id === p.stopId);
-          if (s && s.day !== patch.day) patch.stopId = null;
-          patch.placed = "manual";
-        } else if (k === "stopId") {
-          patch.stopId = el.value || null;
-          const s = t.stops.find((x) => x.id === patch.stopId);
-          if (s) patch.day = s.day;
-          patch.placed = "manual";
-        } else patch[k] = el.value;
-        Object.assign(p, patch);
-        savePhotos([patch], k === "day" || k === "stopId");
-      };
-      if (el.tagName === "SELECT") el.onchange = handler;
-      else { el.oninput = debounce(handler, 700); }
+    drop.addEventListener("drop", (e) => queueFiles([...e.dataTransfer.files], null));
+    P.querySelectorAll("[data-add-day]").forEach((b) => b.onclick = () => {
+      photoTarget = { stopId: b.dataset.addStop || null, day: Number(b.dataset.addDay) || null };
+      $("file").click();
     });
-    P.querySelectorAll("[data-feat]").forEach((b) => b.onclick = () => { const p = photoOf(b); p.featured = !p.featured; savePhotos([{ id: p.id, featured: p.featured }], true); });
-    P.querySelectorAll("[data-hide]").forEach((b) => b.onclick = () => { const p = photoOf(b); p.hidden = !p.hidden; savePhotos([{ id: p.id, hidden: p.hidden }], true); });
-    P.querySelectorAll("[data-cover]").forEach((b) => b.onclick = async () => {
-      const p = photoOf(b);
-      t.coverPhotoId = t.coverPhotoId === p.id ? null : p.id;
-      const j = await A.api("saveTrip", { method: "POST", body: { trip: strip(t) } });
-      Object.assign(t, { coverPhotoId: j.trip.coverPhotoId });
-      saved = JSON.stringify(strip(t));
-      renderPhotos(); toast("Cover updated");
+    // a stop's section also accepts photos dragged onto it (desktop)
+    P.querySelectorAll(".pstop").forEach((box) => {
+      const b = box.querySelector("[data-add-day]");
+      ["dragenter", "dragover"].forEach((ev) => box.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); box.classList.add("over"); }));
+      ["dragleave", "drop"].forEach((ev) => box.addEventListener(ev, (e) => { e.preventDefault(); e.stopPropagation(); box.classList.remove("over"); }));
+      box.addEventListener("drop", (e) => queueFiles([...e.dataTransfer.files], { stopId: b.dataset.addStop || null, day: Number(b.dataset.addDay) || null }));
     });
-    P.querySelectorAll("[data-del]").forEach((b) => b.onclick = async () => {
-      const p = photoOf(b);
-      if (!confirm("Delete this photo for good?")) return;
-      await A.api("deletePhotos", { method: "POST", body: { tripId: t.id, ids: [p.id] } });
-      t.photos = t.photos.filter((x) => x !== p);
-      renderPhotos(); renderNav();
-    });
+    const photoOf = (el) => t.photos.find((ph) => ph.id === el.closest("[data-p]").dataset.p);
+    P.querySelectorAll("[data-ck]").forEach((b) => b.onclick = (e) => { e.stopPropagation(); const ph = photoOf(b); selected.has(ph.id) ? selected.delete(ph.id) : selected.add(ph.id); keepY(renderPhotos); });
+    P.querySelectorAll(".th").forEach((el) => el.onclick = () => { if (selected.size) { const ph = photoOf(el); selected.has(ph.id) ? selected.delete(ph.id) : selected.add(ph.id); keepY(renderPhotos); } else openPhoto(photoOf(el)); });
     if (selected.size) {
-      $("bulk-day").onchange = () => { const d = $("bulk-day").value; $("bulk-stop").innerHTML = stopOpts("", d); };
-      $("bulk-apply").onclick = () => {
-        const day = $("bulk-day").value ? Number($("bulk-day").value) : undefined;
-        const stopId = $("bulk-stop").value || undefined;
-        const s = stopId && t.stops.find((x) => x.id === stopId);
-        const patches = [...selected].map((id) => ({ id, ...(day ? { day } : {}), ...(s ? { stopId, day: s.day } : {}), placed: "manual" }));
-        patches.forEach((pt) => Object.assign(t.photos.find((p) => p.id === pt.id), pt));
+      $("bulk-stop").onchange = () => {
+        const v = $("bulk-stop").value;
+        if (!v) return;
+        const st = v.startsWith("day:") ? null : t.stops.find((x) => x.id === v);
+        const day = st ? st.day : Number(v.slice(4));
+        const patches = [...selected].map((id) => ({ id, stopId: st ? st.id : null, day, placed: "manual" }));
+        patches.forEach((pt) => Object.assign(t.photos.find((ph) => ph.id === pt.id), pt));
         selected.clear();
         savePhotos(patches, true);
       };
-      $("bulk-hide").onclick = () => { const patches = [...selected].map((id) => ({ id, hidden: true })); patches.forEach((pt) => Object.assign(t.photos.find((p) => p.id === pt.id), pt)); selected.clear(); savePhotos(patches, true); };
+      $("bulk-hide").onclick = () => { const patches = [...selected].map((id) => ({ id, hidden: true })); patches.forEach((pt) => Object.assign(t.photos.find((ph) => ph.id === pt.id), pt)); selected.clear(); savePhotos(patches, true); };
       $("bulk-del").onclick = async () => {
         if (!confirm(`Delete ${selected.size} photos for good?`)) return;
         const ids = [...selected];
         await A.api("deletePhotos", { method: "POST", body: { tripId: t.id, ids } });
-        t.photos = t.photos.filter((p) => !ids.includes(p.id));
+        t.photos = t.photos.filter((ph) => !ids.includes(ph.id));
         selected.clear();
-        renderPhotos(); renderNav();
+        keepY(renderPhotos); renderNav();
       };
+      $("bulk-clear").onclick = () => { selected.clear(); keepY(renderPhotos); };
     }
+  }
+  const keepY = (fn) => { const y = scrollY; fn(); scrollTo(0, y); };
+
+  // One photo: where it goes, its title and caption, and the star / cover / hide / delete actions.
+  function openPhoto(ph) {
+    const t = cur;
+    const days = [...t.days].sort((a, b) => a.n - b.n);
+    const where = ph.stopId ? ph.stopId : ph.day ? `day:${ph.day}` : "";
+    const box = document.createElement("div");
+    box.className = "pmodal";
+    box.innerHTML = `<div class="pm-card">
+      <button class="ib pm-x" aria-label="Close">✕</button>
+      <div class="pm-img"><img src="${A.photoUrl(ph, "t")}" alt=""></div>
+      <div class="pm-body">
+        <label class="f"><span>Where</span><select data-pm="where"><option value="">Needs a place</option>${days.map((d) => `<optgroup label="Day ${d.n} · ${esc(A.dayLabel(d))}">${t.stops.filter((x) => x.day === d.n && x.name).map((x) => `<option value="${esc(x.id)}" ${where === x.id ? "selected" : ""}>${esc(x.name)}</option>`).join("")}<option value="day:${d.n}" ${where === `day:${d.n}` ? "selected" : ""}>Day ${d.n}, no particular stop</option></optgroup>`).join("")}</select></label>
+        <label class="f"><span>Title</span><input type="text" data-pm="title" value="${esc(ph.title)}" placeholder="Defaults to the place"></label>
+        <label class="f"><span>What was happening</span><textarea data-pm="caption" rows="3">${esc(ph.caption)}</textarea></label>
+        <div class="pm-acts">
+          <button class="btn sm ${ph.featured ? "dark" : ""}" data-pa="feat">★ ${ph.featured ? "Featured" : "Feature"}</button>
+          <button class="btn sm ${t.coverPhotoId === ph.id ? "dark" : ""}" data-pa="cover">${t.coverPhotoId === ph.id ? "Journey cover" : "Use as cover"}</button>
+          <button class="btn sm ${ph.hidden ? "dark" : ""}" data-pa="hide">${ph.hidden ? "Hidden" : "Hide"}</button>
+          <button class="btn sm danger" data-pa="del">Delete</button>
+        </div>
+        <div class="fn">${esc(ph.fileName || "")}${ph.takenAt ? ` · ${esc(ph.takenAt.slice(0, 10))}` : ""}</div>
+      </div></div>`;
+    document.body.appendChild(box);
+    const close = () => { box.remove(); keepY(renderPhotos); };
+    box.querySelector(".pm-x").onclick = close;
+    box.onclick = (e) => { if (e.target === box) close(); };
+    box.querySelector('[data-pm="where"]').onchange = (e) => {
+      const v = e.target.value;
+      const st = v && !v.startsWith("day:") ? t.stops.find((x) => x.id === v) : null;
+      const patch = { id: ph.id, stopId: st ? st.id : null, day: st ? st.day : v ? Number(v.slice(4)) : null, placed: "manual" };
+      Object.assign(ph, patch); savePhotos([patch], false);
+    };
+    ["title", "caption"].forEach((k) => { box.querySelector(`[data-pm="${k}"]`).oninput = debounce((e) => { ph[k] = e.target.value; savePhotos([{ id: ph.id, [k]: ph[k] }], false); }, 600); });
+    box.querySelectorAll("[data-pa]").forEach((b) => b.onclick = async () => {
+      const a = b.dataset.pa;
+      if (a === "feat") { ph.featured = !ph.featured; await savePhotos([{ id: ph.id, featured: ph.featured }], false); }
+      if (a === "hide") { ph.hidden = !ph.hidden; await savePhotos([{ id: ph.id, hidden: ph.hidden }], false); }
+      if (a === "cover") {
+        t.coverPhotoId = t.coverPhotoId === ph.id ? null : ph.id;
+        await A.api("saveTrip", { method: "POST", body: { trip: strip(t) } });
+        saved = JSON.stringify(strip(t));
+      }
+      if (a === "del") {
+        if (!confirm("Delete this photo for good?")) return;
+        await A.api("deletePhotos", { method: "POST", body: { tripId: t.id, ids: [ph.id] } });
+        t.photos = t.photos.filter((x) => x !== ph);
+        renderNav();
+        return close();
+      }
+      box.remove(); openPhoto(ph);
+    });
   }
   function debounce(fn, ms) { let h; return (...a) => { clearTimeout(h); h = setTimeout(() => fn(...a), ms); }; }
   async function savePhotos(patches, rerender) {
@@ -777,12 +924,12 @@
   }
 
   // ─── Upload pipeline ───────────────────────────────────────────────────────
-  $("file").onchange = () => { queueFiles([...$("file").files]); $("file").value = ""; };
+  $("file").onchange = () => { queueFiles([...$("file").files], photoTarget); $("file").value = ""; photoTarget = null; };
   const queue = [];
   let active = 0;
   const queueEl = document.createElement("div");
   queueEl.className = "queue";
-  function queueFiles(files) {
+  function queueFiles(files, target = null) {
     const t = cur;
     if (!queue.length && !active) queueEl.innerHTML = "";
     files = files.filter((f) => /^image\//.test(f.type) || /\.(heic|heif|jpe?g|png|webp)$/i.test(f.name));
@@ -792,7 +939,7 @@
       row.className = "qrow";
       row.innerHTML = `<span>${esc(f.name)}</span><div class="bar"><i></i></div><span class="st">Waiting</span>`;
       queueEl.appendChild(row);
-      queue.push({ f, row, trip: t });
+      queue.push({ f, row, trip: t, target });
     }
     pump();
   }
@@ -809,7 +956,7 @@
   }
   const setRow = (row, pct, st, err) => { row.querySelector("i").style.width = `${pct}%`; row.querySelector(".st").textContent = st; row.classList.toggle("err", !!err); };
 
-  async function processOne({ f, row, trip }) {
+  async function processOne({ f, row, trip, target }) {
     try {
       setRow(row, 10, "Reading");
       let meta = {};
@@ -826,7 +973,10 @@
       const full = await toJpeg(bmp, 2048, 0.84);
       const thumb = await toJpeg(bmp, 800, 0.8);
       if (bmp.close) bmp.close();
-      const placement = autoPlace(trip, meta, f.name);
+      // photos added to a particular stop (or day) go there; a dropped batch is sorted automatically
+      const placement = target && (target.stopId || target.day)
+        ? { stopId: target.stopId || null, day: target.day || null, placed: "manual", ...(autoPlace(trip, meta, f.name).caption ? { caption: autoPlace(trip, meta, f.name).caption } : {}) }
+        : autoPlace(trip, meta, f.name);
       setRow(row, 60, "Uploading");
       const body = {
         tripId: trip.id,
