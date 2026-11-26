@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Travel Map">
 <link rel="manifest" href="/trips/manifest.webmanifest">
-<link rel="icon" href="/trips/icon.svg" type="image/svg+xml">
+<link rel="icon" href="/trips/icon-32.png" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/trips/icon-180.png">
 <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -83,6 +83,7 @@
   .totals span { font: 500 9.5px var(--font-mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft); }
   .trip-list { overflow-y: auto; margin: 0 -8px; padding: 0 8px; flex: 1; -webkit-overflow-scrolling: touch; }
   /* Postcard: a photo (or the route drawn on paper), then the title and date. */
+  .sheet-handle { display: none; }
   .trip-card {
     display: block; width: 100%; padding: 0; margin: 0 0 18px; text-align: left; cursor: pointer;
     background: none; border: 0;
@@ -352,6 +353,10 @@
     }
     .home-panel.off { transform: translateY(30px); }
     .home-panel .masthead { font-size: 44px; }
+    .sheet-handle { display: block; position: absolute; left: 0; right: 0; top: 0; height: 26px; border: 0; background: none; cursor: pointer; }
+    .sheet-handle i { position: absolute; left: 50%; top: 9px; width: 40px; height: 5px; margin-left: -20px; border-radius: 3px; background: rgba(22,35,61,0.22); }
+    body.home-min .home-panel { transform: translateY(calc(100% - 112px - env(safe-area-inset-bottom))); overflow: hidden; cursor: pointer; }
+    body.home-min .home-panel .masthead { font-size: 34px; }
     .totals { margin-top: 14px; gap: 2px 14px; }
     .totals b { font-size: 23px; }
     .totals span { font-size: 8.5px; letter-spacing: 0.14em; }
@@ -644,7 +649,8 @@
     const w = innerWidth, h = innerHeight;
     const narrow = w < 760;
     // home: extra headroom so trip labels can sit above their routes
-    if (S.view === "home") return narrow ? { top: 70, bottom: h * 0.6 + 20, left: 24, right: 24 } : { top: Math.min(150, h * 0.24), bottom: 60, left: Math.min(400, w * 0.38) + 70, right: 90 };
+    const homeMin = document.body.classList.contains("home-min");
+    if (S.view === "home") return narrow ? { top: 70, bottom: homeMin ? 130 : h * 0.6 + 20, left: 24, right: 24 } : { top: Math.min(150, h * 0.24), bottom: 60, left: Math.min(400, w * 0.38) + 70, right: 90 };
     const head = $("trip-head").getBoundingClientRect();
     const sheetOpen = document.body.classList.contains("sheet-open");
     if (narrow) return { top: head.bottom + 24, bottom: sheetOpen ? h * 0.5 + 24 : 110, left: 28, right: 28 };
@@ -844,6 +850,7 @@
     const trips = S.trips;
     const tot = totals(trips);
     $("home-panel").innerHTML = `
+      <button class="sheet-handle" id="home-handle" aria-label="Show just the map"><i></i></button>
       <div class="kicker">${esc(A.BRAND.family)}</div>
       <h1 class="masthead">${esc(A.BRAND.name)}</h1>
       <div class="totals">
@@ -855,7 +862,11 @@
       <div class="rule"></div>
       <div class="trip-list">${trips.map(tripCard).join("") || `<div class="empty">No journeys yet. Add one from the admin page.</div>`}</div>
       <div class="home-foot"><span>Tap a journey to open it</span><a href="${A.adminHome}">Admin</a></div>`;
-    $("home-panel").querySelectorAll("[data-trip]").forEach((b) => b.addEventListener("click", () => openTrip(S.trips.find((t) => t.id === b.dataset.trip))));
+    $("home-panel").querySelectorAll("[data-trip]").forEach((b) => b.addEventListener("click", (e) => {
+      if (document.body.classList.contains("home-min")) { e.stopPropagation(); return setHomeMin(false); }
+      openTrip(S.trips.find((t) => t.id === b.dataset.trip));
+    }));
+    $("home-handle").onclick = (e) => { e.stopPropagation(); setHomeMin(!document.body.classList.contains("home-min")); };
   }
 
   function routeSvg(trip, stroke = "rgba(22,35,61,0.55)", w = 1.6) {
@@ -907,10 +918,47 @@
     styleRoutes();
     buildTripTags();
     buildHere();
-    const b = allBounds();
-    if (b) fit(b, { duration, maxZoom: 5.6 });
-    else map.flyTo({ center: [-92, 33], zoom: 3.4, duration });
+    fitHome(duration);
   }
+
+  // On a narrow screen the usable map area is short, and fitting a US-to-Europe box into it
+  // pushes the routes over the globe's horizon. Centre on the routes instead and keep a
+  // sensible zoom, so the globe always faces them.
+  function fitHome(duration = 1200) {
+    const b = allBounds();
+    if (!b) return map.flyTo({ center: [-92, 33], zoom: 3.4, duration });
+    if (innerWidth >= 760) return fit(b, { duration, maxZoom: 5.6 });
+    const p = padding();
+    // Estimate the zoom that fits the routes in the space left above the sheet (MapLibre's
+    // own camera helper can throw on the globe here).
+    const w = Math.max(120, innerWidth - p.left - p.right), h = Math.max(120, innerHeight - p.top - p.bottom);
+    const lngSpan = Math.max(0.5, b[1][0] - b[0][0]), latSpan = Math.max(0.5, b[1][1] - b[0][1]) * 1.25;
+    const est = Math.min(Math.log2((w * 360) / (512 * lngSpan)), Math.log2((h * 360) / (512 * latSpan)));
+    const zoom = Math.max(0.9, Math.min(Number.isFinite(est) ? est : 1.5, 5.6));
+    map.flyTo({ center: [(b[0][0] + b[1][0]) / 2, (b[0][1] + b[1][1]) / 2], zoom, padding: p, bearing: 0, pitch: 0, duration, essential: true });
+  }
+
+  // Phones: the journeys sheet can be pulled down out of the way to leave just the map.
+  function setHomeMin(min) {
+    document.body.classList.toggle("home-min", min);
+    if (S.view === "home") setTimeout(() => fitHome(900), 50);
+  }
+  (() => {
+    const panel = $("home-panel");
+    let y0 = null, startMin = false;
+    panel.addEventListener("touchstart", (e) => {
+      startMin = document.body.classList.contains("home-min");
+      y0 = startMin || panel.scrollTop <= 0 ? e.touches[0].clientY : null;
+    }, { passive: true });
+    panel.addEventListener("touchend", (e) => {
+      if (y0 == null) return;
+      const dy = e.changedTouches[0].clientY - y0;
+      if (!startMin && dy > 60) setHomeMin(true);
+      else if (startMin && dy < -30) setHomeMin(false);
+      y0 = null;
+    });
+    panel.addEventListener("click", () => { if (document.body.classList.contains("home-min")) setHomeMin(false); });
+  })();
 
   function openTrip(t, { day = null, place = null, duration = 1800 } = {}) {
     poke();
