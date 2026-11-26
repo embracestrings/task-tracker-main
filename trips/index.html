@@ -607,7 +607,7 @@
       for (const seg of (t.route && t.route.segments) || []) {
         feats.push({
           type: "Feature",
-          properties: { trip: t.id, day: seg.day, key: seg.key, color: routeColor(t, seg), straight: !!seg.straight, flight: seg.mode === "fly", groups: (seg.groups || []).join(",") },
+          properties: { trip: t.id, day: seg.day, key: seg.key, color: routeColor(t, seg), straight: !!seg.straight, flight: seg.mode === "fly" || seg.mode === "boat", groups: (seg.groups || []).join(",") },
           geometry: { type: "LineString", coordinates: seg.coords },
         });
       }
@@ -1088,7 +1088,7 @@
     $("trip-head").innerHTML = `
       <button class="back kicker" id="hd-back">${ICON.back}All journeys</button>
       <h1>${esc(t.title)}</h1>
-      <div class="sub">${esc(A.dateRange(t.startDate, t.endDate))}${t.subtitle ? ` · ${esc(t.subtitle)}` : ""}</div>
+      <div class="sub">${esc(A.dateRange(t.startDate, t.endDate))}</div>
       ${t.family || (t.travelers || []).length ? `<div class="who-row">${A.whoWent(t, 26)}</div>` : ""}
       <div class="stats">
         <span><b>${fmtNum(s.miles)}</b>miles driven</span>${s.flown ? `<span><b>${fmtNum(s.flown)}</b>flown</span>` : ""}<span><b>${s.nights}</b>nights</span><span><b>${s.stops}</b>stops</span>${s.countries > 1 ? `<span><b>${s.countries}</b>countries</span>` : s.states ? `<span><b>${s.states}</b>states</span>` : ""}${s.photos ? `<span><b>${s.photos}</b>photos</span>` : ""}

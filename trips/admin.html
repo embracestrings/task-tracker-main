@@ -176,7 +176,8 @@
   .tabs.steps button { display: inline-flex; align-items: center; gap: 8px; }
   .tabs.steps i { font-style: normal; width: 20px; height: 20px; border-radius: 50%; display: inline-grid; place-items: center; border: 1px solid currentColor; font-size: 10px; letter-spacing: 0; }
   .tabs.steps button.on i { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-  .next-row { display: flex; justify-content: flex-end; margin: 18px 0 8px; }
+  .next-row { display: flex; justify-content: flex-end; align-items: center; gap: 16px; margin: 18px 0 8px; }
+  .linkbtn { margin-right: auto; border: 0; background: none; padding: 6px 0; cursor: pointer; font: 500 13px var(--font-body); color: #9A3E3E; text-decoration: underline; text-underline-offset: 3px; }
 
   /* ── Itinerary days and stops ─────────────────────────────────────────── */
   .day { display: flex; flex-direction: column; gap: 10px; padding: 18px; }
@@ -403,7 +404,6 @@
         <div class="fields">
           <label class="f s8"><span>Title</span><input type="text" data-k="title" value="${esc(t.title)}"></label>
           <label class="f s4"><span>Hidden from the map</span><select data-k="hidden"><option value="">No</option><option value="1" ${t.hidden ? "selected" : ""}>Yes, hide it</option></select></label>
-          <label class="f s12"><span>Subtitle</span><input type="text" data-k="subtitle" value="${esc(t.subtitle)}"></label>
           <label class="f s3"><span>Starts</span><input type="date" data-k="startDate" value="${esc(t.startDate)}"></label>
           <label class="f s3"><span>Ends</span><input type="date" data-k="endDate" value="${esc(t.endDate)}"></label>
           <label class="f s6"><span>Route color</span><div class="swatches">${A.ROUTE_COLORS.map((c) => `<button type="button" style="--c:${c}" data-color="${c}" class="${t.color === c ? "on" : ""}"></button>`).join("")}</div></label>
@@ -413,8 +413,6 @@
               ${A.people.list.map((p) => `<button type="button" class="wp ${!t.family && (t.travelers || []).includes(p.id) ? "on" : ""}" data-person="${esc(p.id)}" ${t.family ? "disabled" : ""}>${A.avatar(p, 30)}<span>${esc(p.name)}</span></button>`).join("")}
             </div>
           </div>
-          <label class="f s6"><span>States (two-letter, comma separated)</span><input type="text" data-k="states" value="${esc((t.states || []).join(", "))}"></label>
-          <label class="f s6"><span>Countries (comma separated)</span><input type="text" data-k="countries" value="${esc((t.countries || []).join(", "))}"></label>
         </div>
       </div>
       <div class="card"><h3>Starting point</h3>
@@ -436,11 +434,7 @@
           </div>`).join("")}</div>
         <button class="btn sm" id="add-group">+ Add group</button>
       </div>
-      <div class="card"><h3>Backup</h3>
-        <p class="hint">Download this journey's itinerary as a file, or paste one in to replace it.</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn sm" id="export">Download itinerary</button><button class="btn sm" id="import">Paste itinerary</button>${t._new ? "" : `<button class="btn sm danger" id="del-trip">Delete journey</button>`}</div>
-      </div>
-      <div class="next-row"><button class="btn dark" id="next-1">Next: Itinerary →</button></div>`;
+      <div class="next-row">${t._new ? "" : `<button class="linkbtn" id="del-trip">Delete this journey</button>`}<button class="btn dark" id="next-1">Next: Itinerary →</button></div>`;
     const P = $("pane");
     P.querySelectorAll("[data-k]").forEach((el) => el.oninput = el.onchange = () => {
       const k = el.dataset.k;
@@ -474,19 +468,6 @@
     P.querySelectorAll("[data-gdel]").forEach((b) => b.onclick = () => { const g = t.groups.splice(b.dataset.gdel, 1)[0]; t.stops.forEach((s) => { if (s.group === g.id) s.group = null; }); renderDetails(); markDirty(); });
     $("add-group").onclick = () => { t.groups.push({ id: `g${uid()}`, name: "", people: [], color: A.ROUTE_COLORS[(t.groups.length + 3) % A.ROUTE_COLORS.length] }); renderDetails(); markDirty(); };
     wireSearch(P.querySelector('[data-search="origin"]'), (r) => { t.origin = { name: t.origin?.name || r.name, area: r.area, lat: r.lat, lng: r.lng }; renderDetails(); markDirty(); toast(`Starting point set to ${r.name}`); });
-    $("export").onclick = () => {
-      const blob = new Blob([JSON.stringify(strip(t), null, 2)], { type: "application/json" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = `${t.id}.json`;
-      a.click();
-    };
-    $("import").onclick = () => {
-      const txt = prompt("Paste an itinerary (JSON):");
-      if (!txt) return;
-      try { const j = JSON.parse(txt); Object.assign(t, j, { id: t.id }); render(); markDirty(); toast("Pasted. Review it, then save."); }
-      catch { alert("That isn't valid itinerary JSON."); }
-    };
     if ($("del-trip")) $("del-trip").onclick = async () => {
       if (prompt(`This deletes "${t.title}" and all ${(t.photos || []).length} of its photos. Type DELETE to confirm.`) !== "DELETE") return;
       await A.api("deleteTrip", { method: "POST", body: { id: t.id } });
@@ -499,8 +480,8 @@
   // ─── Itinerary tab ─────────────────────────────────────────────────────────
   // One card per day, made from the journey's dates. Each day has a title, what happened,
   // and its stops; every day always shows at least one (blank) stop to fill in.
-  const STOP_KINDS = [["visit", "Stop", "A place you went"], ["stay", "Overnight", "Where you slept that night"], ["airport", "Airport", "Shown with a plane; flights draw between airports"], ["home", "Home", "Home"]];
-  const HOW = [["drive", "Drove", "A road route is drawn from the previous stop"], ["fly", "Flew", "A dashed flight line from the previous stop"], ["skip", "Walk/boat", "Pinned, but no line is drawn to it"], ["start", "Joined", "Starts a new line here, e.g. someone joining from elsewhere"]];
+  const STOP_KINDS = [["visit", "Stopped", "Visited during the day"], ["stay", "Stayed the night", "Where you slept"]];
+  const HOW = [["drive", "Drove", "Draws the road route from the previous stop"], ["fly", "Flew", "Draws a dashed flight line from the previous stop"], ["boat", "Boat", "Draws a dashed line across the water"], ["skip", "Other", "Walked or anything else: the place is pinned with no line"]];
   const newStop = (day) => ({ id: uid(), day, name: "", area: "", lat: null, lng: null, kind: "visit", note: "", time: "", group: null, travel: "drive" });
 
   function syncDays(t) {
@@ -531,7 +512,8 @@
     reorderStops();
     const days = [...t.days].sort((a, b) => a.n - b.n);
     const seg = (key, list, val, label) => `<div class="opt"><span class="opt-l">${label}</span><div class="chips" data-opt="${key}">${list.map(([k, l, h]) => `<button type="button" data-v="${esc(k)}" title="${esc(h || l)}" class="${val === k ? "on" : ""}">${esc(l)}</button>`).join("")}</div></div>`;
-    const kindChip = (s) => (["visit", "activity", "food"].includes(s.kind) ? "visit" : s.kind);
+    const kindChip = (s) => (s.kind === "stay" ? "stay" : "visit");
+    const howChip = (s) => { const h = travelOf(s); return h === "start" ? "skip" : h; };
     $("pane").innerHTML = `
       <div class="editor">
         <div>
@@ -546,11 +528,11 @@
               <div class="stops">
               ${stops.map((x) => {
                 const k = kindChip(x);
-                const n = k === "home" ? "⌂" : k === "airport" ? "✈" : ++num;
+                const n = x.kind === "home" ? "⌂" : x.kind === "airport" ? "✈" : ++num;
                 const has = A.hasXY(x);
                 return `<div class="stop2" data-stop="${esc(x.id)}">
                   <div class="s-top">
-                    <span class="s-n ${k}">${n}</span>
+                    <span class="s-n ${x.kind === "home" || x.kind === "airport" ? x.kind : k}">${n}</span>
                     <input type="text" data-sk="name" value="${esc(x.name)}" placeholder="Place name">
                     <div class="acts"><button class="ib" data-up title="Move up">↑</button><button class="ib" data-sdel title="Remove stop">✕</button></div>
                   </div>
@@ -561,8 +543,8 @@
                   <div class="loc-line ${has ? "" : "missing"}">${has ? `📍 ${esc(x.area || `${x.lat.toFixed(3)}, ${x.lng.toFixed(3)}`)}` : "No location yet. Search above or pick it on the map."}</div>
                   <input type="text" data-sk="note" value="${esc(x.note)}" placeholder="Note (optional)">
                   <div class="opts">
-                    ${seg("kind", STOP_KINDS, k, "Type")}
-                    ${seg("travel", HOW, travelOf(x), "Got here")}
+                    ${seg("kind", STOP_KINDS, k, "Did you")}
+                    ${seg("travel", HOW, howChip(x), "Got there by")}
                     ${(t.groups || []).length ? seg("group", [["", "Everyone"], ...t.groups.map((g) => [g.id, g.name || "Group"])], x.group || "", "Who") : ""}
                   </div>
                 </div>`;
@@ -572,7 +554,7 @@
             </div>`;
           }).join("")}
           ${days.length ? `<button class="btn" id="add-day">+ Add a day</button>` : ""}
-          <p class="hint" style="margin-top:14px"><b>Overnight</b> marks where you slept. <b>Flew</b> draws a dashed flight line from the stop before. <b>Walk/boat</b> pins a place without a road line. <b>Joined</b> starts a new line, for someone meeting up from somewhere else. Saving traces the roads.</p>
+          <p class="hint" style="margin-top:14px">States and countries are worked out from your stops and the roads you drove when you save.</p>
           <div class="next-row"><button class="btn dark" id="next-2">${t._new ? "Save and add photos →" : "Next: Photos →"}</button></div>
         </div>
         <div class="mapbox" id="mapbox"><div id="emap"></div><div class="pickbar"><span id="pick-msg">Tap the map to place this stop</span><button class="btn sm" style="color:var(--paper);border-color:rgba(239,234,224,0.4);background:transparent" id="pick-cancel">Cancel</button></div></div>
@@ -593,7 +575,7 @@
       const x = stopOfEl(b);
       const key = b.closest("[data-opt]").dataset.opt;
       const v = b.dataset.v;
-      if (key === "kind") x.kind = v === "visit" && ["activity", "food"].includes(x.kind) ? x.kind : v;
+      if (key === "kind") x.kind = v === "stay" ? "stay" : x.kind === "stay" ? (/\bairport\b/i.test(x.name) ? "airport" : "visit") : x.kind;
       else if (key === "travel") { x.travel = v; delete x.route; }
       else if (key === "group") x.group = v || null;
       markDirty();

@@ -178,7 +178,7 @@ async function getTrips() {
 }
 
 const KINDS = ["home", "stay", "visit", "food", "activity", "airport"];
-const TRAVEL = ["drive", "fly", "skip", "start"];
+const TRAVEL = ["drive", "fly", "boat", "skip", "start"];
 
 // Whitelist every field so the admin page can never write arbitrary blobs of data.
 function cleanTrip(t) {
@@ -264,9 +264,9 @@ export function routePlan(trip) {
         const p = [s.lng, s.lat];
         const pos = drive[drive.length - 1];
         if (how === "start") { closeDrive(); drive = [p]; continue; }
-        if (how === "fly") {
+        if (how === "fly" || how === "boat") {
           closeDrive();
-          if (pos && !sameXY(pos, p)) legs.push({ mode: "fly", wps: [pos, p] });
+          if (pos && !sameXY(pos, p)) legs.push({ mode: how, wps: [pos, p] });
           drive = [p];
           continue;
         }
@@ -283,7 +283,7 @@ export function routePlan(trip) {
     for (const { mode, wps, groups } of byPath.values()) {
       const everyone = groups.length === groupIds.length || groupIds[0] === "_all";
       // drive keys match the earlier format so cached road geometry stays valid
-      const keySrc = (mode === "fly" ? "fly" : "") + JSON.stringify(wps);
+      const keySrc = (mode === "drive" ? "" : mode) + JSON.stringify(wps);
       plan.push({
         key: crypto.createHash("sha1").update(keySrc).digest("hex").slice(0, 16),
         day: n,
@@ -378,13 +378,13 @@ async function osrm(wps) {
 async function buildRoute(trip, budgetMs = 20000) {
   const started = Date.now();
   const prev = parseMaybe(await kv.get(routeKey(trip.id))) || { segments: [] };
-  const cache = new Map(prev.segments.filter((s) => !s.straight && s.mode !== "fly").map((s) => [s.key, s]));
+  const cache = new Map(prev.segments.filter((s) => !s.straight && (s.mode || "drive") === "drive").map((s) => [s.key, s]));
   const segments = [];
   let incomplete = false;
   for (const p of routePlan(trip)) {
-    if (p.mode === "fly") {
-      const f = arc(p.wps[0], p.wps[1]);
-      segments.push({ key: p.key, day: p.day, mode: "fly", groups: p.groups, coords: f.coords, distance: f.distance, duration: null });
+    if (p.mode === "fly" || p.mode === "boat") {
+      const f = arc(p.wps[0], p.wps[1], p.mode === "boat" ? 12 : 64);
+      segments.push({ key: p.key, day: p.day, mode: p.mode, groups: p.groups, coords: f.coords, distance: f.distance, duration: null });
       continue;
     }
     let hit = cache.get(p.key);
@@ -427,6 +427,68 @@ async function linkTravelers(trips, people) {
     if (ids.length) { t.travelers = ids; changed = true; }
   }
   if (changed) await kv.set(LIST_KEY, trips);
+}
+
+// ─── States and countries ────────────────────────────────────────────────────
+// Worked out from the stops plus points sampled along the driven roads, reverse-geocoded on
+// a coarse grid that is cached forever in KV (one lookup per ~25 km cell, ever).
+const US_STATES = { Alabama: "AL", Alaska: "AK", Arizona: "AZ", Arkansas: "AR", California: "CA", Colorado: "CO", Connecticut: "CT", Delaware: "DE", "District of Columbia": "DC", Florida: "FL", Georgia: "GA", Hawaii: "HI", Idaho: "ID", Illinois: "IL", Indiana: "IN", Iowa: "IA", Kansas: "KS", Kentucky: "KY", Louisiana: "LA", Maine: "ME", Maryland: "MD", Massachusetts: "MA", Michigan: "MI", Minnesota: "MN", Mississippi: "MS", Missouri: "MO", Montana: "MT", Nebraska: "NE", Nevada: "NV", "New Hampshire": "NH", "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND", Ohio: "OH", Oklahoma: "OK", Oregon: "OR", Pennsylvania: "PA", "Rhode Island": "RI", "South Carolina": "SC", "South Dakota": "SD", Tennessee: "TN", Texas: "TX", Utah: "UT", Vermont: "VT", Virginia: "VA", Washington: "WA", "West Virginia": "WV", Wisconsin: "WI", Wyoming: "WY" };
+const COUNTRY_NAMES = { US: "United States", DE: "Germany", CH: "Switzerland", FR: "France", IT: "Italy", AT: "Austria", CZ: "Czechia", GB: "United Kingdom", ES: "Spain", MX: "Mexico", CA: "Canada", BS: "Bahamas", NL: "Netherlands", BE: "Belgium" };
+
+async function placeAt(lat, lng) {
+  const cell = `${(Math.round(lat * 4) / 4).toFixed(2)},${(Math.round(lng * 4) / 4).toFixed(2)}`;
+  const key = `trips:geo:${cell}`;
+  const hit = parseMaybe(await kv.get(key));
+  if (hit) return hit;
+  let out = null;
+  try {
+    const r = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}&lang=en&limit=1`, { headers: { "User-Agent": "family-trips-atlas/1.0" }, signal: AbortSignal.timeout(5000) });
+    if (r.ok) {
+      const f = ((await r.json()).features || [])[0];
+      if (f) out = { cc: (f.properties.countrycode || "").toUpperCase(), country: f.properties.country || "", state: f.properties.state || "" };
+      else out = { cc: "", country: "", state: "" }; // open water
+    }
+  } catch {}
+  if (!out) {
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=5&accept-language=en&lat=${lat}&lon=${lng}`, { headers: { "User-Agent": "family-trips-atlas/1.0" }, signal: AbortSignal.timeout(6000) });
+      if (r.ok) { const j = await r.json(); const a = j.address || {}; out = { cc: (a.country_code || "").toUpperCase(), country: a.country || "", state: a.state || "" }; }
+    } catch {}
+  }
+  if (out) await kv.set(key, out);
+  return out;
+}
+
+async function deriveRegions(trip, route, budgetMs = 9000) {
+  const started = Date.now();
+  const pts = [];
+  for (const st of trip.stops) if (hasXY(st)) pts.push([st.lat, st.lng]);
+  for (const seg of route.segments || []) {
+    if ((seg.mode || "drive") !== "drive") continue;
+    let acc = 0;
+    for (let i = 1; i < seg.coords.length; i++) {
+      const [x0, y0] = seg.coords[i - 1], [x1, y1] = seg.coords[i];
+      acc += Math.hypot(x1 - x0, (y1 - y0) * 1.2);
+      if (acc > 0.3) { pts.push([y1, x1]); acc = 0; }
+    }
+  }
+  const seen = new Set(), cells = [];
+  for (const [lat, lng] of pts) {
+    const c = `${Math.round(lat * 4)},${Math.round(lng * 4)}`;
+    if (!seen.has(c)) { seen.add(c); cells.push([lat, lng]); }
+  }
+  const states = new Set(), countries = new Set();
+  let complete = true;
+  for (let i = 0; i < cells.length; i += 6) {
+    if (Date.now() - started > budgetMs) { complete = false; break; }
+    const res = await Promise.all(cells.slice(i, i + 6).map(([a, b]) => placeAt(a, b)));
+    for (const r of res) {
+      if (!r) { complete = false; continue; }
+      if (r.cc) countries.add(COUNTRY_NAMES[r.cc] || r.country);
+      if (r.cc === "US" && US_STATES[r.state]) states.add(US_STATES[r.state]);
+    }
+  }
+  return { states: [...states].sort(), countries: [...countries], complete };
 }
 
 // ─── Photos ──────────────────────────────────────────────────────────────────
@@ -672,7 +734,12 @@ export default async function handler(req, res) {
       if (i >= 0) trips[i] = trip;
       else trips.push(trip);
       await kv.set(LIST_KEY, trips);
-      const route = await buildRoute(trip, 22000);
+      const route = await buildRoute(trip, 18000);
+      const reg = await deriveRegions(trip, route);
+      // never shrink the lists because a lookup failed part way
+      if (reg.complete || reg.states.length >= trip.states.length) trip.states = reg.states;
+      if (reg.complete || reg.countries.length >= trip.countries.length) trip.countries = reg.countries;
+      await kv.set(LIST_KEY, trips);
       return res.status(200).json({ trip: { ...trip, route, photos: await getPhotos(trip.id), canEdit: canEditTrip(me, trip) } });
     }
 
