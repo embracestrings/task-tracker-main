@@ -79,20 +79,29 @@
   .totals b { display: block; font: 500 27px/1 var(--font-display); }
   .totals span { font: 500 9.5px var(--font-mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft); }
   .trip-list { overflow-y: auto; margin: 0 -8px; padding: 0 8px; flex: 1; -webkit-overflow-scrolling: touch; }
+  /* Postcard: a photo (or the route drawn on paper), then the title and date. */
   .trip-card {
-    display: grid; grid-template-columns: 4px 1fr 92px; gap: 16px; align-items: stretch; width: 100%;
-    padding: 14px 14px 14px 0; margin-bottom: 10px; text-align: left; cursor: pointer;
-    background: rgba(255,255,255,0.45); border: 1px solid var(--line-soft); border-radius: 16px;
-    transition: background 0.25s, transform 0.25s var(--ease-out);
+    display: block; width: 100%; padding: 0; margin: 0 0 18px; text-align: left; cursor: pointer;
+    background: none; border: 0;
   }
-  .trip-card:active { transform: scale(0.985); background: rgba(255,255,255,0.75); }
-  .trip-card .sw { border-radius: 0 4px 4px 0; background: var(--c); }
-  .trip-card h3 { font: 500 27px/1.05 var(--font-display); margin: 6px 0 6px; }
-  .trip-card p { margin: 0 0 8px; font-size: 13px; line-height: 1.4; color: var(--ink-soft); }
-  .trip-card .st { font: 500 10px var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); }
-  .trip-card .cover { border-radius: 12px; overflow: hidden; background: #E3DACA; align-self: stretch; min-height: 92px; position: relative; }
-  .trip-card .cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .trip-card .cover svg { position: absolute; inset: 10px; width: calc(100% - 20px); height: calc(100% - 20px); }
+  .tc-media {
+    position: relative; height: clamp(92px, 16vh, 128px); border-radius: 14px; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 40%, #F4EFE4, #E3DACA);
+    box-shadow: 0 14px 30px -18px rgba(22,35,61,0.45);
+  }
+  .tc-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; transition: transform 0.8s var(--ease-out); }
+  .tc-media svg { position: absolute; inset: 14px 28px; width: calc(100% - 56px); height: calc(100% - 28px); }
+  .trip-card:active .tc-media img { transform: scale(1.04); }
+  .trip-card:active .tc-media { box-shadow: 0 8px 20px -14px rgba(22,35,61,0.5); }
+  .tc-pill {
+    position: absolute; left: 10px; top: 10px; display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px 5px 8px; border-radius: 999px; background: rgba(250,247,240,0.92);
+    font: 500 9px var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: #9A4E3E;
+  }
+  .tc-pill i { width: 6px; height: 6px; border-radius: 50%; background: #C0654A; animation: ping 2s infinite; }
+  .tc-text { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 2px 0; }
+  .tc-text h3 { font: 500 21px/1.1 var(--font-display); margin: 0; }
+  .tc-meta { flex: 0 0 auto; font: 500 9.5px var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft); text-align: right; }
   .live { display: inline-flex; align-items: center; gap: 6px; color: #9A4E3E; }
   .live i { width: 7px; height: 7px; border-radius: 50%; background: #C0654A; box-shadow: 0 0 0 0 rgba(192,101,74,0.6); animation: ping 2s infinite; }
   @keyframes ping { 70% { box-shadow: 0 0 0 9px rgba(192,101,74,0); } 100% { box-shadow: 0 0 0 0 rgba(192,101,74,0); } }
@@ -567,7 +576,8 @@
   function padding() {
     const w = innerWidth, h = innerHeight;
     const narrow = w < 760;
-    if (S.view === "home") return narrow ? { top: h * 0.55, bottom: 40, left: 30, right: 30 } : { top: 80, bottom: 80, left: Math.min(400, w * 0.38) + 70, right: 90 };
+    // home: extra headroom so trip labels can sit above their routes
+    if (S.view === "home") return narrow ? { top: h * 0.55, bottom: 40, left: 30, right: 30 } : { top: Math.min(150, h * 0.24), bottom: 60, left: Math.min(400, w * 0.38) + 70, right: 90 };
     const head = $("trip-head").getBoundingClientRect();
     const sheetOpen = document.body.classList.contains("sheet-open");
     if (narrow) return { top: head.bottom + 20, bottom: sheetOpen ? h * 0.56 : 120, left: 30, right: 30 };
@@ -700,23 +710,30 @@
       return { m, x: p.x, y: p.y, w: el.offsetWidth || 220, h: el.offsetHeight || 52 };
     }).sort((a, b) => b.y - a.y);
     const placed = [];
-    const panel = $("home-panel").classList.contains("off") ? 0 : $("home-panel").getBoundingClientRect().right + 12;
+    // offsetLeft/Width ignore the panel's slide-in transform, so this is its resting edge
+    const hp = $("home-panel");
+    const panel = hp.classList.contains("off") ? 0 : hp.offsetLeft + hp.offsetWidth + 12;
+    const top = $("controls").getBoundingClientRect().bottom + 8;
+    const bottom = innerHeight - 16;
+    const clear = (b) => b.t >= top && b.b <= bottom && !placed.some((q) => b.l < q.r + 6 && b.r > q.l - 6 && b.t < q.b + 6 && b.b > q.t - 6);
     for (const it of items) {
-      let dy = -18;
-      // sit to the left of the point unless the home panel covers that side
-      const right = it.x - 14 - it.w < panel;
-      const dx = right ? 14 + it.w / 2 : -14 - it.w / 2;
-      const box = () => ({ l: it.x + dx - it.w / 2, r: it.x + dx + it.w / 2, t: it.y + dy - it.h, b: it.y + dy });
-      for (let guard = 0; guard < 12; guard++) {
-        const b = box();
-        const hit = placed.find((q) => b.l < q.r + 6 && b.r > q.l - 6 && b.t < q.b + 6 && b.b > q.t - 6);
-        if (!hit) break;
-        dy -= hit.b - b.t + 8;
-      }
-      it.m.setOffset([dx, dy]);
-      placed.push(box());
+      // prefer the left of the point unless the home panel covers that side
+      const leftOk = it.x - 14 - it.w >= panel;
+      const sides = leftOk ? [-1, 1] : [1];
+      const boxAt = (side, dy) => {
+        const dx = side * (14 + it.w / 2);
+        return { dx, dy, l: it.x + dx - it.w / 2, r: it.x + dx + it.w / 2, t: it.y + dy - it.h, b: it.y + dy };
+      };
+      // nearest spot first: just above (either side), a bit higher, just below, a bit lower …
+      const tries = [];
+      for (let k = 0; k < 8; k++) for (const sd of sides) { tries.push(boxAt(sd, -18 - k * (it.h + 8))); tries.push(boxAt(sd, it.h + 18 + k * (it.h + 8))); }
+      tries.sort((a, b) => Math.abs(a.dy) - Math.abs(b.dy));
+      const pick = tries.find(clear) || boxAt(sides[0], -18);
+      it.m.setOffset([pick.dx, pick.dy]);
+      placed.push(pick);
     }
   }
+
 
   function today(trip) { return A.today(trip); }
 
@@ -776,7 +793,8 @@
   }
 
   function routeSvg(trip, stroke = "rgba(22,35,61,0.55)", w = 1.6) {
-    const segs = ((trip.route && trip.route.segments) || []).filter((s) => s.mode !== "fly");
+    const segLen = (c) => { let L = 0; for (let i = 1; i < c.length; i++) L += A.haversine(c[i - 1], c[i]); return L; };
+    const segs = ((trip.route && trip.route.segments) || []).filter((s) => s.mode !== "fly" && segLen(s.coords) > 15000);
     const b = A.bounds(A.focusPoints(trip));
     if (!b) return "";
     const lat0 = ((b[0][1] + b[1][1]) / 2) * Math.PI / 180;
@@ -792,15 +810,11 @@
     const td = today(t);
     const ph = visiblePhotos(t);
     const cover = ph.find((p) => p.id === t.coverPhotoId) || ph.find((p) => p.featured) || ph[0];
-    return `<button class="trip-card" data-trip="${esc(t.id)}" style="--c:${t.color}">
-      <div class="sw"></div>
-      <div>
-        <div class="kicker">${td ? `<span class="live"><i></i>Day ${td.dayIndex} of ${td.totalDays}</span>` : esc(A.dateRange(t.startDate, t.endDate))}</div>
-        <h3>${esc(t.title)}</h3>
-        <p>${esc(t.subtitle)}</p>
-        <div class="st">${fmtNum(s.miles)} mi driven${s.flown ? ` · ${fmtNum(s.flown)} flown` : ""} · ${s.nights} nights · ${s.stops} stops${s.photos ? ` · ${s.photos} photos` : ""}</div>
-      </div>
-      <div class="cover">${cover ? `<img src="${A.photoUrl(cover, "t")}" alt="">` : routeSvg(t)}</div>
+    const when = A.fmt(t.startDate, { month: "short", year: "numeric" });
+    return `<button class="trip-card" data-trip="${esc(t.id)}">
+      <div class="tc-media">${cover ? `<img src="${A.photoUrl(cover, "t")}" alt="" loading="lazy">` : routeSvg(t, t.color, 1.8)}
+        ${td ? `<span class="tc-pill"><i></i>Day ${td.dayIndex} of ${td.totalDays}</span>` : ""}</div>
+      <div class="tc-text"><h3>${esc(t.title)}</h3><div class="tc-meta">${esc(when)}<br>${s.nights} nights</div></div>
     </button>`;
   }
 
