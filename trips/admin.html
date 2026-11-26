@@ -23,7 +23,8 @@
   @media (max-width: 640px) {
     .wrap { padding-left: 14px; padding-right: 14px; }
     header.top { padding: 8px 2px 14px; }
-    header.top h1 { font-size: 34px; }
+    header.top h1 { font-size: 30px; }
+    header.top a { white-space: nowrap; }
     .tabs button { margin-right: 6px; font-size: 10px; letter-spacing: 0.1em; }
     .card { padding: 16px; }
     .pgrid { grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -82,7 +83,20 @@
   .stop .loc { font: 500 9.5px var(--font-mono); letter-spacing: 0.08em; color: var(--ink-soft); }
   .stop .loc.missing { color: #9A4E3E; }
   .stop-more { grid-column: 2 / -1; display: grid; grid-template-columns: 1fr 1fr 1.6fr auto; gap: 8px; }
-  @media (max-width: 760px) { .stop { grid-template-columns: 26px 1fr 1fr; } .stop-more { grid-template-columns: 1fr; grid-column: 1 / -1; } }
+  @media (max-width: 760px) {
+    /* phone: name on top, then type, location search, coordinates + actions, then details */
+    .stop { grid-template-columns: 26px 1fr 1fr; row-gap: 8px; padding: 12px 0; }
+    .stop > .dot { grid-column: 1; grid-row: 1; }
+    .stop > [data-sk="name"] { grid-column: 2 / 4; grid-row: 1; }
+    .stop > [data-sk="kind"] { grid-column: 2; grid-row: 2; }
+    .stop > .search-pop { grid-column: 3; grid-row: 2; }
+    .stop > .loc { grid-column: 2; grid-row: 3; }
+    .stop > .acts { grid-column: 3; grid-row: 3; justify-content: flex-end; }
+    .stop-more { grid-column: 2 / 4; grid-row: 4; grid-template-columns: 1fr 1fr; grid-auto-flow: dense; }
+    .stop-more > [data-sk="area"], .stop-more > [data-sk="note"] { grid-column: 1 / -1; }
+    .stop-more > div { grid-column: 2; flex-wrap: wrap; }
+    .stop-more select { flex: 1; }
+  }
   .stop .dot { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font: 600 13px var(--font-display); background: var(--surface); border: 1.5px solid var(--ink); }
   .stop .dot.stay { background: var(--ink); color: var(--paper); }
   .stop .dot.none { border-style: dashed; border-color: var(--ink-faint); color: var(--ink-faint); }
@@ -148,7 +162,7 @@
 <div class="wrap">
   <header class="top">
     <div><div class="kicker" id="fam"></div><h1>Travel Map admin</h1></div>
-    <div style="display:flex;gap:16px;align-items:center"><a href="/" id="view-link">View the map →</a></div>
+    <div style="display:flex;gap:16px;align-items:center"><a href="/" id="view-link">View on the map →</a></div>
   </header>
   <div class="layout">
     <aside>
@@ -193,13 +207,32 @@
   }
 
   // ─── Load / select ─────────────────────────────────────────────────────────
+  const params = new URLSearchParams(location.search);
+  let focusDay = params.get("day") ? Number(params.get("day")) : null;
+  let focusPhoto = params.get("photo");
+  if (["photos", "itinerary", "details"].includes(params.get("tab"))) tab = params.get("tab");
+
   async function load(selectId) {
     const j = await A.api("data");
     trips = j.trips.sort((a, b) => (b.startDate || "").localeCompare(a.startDate || ""));
     renderNav();
-    const t = trips.find((x) => x.id === (selectId || (cur && cur.id))) || trips[0];
+    if (!selectId && !cur && params.get("new")) return newTrip();
+    const t = trips.find((x) => x.id === (selectId || (cur && cur.id) || params.get("trip"))) || trips[0];
     if (t) select(t.id);
     else newTrip();
+  }
+
+  // After a deep link, bring the requested day or photo into view once.
+  function revealFocus() {
+    let el = null;
+    if (focusDay != null && tab === "itinerary") el = document.querySelector(`.day[data-day="${focusDay}"]`);
+    if (focusPhoto && tab === "photos") el = document.querySelector(`[data-p="${CSS.escape(focusPhoto)}"]`);
+    if (!el) return;
+    focusDay = null; focusPhoto = null;
+    setTimeout(() => {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.animate([{ boxShadow: "0 0 0 3px rgba(185,154,108,0.9)" }, { boxShadow: "0 0 0 3px rgba(185,154,108,0)" }], { duration: 2200, easing: "ease-out" });
+    }, 300);
   }
 
   function renderNav() {
@@ -225,7 +258,7 @@
       days: [{ n: 1, date: A.ymd(new Date()), title: "", summary: "" }], stops: [], photos: [], route: { segments: [] }, _new: true,
     };
     saved = "";
-    tab = "itinerary";
+    tab = "details";
     renderNav();
     render();
   }
@@ -253,6 +286,8 @@
     else if (tab === "itinerary") renderItinerary();
     else renderDetails();
     markDirty();
+    $("view-link").href = cur && !cur._new ? `${A.home}?trip=${encodeURIComponent(cur.id)}` : A.home;
+    revealFocus();
   }
 
   // ─── Details tab ───────────────────────────────────────────────────────────

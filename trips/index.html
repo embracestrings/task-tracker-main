@@ -64,6 +64,9 @@
   .pill svg { width: 16px; height: 16px; }
   .pill:active { transform: scale(0.97); }
   .pill[hidden] { display: none; }
+  a.pill { text-decoration: none; }
+  /* Add/Edit stay icon-only until there is room for words */
+  @media (max-width: 1199px) { .pill.compact { width: 46px; padding: 0; justify-content: center; } .pill.compact .lbl { display: none; } }
   .pill.dark { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
   /* ── Home panel ──────────────────────────────────────────────────────── */
@@ -335,15 +338,71 @@
   .spot .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,16,28,0.35) 0%, transparent 22%, transparent 55%, rgba(10,16,28,0.72) 100%); }
   .fly-photo { position: fixed; z-index: 45; pointer-events: none; overflow: hidden; background-size: cover; background-position: center; will-change: transform, border-radius; }
 
-  /* Small screens (phone): stack panels */
+  /* ── Phones (portrait): map on top, content in a bottom sheet ─────────── */
   @media (max-width: 760px) {
-    :root { --sheet-w: calc(100vw - 2 * var(--pad)); }
-    .home-panel { width: auto; right: var(--pad); bottom: auto; max-height: 62vh; }
-    .trip-head { max-width: none; right: var(--pad); }
-    .sheet { top: 46vh; }
+    :root { --pad: 12px; --top: max(12px, env(safe-area-inset-top)); --sheet-w: 100vw; }
+    .pill { width: 44px; height: 44px; padding: 0; justify-content: center; }
+    .pill .lbl { display: none; }
+    .controls { gap: 8px; }
+
+    .home-panel {
+      top: 40vh; top: 40dvh; left: 0; right: 0; bottom: 0; width: auto; max-height: none;
+      border-radius: 24px 24px 0 0; border-bottom: 0; padding: 22px 20px calc(14px + env(safe-area-inset-bottom));
+      overflow-y: auto; display: block; -webkit-overflow-scrolling: touch;
+    }
+    .home-panel.off { transform: translateY(30px); }
+    .home-panel .masthead { font-size: 44px; }
+    .totals { margin-top: 14px; gap: 2px 14px; }
+    .totals b { font-size: 23px; }
+    .totals span { font-size: 8.5px; letter-spacing: 0.14em; }
+    .rule { margin: 16px 0 14px; }
+    .trip-list { overflow: visible; margin: 0; padding: 0; }
+    .tc-media { height: 150px; }
+    .trip-tag { display: none; }
+
+    .trip-head { right: calc(var(--pad) + 152px); max-width: none; padding: 10px 14px 11px; border-radius: 16px; }
+    .trip-head h1 { font-size: 21px; margin: 2px 0 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .trip-head .back { font-size: 9px; padding: 0; }
+    .trip-head .sub, .trip-head .stats, .trip-head .legend { display: none; }
+    body.sheet-open .trip-head h1 { font-size: 21px; }
+    body.sheet-open .trip-head { padding: 10px 14px 11px; }
+
+    .rail { left: 0; right: 0; bottom: 0; border-radius: 20px 20px 0 0; border-bottom: 0; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); }
+    .chip { min-width: 96px; padding: 9px 12px 10px; }
+    .chip .t { font-size: 16px; }
     body.sheet-open .rail { display: none; }
+
+    .sheet { top: 50vh; top: 50dvh; left: 0; right: 0; bottom: 0; width: auto; border-radius: 24px 24px 0 0; border-bottom: 0; }
+    .sheet.off { transform: translateY(40px); }
+    .sheet-scroll { padding: 20px 20px calc(24px + env(safe-area-inset-bottom)); }
+    .sheet h2 { font-size: 30px; }
+
     .lightbox { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+    .lb-stage img.ph { inset: 12px; width: calc(100% - 24px); height: calc(100% - 24px); }
+    .lb-nav { width: 42px; height: 42px; }
+    .lb-nav.prev { left: 10px; } .lb-nav.next { right: 10px; }
+    .lb-side { padding: 16px 20px calc(16px + env(safe-area-inset-bottom)); gap: 8px; border-left: 0; border-top: 1px solid rgba(239,234,224,0.12); max-height: 42vh; }
+    .lb-side h2 { font-size: 28px; }
+    .lb-side .cap { font-size: 18px; }
     .lb-mini { display: none; }
+
+    .amb-caption { max-width: calc(100vw - 2 * var(--pad) - 20px); }
+    .amb-caption h2 { font-size: 38px; }
+    .amb-caption p { font-size: 18px; }
+    .amb-clock .tm { font-size: 30px; }
+  }
+  /* ── Short landscape screens (phones on their side) ───────────────────── */
+  @media (max-height: 520px) and (min-width: 761px) {
+    .home-panel { padding: 18px 22px 12px; }
+    .home-panel .masthead { font-size: 38px; }
+    .totals { margin-top: 10px; } .totals b { font-size: 22px; }
+    .rule { margin: 12px 0; }
+    .tc-media { height: 96px; }
+    .trip-head { padding: 12px 18px; }
+    .trip-head h1 { font-size: 26px; margin: 4px 0 0; }
+    .trip-head .sub, .trip-head .stats, .trip-head .legend { display: none; }
+    .chip { padding: 8px 12px; } .chip .t { font-size: 16px; }
+    .amb-caption h2 { font-size: 40px; }
   }
 </style>
 </head>
@@ -353,13 +412,21 @@
 
 <!-- Top-right controls -->
 <div class="ui controls" id="controls">
-  <button class="pill" id="btn-home" hidden>
+  <a class="pill compact" id="btn-add" href="#" aria-label="Add a journey">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2.5v11M2.5 8h11"/></svg>
+    <span class="lbl">Add journey</span>
+  </a>
+  <a class="pill compact" id="btn-edit" href="#" hidden aria-label="Edit this journey">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M10.6 2.6l2.8 2.8-8 8H2.6v-2.8z"/><path d="M9 4.2l2.8 2.8"/></svg>
+    <span class="lbl">Edit</span>
+  </a>
+  <button class="pill" id="btn-home" hidden aria-label="All journeys">
     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6.2"/><path d="M1.8 8h12.4M8 1.8c2 2 2 10.4 0 12.4M8 1.8c-2 2-2 10.4 0 12.4"/></svg>
-    All journeys
+    <span class="lbl">All journeys</span>
   </button>
-  <button class="pill dark" id="btn-play">
+  <button class="pill dark" id="btn-play" aria-label="Slideshow">
     <svg viewBox="0 0 16 16" fill="currentColor"><path d="M4.5 2.8v10.4L13 8z"/></svg>
-    Slideshow
+    <span class="lbl">Slideshow</span>
   </button>
 </div>
 
@@ -577,10 +644,10 @@
     const w = innerWidth, h = innerHeight;
     const narrow = w < 760;
     // home: extra headroom so trip labels can sit above their routes
-    if (S.view === "home") return narrow ? { top: h * 0.55, bottom: 40, left: 30, right: 30 } : { top: Math.min(150, h * 0.24), bottom: 60, left: Math.min(400, w * 0.38) + 70, right: 90 };
+    if (S.view === "home") return narrow ? { top: 70, bottom: h * 0.6 + 20, left: 24, right: 24 } : { top: Math.min(150, h * 0.24), bottom: 60, left: Math.min(400, w * 0.38) + 70, right: 90 };
     const head = $("trip-head").getBoundingClientRect();
     const sheetOpen = document.body.classList.contains("sheet-open");
-    if (narrow) return { top: head.bottom + 20, bottom: sheetOpen ? h * 0.56 : 120, left: 30, right: 30 };
+    if (narrow) return { top: head.bottom + 24, bottom: sheetOpen ? h * 0.5 + 24 : 110, left: 28, right: 28 };
     return {
       top: sheetOpen ? head.bottom + 40 : Math.max(90, head.bottom * 0.55 + 30),
       bottom: 140,
@@ -817,9 +884,20 @@
     </button>`;
   }
 
+  // Add/Edit jump to the admin page, pointed at whatever is on screen.
+  function syncButtons() {
+    const t = S.view === "trip" && S.trip;
+    $("btn-add").hidden = !!t;
+    $("btn-edit").hidden = !t;
+    $("btn-add").href = `${A.adminHome}?new=1`;
+    if (t) $("btn-edit").href = `${A.adminHome}?trip=${encodeURIComponent(t.id)}&tab=itinerary${S.day != null ? `&day=${S.day}` : ""}`;
+  }
+
   function goHome({ duration = 2000 } = {}) {
     S.view = "home"; S.trip = null; S.day = null; S.place = null;
     $("btn-home").hidden = true;
+    S.view = "home";
+    syncButtons();
     $("trip-head").classList.add("off");
     $("rail").classList.add("off");
     setSheet(false);
@@ -870,6 +948,7 @@
 
   function renderRail() {
     const t = S.trip;
+    syncButtons();
     const td = today(t);
     const tStr = A.ymd(new Date());
     $("rail").innerHTML = `<button class="chip ${S.day == null ? "on" : ""}" data-day=""><div class="d">${t.days.length} days</div><div class="t">The whole trip</div></button>` +
@@ -938,6 +1017,7 @@
         <div style="display:flex;gap:6px">
           <button class="icon-btn" id="sh-prev" ${idx <= 0 ? "disabled" : ""} aria-label="Previous day">${ICON.back}</button>
           <button class="icon-btn" id="sh-next" ${idx >= t.days.length - 1 ? "disabled" : ""} aria-label="Next day">${ICON.fwd}</button>
+          <button class="icon-btn" id="sh-close" aria-label="Close">${ICON.close}</button>
         </div>
       </div>
       <h2>${esc(d.title || A.dayLabel(d))}</h2>
@@ -950,6 +1030,7 @@
     $("sheet-body").scrollTop = 0;
     $("sh-prev").onclick = () => selectDay(t.days[idx - 1].n);
     $("sh-next").onclick = () => selectDay(t.days[idx + 1].n);
+    $("sh-close").onclick = () => { S.day = null; S.place = null; setSheet(false); renderRail(); updatePins(); styleRoutes(); fit(tripBounds(t)); };
     $("sheet-body").querySelectorAll("[data-stop]").forEach((li) => li.addEventListener("click", () => {
       const place = placesOf(t).byStop.get(li.dataset.stop);
       if (place) openPlace(place);
@@ -1046,7 +1127,8 @@
       ${p.caption ? `<div class="cap">${esc(p.caption)}</div>` : ""}
       <div id="lb-mini-slot"></div>
       <div class="lb-count">${LB.i + 1} of ${LB.list.length} · ${esc(t.title)}</div>
-      <div class="lb-btns"><button id="lb-show">Show on map</button></div>`;
+      <div class="lb-btns"><button id="lb-show">Show on map</button><button id="lb-edit">Edit photo</button></div>`;
+    $("lb-edit").onclick = () => { location.href = `${A.adminHome}?trip=${encodeURIComponent(t.id)}&tab=photos&photo=${encodeURIComponent(p.id)}`; };
     $("lb-show").onclick = () => {
       LB.resume = false;
       $("lightbox").classList.remove("on");
