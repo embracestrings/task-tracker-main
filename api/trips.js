@@ -466,10 +466,18 @@ async function placeAt(lat, lng) {
   return out;
 }
 
+// Lookups only ever add: a short drive through a country can fall between samples, so what
+// is already listed stays.
+function mergeRegions(trip, reg) {
+  trip.states = [...new Set([...(trip.states || []), ...reg.states])].sort();
+  trip.countries = [...new Set([...(trip.countries || []), ...reg.countries])];
+}
+
 async function deriveRegions(trip, route, budgetMs = 9000) {
   const started = Date.now();
   const pts = [];
-  for (const st of trip.stops) if (hasXY(st)) pts.push([st.lat, st.lng]);
+  // airports are layovers, not places visited
+  for (const st of trip.stops) if (hasXY(st) && st.kind !== "airport") pts.push([st.lat, st.lng]);
   for (const seg of route.segments || []) {
     if ((seg.mode || "drive") !== "drive") continue;
     let acc = 0;
@@ -637,8 +645,7 @@ export default async function handler(req, res) {
         if (t.regionsAt || Date.now() > deadline - 3000) continue;
         const route = parseMaybe(await kv.get(routeKey(t.id))) || { segments: [] };
         const reg = await deriveRegions(t, route, Math.min(8000, deadline - Date.now() - 2000));
-        if (reg.complete || reg.states.length >= (t.states || []).length) t.states = reg.states;
-        if (reg.complete || reg.countries.length >= (t.countries || []).length) t.countries = reg.countries;
+        mergeRegions(t, reg);
         if (reg.complete) t.regionsAt = Date.now();
         changed++;
       }
@@ -764,9 +771,7 @@ export default async function handler(req, res) {
       await kv.set(LIST_KEY, trips);
       const route = await buildRoute(trip, 17000);
       const reg = await deriveRegions(trip, route, 6000);
-      // never shrink the lists because a lookup failed part way
-      if (reg.complete || reg.states.length >= trip.states.length) trip.states = reg.states;
-      if (reg.complete || reg.countries.length >= trip.countries.length) trip.countries = reg.countries;
+      mergeRegions(trip, reg);
       if (reg.complete) trip.regionsAt = Date.now();
       await kv.set(LIST_KEY, trips);
       return res.status(200).json({ trip: { ...trip, route, photos: await getPhotos(trip.id), canEdit: canEditTrip(me, trip) } });
