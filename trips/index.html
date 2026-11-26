@@ -75,8 +75,8 @@
   .masthead { font-family: var(--font-display); font-weight: 500; font-size: clamp(44px, 6vw, 76px); line-height: 0.92; margin: 6px 0 0; letter-spacing: -0.015em; }
   .masthead em { font-style: italic; font-weight: 400; color: var(--gold-deep); }
   .rule { height: 1px; background: linear-gradient(90deg, var(--gold), rgba(185,154,108,0)); margin: 22px 0; }
-  .totals { display: grid; grid-template-columns: repeat(4, auto); gap: 4px 20px; margin-top: 22px; justify-content: start; }
-  .totals b { display: block; font: 500 30px/1 var(--font-display); }
+  .totals { display: grid; grid-template-columns: repeat(5, auto); gap: 4px 16px; margin-top: 22px; justify-content: start; }
+  .totals b { display: block; font: 500 27px/1 var(--font-display); }
   .totals span { font: 500 9.5px var(--font-mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft); }
   .trip-list { overflow-y: auto; margin: 0 -8px; padding: 0 8px; flex: 1; -webkit-overflow-scrolling: touch; }
   .trip-card {
@@ -171,6 +171,7 @@
   }
   .num.stay { background: var(--ink); color: var(--paper); }
   .num.home { background: var(--gold); border-color: var(--gold); color: var(--paper); }
+  .num.airport { border-color: var(--ink-soft); }
   .num.none { border-style: dashed; border-color: var(--ink-faint); color: var(--ink-faint); }
   .num svg { width: 14px; height: 14px; }
   .timeline .nm { font: 500 20px/1.15 var(--font-display); }
@@ -198,6 +199,8 @@
   .pin.stay .dot { background: var(--ink); color: var(--paper); }
   .pin.home .dot { background: var(--gold); border-color: #fff; color: #fff; }
   .pin.home .dot svg { width: 14px; height: 14px; }
+  .pin.airport .dot { width: 26px; height: 26px; background: var(--surface); border-color: var(--ink-soft); color: var(--ink); }
+  .pin.airport .dot svg { width: 13px; height: 13px; }
   .pin.photo .dot {
     width: 50px; height: 50px; border: 2.5px solid #fff; padding: 0; overflow: hidden; background: #E3DACA;
     box-shadow: 0 0 0 1.5px var(--ink), 0 10px 22px -8px rgba(22,35,61,0.65);
@@ -411,6 +414,7 @@
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const ICON = {
     home: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.6 1.5 7.2h1.9V14h3.7V9.8h1.8V14h3.7V7.2h1.9z"/></svg>',
+    plane: '<svg viewBox="0 0 16 16" fill="currentColor"><path d="M15 9.2V7.9L9.3 4.6V1.9C9.3 1.2 8.7.6 8 .6s-1.3.6-1.3 1.3v2.7L1 7.9v1.3l5.7-1.6v3.1L5.1 11.9V13L8 12.2l2.9.8v-1.1l-1.6-1.2V7.6z"/></svg>',
     back: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 2.5L4.5 8l5.5 5.5"/></svg>',
     fwd: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2.5L11.5 8 6 13.5"/></svg>',
     close: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 3l10 10M13 3L3 13"/></svg>',
@@ -502,7 +506,7 @@
       for (const seg of (t.route && t.route.segments) || []) {
         feats.push({
           type: "Feature",
-          properties: { trip: t.id, day: seg.day, key: seg.key, color: routeColor(t, seg), straight: !!seg.straight, groups: (seg.groups || []).join(",") },
+          properties: { trip: t.id, day: seg.day, key: seg.key, color: routeColor(t, seg), straight: !!seg.straight, flight: seg.mode === "fly", groups: (seg.groups || []).join(",") },
           geometry: { type: "LineString", coordinates: seg.coords },
         });
       }
@@ -513,19 +517,25 @@
   function addRouteLayers() {
     map.addSource("routes", { type: "geojson", data: routeFeatures(), lineMetrics: true });
     map.addLayer({
-      id: "routes-halo", type: "line", source: "routes",
+      id: "routes-halo", type: "line", source: "routes", filter: ["!", ["get", "flight"]],
       layout: { "line-join": "round", "line-cap": "round" },
       paint: { "line-color": "#FBF8F1", "line-width": ["interpolate", ["linear"], ["zoom"], 3, 5, 8, 8, 13, 11], "line-opacity": 0.85, "line-blur": 0.5 },
     });
     map.addLayer({
-      id: "routes-line", type: "line", source: "routes", filter: ["!", ["get", "straight"]],
+      id: "routes-line", type: "line", source: "routes", filter: ["all", ["!", ["get", "straight"]], ["!", ["get", "flight"]]],
       layout: { "line-join": "round", "line-cap": "round" },
       paint: { "line-color": ["get", "color"], "line-width": ["interpolate", ["linear"], ["zoom"], 3, 2, 8, 3.4, 13, 5] },
     });
     map.addLayer({
-      id: "routes-straight", type: "line", source: "routes", filter: ["get", "straight"],
+      id: "routes-straight", type: "line", source: "routes", filter: ["all", ["get", "straight"], ["!", ["get", "flight"]]],
       layout: { "line-join": "round", "line-cap": "round" },
       paint: { "line-color": ["get", "color"], "line-width": ["interpolate", ["linear"], ["zoom"], 3, 2, 8, 3, 13, 4], "line-dasharray": [1, 2.2] },
+    });
+    // Flights: a fine dashed arc, so they read as "flew" rather than "drove"
+    map.addLayer({
+      id: "routes-flight", type: "line", source: "routes", filter: ["get", "flight"],
+      layout: { "line-cap": "round" },
+      paint: { "line-color": ["get", "color"], "line-width": ["interpolate", ["linear"], ["zoom"], 1, 1.2, 6, 1.8], "line-dasharray": [0.2, 2.4] },
     });
     // Wide invisible line so a fingertip can hit a route on the overview map
     map.addLayer({ id: "routes-hit", type: "line", source: "routes", paint: { "line-color": "#000", "line-opacity": 0.001, "line-width": 26 } });
@@ -547,7 +557,7 @@
     if (!t) op = 1;
     else if (d == null) op = ["case", ["==", ["get", "trip"], t], 1, 0.12];
     else op = ["case", ["all", ["==", ["get", "trip"], t], ["==", ["get", "day"], d]], 1, ["==", ["get", "trip"], t], 0.22, 0.08];
-    for (const id of ["routes-line", "routes-straight"]) map.setPaintProperty(id, "line-opacity", op);
+    for (const id of ["routes-line", "routes-straight", "routes-flight"]) map.setPaintProperty(id, "line-opacity", op);
     map.setPaintProperty("routes-halo", "line-opacity", typeof op === "number" ? 0.85 : ["*", 0.85, op]);
     const w = d == null ? ["interpolate", ["linear"], ["zoom"], 3, 2, 8, 3.4, 13, 5]
       : ["interpolate", ["linear"], ["zoom"], 3, ["case", ["==", ["get", "day"], d], 3, 2], 8, ["case", ["==", ["get", "day"], d], 4.6, 3], 13, ["case", ["==", ["get", "day"], d], 6.5, 4.5]];
@@ -570,12 +580,7 @@
   }
 
   function tripBounds(trip, dayN) {
-    const pts = [];
-    for (const seg of (trip.route && trip.route.segments) || []) if (dayN == null || seg.day === dayN) pts.push(...seg.coords);
-    const stops = trip.stops.filter((s) => A.hasXY(s) && (dayN == null || s.day === dayN));
-    pts.push(...stops.map((s) => [s.lng, s.lat]));
-    if (dayN == null && A.hasXY(trip.origin)) pts.push([trip.origin.lng, trip.origin.lat]);
-    return A.bounds(pts);
+    return A.bounds(A.focusPoints(trip, dayN == null ? null : dayN));
   }
   function allBounds() {
     const pts = [];
@@ -602,12 +607,12 @@
     for (const place of pl.list) {
       const photos = photosForPlace(trip, place);
       const el = document.createElement("div");
-      const cls = ["pin", place.kind === "home" ? "home" : place.kind === "stay" ? "stay" : "visit"];
+      const cls = ["pin", place.kind === "home" ? "home" : place.kind === "airport" ? "airport" : place.kind === "stay" ? "stay" : "visit"];
       if (photos.length) cls.push("photo");
       el.className = cls.join(" ");
       const cover = photos.find((p) => p.featured) || photos[0];
-      el.innerHTML = `<div class="dot">${cover ? `<img src="${A.photoUrl(cover, "t")}" alt="" loading="lazy">` : place.kind === "home" ? ICON.home : place.num}</div>
-        <span class="n">${place.kind === "home" ? "⌂" : place.num}</span><span class="more"></span><span class="lbl">${esc(place.name)}</span>`;
+      el.innerHTML = `<div class="dot">${cover ? `<img src="${A.photoUrl(cover, "t")}" alt="" loading="lazy">` : place.kind === "home" ? ICON.home : place.kind === "airport" ? ICON.plane : place.num}</div>
+        <span class="n">${place.kind === "home" ? "⌂" : place.kind === "airport" ? "✈" : place.num}</span><span class="more"></span><span class="lbl">${esc(place.name)}</span>`;
       const root = document.createElement("div");
       root.appendChild(el);
       const marker = new maplibregl.Marker({ element: root, anchor: "center" }).setLngLat([place.lng, place.lat]).addTo(map);
@@ -681,7 +686,35 @@
       el.style.setProperty("--c", t.color);
       el.innerHTML = `<div class="k">${esc(A.fmt(t.startDate, { month: "short", year: "numeric" }))}</div><div class="t"><i></i>${esc(t.title)}</div>`;
       el.addEventListener("click", (e) => { e.stopPropagation(); if (!S.ambient) openTrip(t); });
-      tagMarkers.push(new maplibregl.Marker({ element: el, anchor: "bottom-right", offset: [-14, -18] }).setLngLat(best).addTo(map));
+      tagMarkers.push(new maplibregl.Marker({ element: el, anchor: "bottom", offset: [0, -18] }).setLngLat(best).addTo(map));
+    }
+    layoutTags();
+  }
+
+  // Trips in the same region would stack their labels; nudge each one up until it is clear.
+  function layoutTags() {
+    if (!tagMarkers.length) return;
+    const items = tagMarkers.map((m) => {
+      const p = map.project(m.getLngLat());
+      const el = m.getElement();
+      return { m, x: p.x, y: p.y, w: el.offsetWidth || 220, h: el.offsetHeight || 52 };
+    }).sort((a, b) => b.y - a.y);
+    const placed = [];
+    const panel = $("home-panel").classList.contains("off") ? 0 : $("home-panel").getBoundingClientRect().right + 12;
+    for (const it of items) {
+      let dy = -18;
+      // sit to the left of the point unless the home panel covers that side
+      const right = it.x - 14 - it.w < panel;
+      const dx = right ? 14 + it.w / 2 : -14 - it.w / 2;
+      const box = () => ({ l: it.x + dx - it.w / 2, r: it.x + dx + it.w / 2, t: it.y + dy - it.h, b: it.y + dy });
+      for (let guard = 0; guard < 12; guard++) {
+        const b = box();
+        const hit = placed.find((q) => b.l < q.r + 6 && b.r > q.l - 6 && b.t < q.b + 6 && b.b > q.t - 6);
+        if (!hit) break;
+        dy -= hit.b - b.t + 8;
+      }
+      it.m.setOffset([dx, dy]);
+      placed.push(box());
     }
   }
 
@@ -710,15 +743,29 @@
     document.body.classList.toggle("sheet-open", open);
   }
 
+  // Totals across every journey; miles include flights.
+  function totals(trips) {
+    return trips.reduce((a, t) => {
+      const s = A.tripStats(t);
+      a.miles += s.miles + s.flown;
+      a.nights += s.nights;
+      (t.states || []).forEach((x) => a.states.add(x));
+      (t.countries || []).forEach((x) => a.countries.add(x));
+      if ((t.states || []).length) a.countries.add("United States");
+      return a;
+    }, { miles: 0, nights: 0, states: new Set(), countries: new Set() });
+  }
+
   function renderHome() {
     const trips = S.trips;
-    const tot = trips.reduce((a, t) => { const s = A.tripStats(t); a.miles += s.miles; a.nights += s.nights; (t.states || []).forEach((x) => a.states.add(x)); return a; }, { miles: 0, nights: 0, states: new Set() });
+    const tot = totals(trips);
     $("home-panel").innerHTML = `
       <div class="kicker">${esc(A.BRAND.family)}</div>
       <h1 class="masthead">${esc(A.BRAND.name)}</h1>
       <div class="totals">
         <div><b>${trips.length}</b><span>${trips.length === 1 ? "Journey" : "Journeys"}</span></div>
         <div><b>${fmtNum(tot.miles)}</b><span>Miles</span></div>
+        <div><b>${tot.countries.size}</b><span>${tot.countries.size === 1 ? "Country" : "Countries"}</span></div>
         <div><b>${tot.states.size}</b><span>States</span></div>
         <div><b>${tot.nights}</b><span>Nights</span></div>
       </div>
@@ -729,8 +776,8 @@
   }
 
   function routeSvg(trip, stroke = "rgba(22,35,61,0.55)", w = 1.6) {
-    const segs = (trip.route && trip.route.segments) || [];
-    const b = A.bounds(segs.flatMap((s) => s.coords));
+    const segs = ((trip.route && trip.route.segments) || []).filter((s) => s.mode !== "fly");
+    const b = A.bounds(A.focusPoints(trip));
     if (!b) return "";
     const lat0 = ((b[0][1] + b[1][1]) / 2) * Math.PI / 180;
     const sx = Math.cos(lat0);
@@ -751,7 +798,7 @@
         <div class="kicker">${td ? `<span class="live"><i></i>Day ${td.dayIndex} of ${td.totalDays}</span>` : esc(A.dateRange(t.startDate, t.endDate))}</div>
         <h3>${esc(t.title)}</h3>
         <p>${esc(t.subtitle)}</p>
-        <div class="st">${fmtNum(s.miles)} mi · ${s.nights} nights · ${s.stops} stops${s.photos ? ` · ${s.photos} photos` : ""}</div>
+        <div class="st">${fmtNum(s.miles)} mi driven${s.flown ? ` · ${fmtNum(s.flown)} flown` : ""} · ${s.nights} nights · ${s.stops} stops${s.photos ? ` · ${s.photos} photos` : ""}</div>
       </div>
       <div class="cover">${cover ? `<img src="${A.photoUrl(cover, "t")}" alt="">` : routeSvg(t)}</div>
     </button>`;
@@ -802,7 +849,7 @@
       <h1>${esc(t.title)}</h1>
       <div class="sub">${esc(A.dateRange(t.startDate, t.endDate))}${t.subtitle ? ` · ${esc(t.subtitle)}` : ""}</div>
       <div class="stats">
-        <span><b>${fmtNum(s.miles)}</b>miles</span><span><b>${s.nights}</b>nights</span><span><b>${s.stops}</b>stops</span>${s.states ? `<span><b>${s.states}</b>states</span>` : ""}${s.photos ? `<span><b>${s.photos}</b>photos</span>` : ""}
+        <span><b>${fmtNum(s.miles)}</b>miles driven</span>${s.flown ? `<span><b>${fmtNum(s.flown)}</b>flown</span>` : ""}<span><b>${s.nights}</b>nights</span><span><b>${s.stops}</b>stops</span>${s.countries > 1 ? `<span><b>${s.countries}</b>countries</span>` : s.states ? `<span><b>${s.states}</b>states</span>` : ""}${s.photos ? `<span><b>${s.photos}</b>photos</span>` : ""}
       </div>
       ${multi ? `<div class="legend"><span style="--c:${t.color}"><i></i>Everyone</span>${t.groups.map((g) => `<span style="--c:${g.color}"><i></i>${esc(g.name)}</span>`).join("")}</div>` : ""}`;
     $("hd-back").addEventListener("click", () => goHome());
@@ -844,8 +891,8 @@
   function stopRow(t, s) {
     const pl = placesOf(t);
     const place = pl.byStop.get(s.id);
-    const n = place ? (place.kind === "home" ? ICON.home : place.num) : "·";
-    const cls = !place ? "none" : place.kind === "home" ? "home" : s.kind === "stay" ? "stay" : "";
+    const n = place ? (place.kind === "home" ? ICON.home : place.kind === "airport" ? ICON.plane : place.num) : "·";
+    const cls = !place ? "none" : place.kind === "home" ? "home" : place.kind === "airport" ? "airport" : s.kind === "stay" ? "stay" : "";
     return `<li class="${place ? "" : "nopin"}" data-stop="${esc(s.id)}">
       <div class="num ${cls}">${n}</div>
       <div>${s.time ? `<div class="tm">${esc(s.time)}</div>` : ""}<div class="nm">${esc(s.name)}</div>
@@ -1141,10 +1188,10 @@
     S.view = "home"; S.trip = null; S.day = null;
     clearMarkers(); buildTripTags(); buildHere(); styleRoutes();
     const b = allBounds();
-    const tot = S.trips.reduce((a, t) => { const s = A.tripStats(t); a.miles += s.miles; a.nights += s.nights; return a; }, { miles: 0, nights: 0 });
+    const tot = totals(S.trips);
     // start out in space and fall toward the routes
     if (b) map.jumpTo({ center: [(b[0][0] + b[1][0]) / 2 - 30, (b[0][1] + b[1][1]) / 2 - 8], zoom: 1.7, pitch: 0, bearing: 0 });
-    await caption(`<div class="kicker">${S.trips.length} ${S.trips.length === 1 ? "journey" : "journeys"} · ${fmtNum(tot.miles)} miles · ${tot.nights} nights</div><h2>Where we've been</h2><div class="line"></div>`);
+    await caption(`<div class="kicker">${S.trips.length} ${S.trips.length === 1 ? "journey" : "journeys"} · ${fmtNum(tot.miles)} miles · ${tot.countries.size} ${tot.countries.size === 1 ? "country" : "countries"} · ${tot.nights} nights</div><h2>Where we've been</h2><div class="line"></div>`);
     guard(me);
     if (b) map.fitBounds(b, { padding: ambPad(120, 220, 120), duration: 5200, maxZoom: 5, essential: true, curve: 1.2 });
     await wait(5600, me);
@@ -1162,7 +1209,7 @@
     styleRoutes();
     setRouteVisibility(t.id, false);
     const s = A.tripStats(t);
-    await caption(`<div class="kicker">${esc(A.dateRange(t.startDate, t.endDate))}</div><h2>${esc(t.title)}</h2><p>${fmtNum(s.miles)} miles · ${s.nights} nights · ${s.stops} stops${s.photos ? ` · ${s.photos} photos` : ""}</p><div class="line"></div>`);
+    await caption(`<div class="kicker">${esc(A.dateRange(t.startDate, t.endDate))}</div><h2>${esc(t.title)}</h2><p>${fmtNum(s.miles)} miles driven${s.flown ? ` · ${fmtNum(s.flown)} flown` : ""} · ${s.nights} nights · ${s.stops} stops${s.photos ? ` · ${s.photos} photos` : ""}</p><div class="line"></div>`);
     guard(me);
     map.fitBounds(tripBounds(t), { padding: ambPad(120, 260, 140), pitch: 0, bearing: 0, duration: 2600, essential: true });
     await wait(2700, me);
@@ -1218,7 +1265,7 @@
     if (visible && exceptDay == null) { styleRoutes(); return; }
     if (!visible) op = ["case", ["==", ["get", "trip"], tripId], 0, 0.12];
     else op = ["case", ["all", ["==", ["get", "trip"], tripId], ["==", ["get", "day"], exceptDay]], 0, ["==", ["get", "trip"], tripId], 0.22, 0.08];
-    for (const id of ["routes-line", "routes-straight"]) map.setPaintProperty(id, "line-opacity", op);
+    for (const id of ["routes-line", "routes-straight", "routes-flight"]) map.setPaintProperty(id, "line-opacity", op);
     map.setPaintProperty("routes-halo", "line-opacity", ["*", 0.85, op]);
   }
   let cometMarker = null;
@@ -1439,6 +1486,7 @@
     await Promise.all([loadData(), initMap()]);
     addRouteLayers();
     map.on("move", () => { if (markers.length) declutter(); });
+    map.on("moveend", () => { if (tagMarkers.length) layoutTags(); });
     goHome({ duration: 0 });
     poke();
     if (params.get("trip")) { const t = S.trips.find((x) => x.id === params.get("trip")); if (t) openTrip(t, { day: params.get("day") ? Number(params.get("day")) : null, duration: 0 }); }

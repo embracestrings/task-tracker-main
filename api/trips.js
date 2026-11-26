@@ -127,6 +127,9 @@ async function getTrips() {
   return trips;
 }
 
+const KINDS = ["home", "stay", "visit", "food", "activity", "airport"];
+const TRAVEL = ["drive", "fly", "skip", "start"];
+
 // Whitelist every field so the admin page can never write arbitrary blobs of data.
 function cleanTrip(t) {
   const id = isId(t.id) ? t.id : uid();
@@ -146,6 +149,7 @@ function cleanTrip(t) {
     color: /^#[0-9a-fA-F]{6}$/.test(t.color) ? t.color : "#1F3A5F",
     people: (Array.isArray(t.people) ? t.people : []).map((p) => str(p, 60)).slice(0, 30),
     states: (Array.isArray(t.states) ? t.states : []).map((s) => str(s, 4).toUpperCase()).slice(0, 60),
+    countries: (Array.isArray(t.countries) ? t.countries : []).map((c) => str(c, 60)).filter(Boolean).slice(0, 60),
     groups,
     origin: t.origin
       ? { name: str(t.origin.name, 120), area: str(t.origin.area, 120), lat: num(t.origin.lat), lng: num(t.origin.lng) }
@@ -166,11 +170,13 @@ function cleanTrip(t) {
       area: str(s.area, 160),
       lat: num(s.lat),
       lng: num(s.lng),
-      kind: ["home", "stay", "visit", "food", "activity"].includes(s.kind) ? s.kind : "visit",
+      kind: KINDS.includes(s.kind) ? s.kind : "visit",
       time: str(s.time, 60),
       note: str(s.note, 2000),
       group: groupIds.has(s.group) ? s.group : null,
-      route: s.route !== false,
+      // How this stop was reached: drive (road route), fly (dashed arc), skip (side trip by
+      // boat or on foot: pinned but not part of the line), start (position jumps here, no line).
+      travel: TRAVEL.includes(s.travel) ? s.travel : s.route === false ? "skip" : "drive",
     })),
     updatedAt: Date.now(),
   };
@@ -181,8 +187,9 @@ function cleanTrip(t) {
 const hasXY = (p) => p && Number.isFinite(p.lat) && Number.isFinite(p.lng);
 const sameXY = (a, b) => a && b && Math.abs(a[0] - b[0]) < 1e-5 && Math.abs(a[1] - b[1]) < 1e-5;
 
-// For every day and every travel group, the ordered waypoints that group drove through.
-// Groups that drove the same waypoints share one segment (groups: null means everyone).
+// For every day and every travel group, the legs that group travelled: road legs through
+// consecutive driven stops, and single flight legs. Groups that travelled the same leg share
+// one segment (groups: null means everyone).
 export function routePlan(trip) {
   const groupIds = trip.groups && trip.groups.length ? trip.groups.map((g) => g.id) : ["_all"];
   const start = hasXY(trip.origin) ? [trip.origin.lng, trip.origin.lat] : null;
@@ -190,33 +197,71 @@ export function routePlan(trip) {
   const plan = [];
   const days = [...trip.days].sort((a, b) => a.n - b.n);
   const dayNums = days.length ? days.map((d) => d.n) : [...new Set(trip.stops.map((s) => s.day))].sort((a, b) => a - b);
+  const travelOf = (s) => s.travel || (s.route === false ? "skip" : "drive");
   for (const n of dayNums) {
     const byPath = new Map();
     for (const g of groupIds) {
-      const wps = last[g] ? [last[g]] : [];
+      const legs = [];
+      let drive = last[g] ? [last[g]] : [];
+      const closeDrive = () => { if (drive.length >= 2) legs.push({ mode: "drive", wps: drive }); };
       for (const s of trip.stops) {
-        if (s.day !== n || !hasXY(s) || s.route === false) continue;
+        if (s.day !== n || !hasXY(s)) continue;
         if (s.group && s.group !== g) continue;
+        const how = travelOf(s);
+        if (how === "skip") continue;
         const p = [s.lng, s.lat];
-        if (!sameXY(wps[wps.length - 1], p)) wps.push(p);
+        const pos = drive[drive.length - 1];
+        if (how === "start") { closeDrive(); drive = [p]; continue; }
+        if (how === "fly") {
+          closeDrive();
+          if (pos && !sameXY(pos, p)) legs.push({ mode: "fly", wps: [pos, p] });
+          drive = [p];
+          continue;
+        }
+        if (!sameXY(pos, p)) drive.push(p);
       }
-      if (wps.length) last[g] = wps[wps.length - 1];
-      if (wps.length < 2) continue;
-      const k = JSON.stringify(wps);
-      if (!byPath.has(k)) byPath.set(k, { wps, groups: [] });
-      byPath.get(k).groups.push(g);
+      closeDrive();
+      if (drive.length) last[g] = drive[drive.length - 1];
+      for (const leg of legs) {
+        const k = leg.mode + JSON.stringify(leg.wps);
+        if (!byPath.has(k)) byPath.set(k, { ...leg, groups: [] });
+        byPath.get(k).groups.push(g);
+      }
     }
-    for (const { wps, groups } of byPath.values()) {
+    for (const { mode, wps, groups } of byPath.values()) {
       const everyone = groups.length === groupIds.length || groupIds[0] === "_all";
+      // drive keys match the earlier format so cached road geometry stays valid
+      const keySrc = (mode === "fly" ? "fly" : "") + JSON.stringify(wps);
       plan.push({
-        key: crypto.createHash("sha1").update(JSON.stringify(wps)).digest("hex").slice(0, 16),
+        key: crypto.createHash("sha1").update(keySrc).digest("hex").slice(0, 16),
         day: n,
+        mode,
         groups: everyone ? null : groups,
         wps,
       });
     }
   }
   return plan;
+}
+
+// Great-circle arc between two [lng,lat] points, for flights.
+function arc(a, b, steps = 64) {
+  const toR = Math.PI / 180;
+  const [l1, p1] = [a[0] * toR, a[1] * toR];
+  const [l2, p2] = [b[0] * toR, b[1] * toR];
+  const d = 2 * Math.asin(Math.sqrt(Math.sin((p2 - p1) / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin((l2 - l1) / 2) ** 2));
+  if (!d) return [a, b];
+  const out = [];
+  for (let i = 0; i <= steps; i++) {
+    const f = i / steps;
+    const A = Math.sin((1 - f) * d) / Math.sin(d);
+    const B = Math.sin(f * d) / Math.sin(d);
+    const x = A * Math.cos(p1) * Math.cos(l1) + B * Math.cos(p2) * Math.cos(l2);
+    const y = A * Math.cos(p1) * Math.sin(l1) + B * Math.cos(p2) * Math.sin(l2);
+    const z = A * Math.sin(p1) + B * Math.sin(p2);
+    out.push([+(Math.atan2(y, x) / toR).toFixed(4), +(Math.atan2(z, Math.sqrt(x * x + y * y)) / toR).toFixed(4)]);
+  }
+  return { coords: out, distance: Math.round(d * 6371000) };
 }
 
 // Douglas–Peucker on [lng,lat] pairs; tolerance in degrees.
@@ -281,10 +326,15 @@ async function osrm(wps) {
 async function buildRoute(trip, budgetMs = 20000) {
   const started = Date.now();
   const prev = parseMaybe(await kv.get(routeKey(trip.id))) || { segments: [] };
-  const cache = new Map(prev.segments.filter((s) => !s.straight).map((s) => [s.key, s]));
+  const cache = new Map(prev.segments.filter((s) => !s.straight && s.mode !== "fly").map((s) => [s.key, s]));
   const segments = [];
   let incomplete = false;
   for (const p of routePlan(trip)) {
+    if (p.mode === "fly") {
+      const f = arc(p.wps[0], p.wps[1]);
+      segments.push({ key: p.key, day: p.day, mode: "fly", groups: p.groups, coords: f.coords, distance: f.distance, duration: null });
+      continue;
+    }
     let hit = cache.get(p.key);
     if (!hit && Date.now() - started < budgetMs) {
       const r = await osrm(p.wps);
@@ -293,8 +343,8 @@ async function buildRoute(trip, budgetMs = 20000) {
     if (!hit) incomplete = true;
     segments.push(
       hit
-        ? { key: p.key, day: p.day, groups: p.groups, coords: hit.coords, distance: hit.distance, duration: hit.duration }
-        : { key: p.key, day: p.day, groups: p.groups, coords: p.wps, distance: null, duration: null, straight: true }
+        ? { key: p.key, day: p.day, mode: "drive", groups: p.groups, coords: hit.coords, distance: hit.distance, duration: hit.duration }
+        : { key: p.key, day: p.day, mode: "drive", groups: p.groups, coords: p.wps, distance: null, duration: null, straight: true }
     );
   }
   const route = { segments, incomplete, builtAt: Date.now() };
@@ -305,7 +355,7 @@ async function buildRoute(trip, budgetMs = 20000) {
 async function routeFor(trip, budgetMs) {
   const r = parseMaybe(await kv.get(routeKey(trip.id)));
   const keys = routePlan(trip).map((p) => p.key).join(",");
-  const fresh = r && r.segments && r.segments.map((s) => s.key).join(",") === keys && !r.incomplete;
+  const fresh = r && r.segments && r.segments.map((s) => s.key).join(",") === keys && !r.incomplete && r.segments.every((s) => s.mode);
   return fresh ? r : buildRoute(trip, budgetMs);
 }
 
@@ -390,20 +440,46 @@ export default async function handler(req, res) {
     if (action === "geocode") {
       const q = str(req.query.q, 200).trim();
       if (!q) return res.status(200).json({ results: [] });
-      const bias = req.query.lat && req.query.lng ? `&lat=${num(req.query.lat)}&lon=${num(req.query.lng)}` : "";
-      const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=6&lang=en${bias}`, {
-        headers: { "User-Agent": "family-trips-atlas/1.0" },
-        signal: AbortSignal.timeout(8000),
-      });
-      const j = await r.json();
-      const results = (j.features || []).map((f) => {
-        const p = f.properties || {};
-        const area = [p.city || p.town || p.village || p.county, p.state, p.countrycode === "US" ? "" : p.country]
-          .filter(Boolean)
-          .join(", ");
-        return { name: p.name || p.street || q, area, lat: f.geometry.coordinates[1], lng: f.geometry.coordinates[0] };
-      });
-      return res.status(200).json({ results });
+      const lat = num(req.query.lat);
+      const lng = num(req.query.lng);
+      let results = null;
+      // Photon first (fast, typo-tolerant); OpenStreetMap's Nominatim if Photon is down or busy.
+      try {
+        const bias = lat != null && lng != null ? `&lat=${lat}&lon=${lng}` : "";
+        const r = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=6&lang=en${bias}`, {
+          headers: { "User-Agent": "family-trips-atlas/1.0" },
+          signal: AbortSignal.timeout(6000),
+        });
+        if (r.ok) {
+          const j = await r.json();
+          results = (j.features || []).map((f) => {
+            const p = f.properties || {};
+            const area = [p.city || p.town || p.village || p.county, p.state, p.countrycode === "US" ? "" : p.country]
+              .filter(Boolean)
+              .join(", ");
+            return { name: p.name || p.street || q, area, lat: f.geometry.coordinates[1], lng: f.geometry.coordinates[0] };
+          });
+        }
+      } catch {}
+      if (!results || !results.length) {
+        try {
+          const r = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&limit=6&accept-language=en&q=${encodeURIComponent(q)}`,
+            { headers: { "User-Agent": "family-trips-atlas/1.0" }, signal: AbortSignal.timeout(8000) }
+          );
+          if (r.ok) {
+            const j = await r.json();
+            results = j.map((x) => {
+              const a = x.address || {};
+              const area = [a.city || a.town || a.village || a.county, a.state, a.country_code === "us" ? "" : a.country]
+                .filter(Boolean)
+                .join(", ");
+              return { name: x.name || x.display_name.split(",")[0], area, lat: Number(x.lat), lng: Number(x.lon) };
+            });
+          }
+        } catch {}
+      }
+      return res.status(200).json({ results: results || [] });
     }
 
     if (req.method !== "POST") return res.status(405).json({ error: "POST only" });

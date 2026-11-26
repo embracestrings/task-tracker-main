@@ -431,7 +431,7 @@
     const order = [...trip.stops].sort((a, b) => a.day - b.day);
     for (const s of order) if (hasXY(s)) add(s, s);
     let n = 0;
-    for (const p of out) p.num = p.kind === "home" ? 0 : ++n;
+    for (const p of out) p.num = p.kind === "home" || p.kind === "airport" ? 0 : ++n;
     const byStop = new Map();
     for (const p of out) for (const s of p.stops) byStop.set(s.id, p);
     return { list: out, byStop };
@@ -440,21 +440,50 @@
   function tripStats(trip) {
     const segs = (trip.route && trip.route.segments) || [];
     let meters = 0;
+    let flown = 0;
     for (const s of segs) {
-      if (Number.isFinite(s.distance)) meters += s.distance;
-      else for (let i = 1; i < s.coords.length; i++) meters += haversine(s.coords[i - 1], s.coords[i]);
+      let m = 0;
+      if (Number.isFinite(s.distance)) m = s.distance;
+      else for (let i = 1; i < s.coords.length; i++) m += haversine(s.coords[i - 1], s.coords[i]);
+      if (s.mode === "fly") flown += m;
+      else meters += m;
     }
     const A = parseDate(trip.startDate);
     const B = parseDate(trip.endDate);
     const nights = A && B ? Math.max(0, Math.round((B - A) / 864e5)) : 0;
-    const pl = places(trip).list.filter((p) => p.kind !== "home");
+    const pl = places(trip).list.filter((p) => p.kind !== "home" && p.kind !== "airport");
     return {
       miles: Math.round(meters / 1609.344),
+      flown: Math.round(flown / 1609.344),
+      countries: (trip.countries || []).length,
       nights,
       stops: pl.length,
       states: (trip.states || []).length,
       photos: (trip.photos || []).filter((p) => !p.hidden).length,
     };
+  }
+
+  // The part of a trip worth framing on the map. For trips that fly somewhere, that's the
+  // destination: flights, airports and anything near home are left out.
+  function focusPoints(trip, dayN = null) {
+    const segs = ((trip.route && trip.route.segments) || []).filter((s) => dayN == null || s.day === dayN);
+    const home = hasXY(trip.origin) ? [trip.origin.lng, trip.origin.lat] : null;
+    const flies = segs.some((s) => s.mode === "fly");
+    const near = (c) => home && haversine(home, c) < 150000;
+    const pts = [];
+    for (const s of segs) {
+      if (flies && s.mode === "fly") continue;
+      for (const c of s.coords) if (!(flies && dayN == null && near(c))) pts.push(c);
+    }
+    for (const st of trip.stops) {
+      if (!hasXY(st) || (dayN != null && st.day !== dayN)) continue;
+      const c = [st.lng, st.lat];
+      if (flies && dayN == null && (st.kind === "airport" || st.kind === "home" || near(c))) continue;
+      pts.push(c);
+    }
+    if (dayN != null && flies && !pts.length) for (const s of segs) pts.push(...s.coords);
+    if (!pts.length) for (const s of segs) pts.push(...s.coords);
+    return pts;
   }
 
   // Where the trip stands today, if it is underway.
@@ -504,6 +533,7 @@
     bounds,
     places,
     tripStats,
+    focusPoints,
     today,
     esc,
   };

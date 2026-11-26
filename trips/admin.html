@@ -170,7 +170,9 @@
   const A = window.Atlas;
   const { esc } = A;
   const $ = (id) => document.getElementById(id);
-  const KINDS = [["visit", "Visit"], ["activity", "Activity"], ["food", "Food"], ["stay", "Overnight"], ["home", "Home"]];
+  const KINDS = [["visit", "Visit"], ["activity", "Activity"], ["food", "Food"], ["stay", "Overnight"], ["airport", "Airport"], ["home", "Home"]];
+  const TRAVEL = [["drive", "Drove here"], ["fly", "Flew here"], ["skip", "Side trip (no line)"], ["start", "Start here (no line)"]];
+  const travelOf = (s) => s.travel || (s.route === false ? "skip" : "drive");
   const uid = () => Math.random().toString(36).slice(2, 10);
   const clone = (o) => JSON.parse(JSON.stringify(o));
 
@@ -267,6 +269,7 @@
           <label class="f s6"><span>Route color</span><div class="swatches">${A.ROUTE_COLORS.map((c) => `<button type="button" style="--c:${c}" data-color="${c}" class="${t.color === c ? "on" : ""}"></button>`).join("")}</div></label>
           <label class="f s6"><span>Who went (comma separated)</span><input type="text" data-k="people" value="${esc((t.people || []).join(", "))}"></label>
           <label class="f s6"><span>States (two-letter, comma separated)</span><input type="text" data-k="states" value="${esc((t.states || []).join(", "))}"></label>
+          <label class="f s6"><span>Countries (comma separated)</span><input type="text" data-k="countries" value="${esc((t.countries || []).join(", "))}"></label>
         </div>
       </div>
       <div class="card"><h3>Starting point</h3>
@@ -295,7 +298,7 @@
     const P = $("pane");
     P.querySelectorAll("[data-k]").forEach((el) => el.oninput = el.onchange = () => {
       const k = el.dataset.k;
-      if (k === "people" || k === "states") t[k] = el.value.split(",").map((s) => s.trim()).filter(Boolean).map((s) => (k === "states" ? s.toUpperCase() : s));
+      if (k === "people" || k === "states" || k === "countries") t[k] = el.value.split(",").map((s) => s.trim()).filter(Boolean).map((s) => (k === "states" ? s.toUpperCase() : s));
       else if (k === "hidden") t.hidden = !!el.value;
       else t[k] = el.value;
       markDirty();
@@ -343,7 +346,7 @@
     $("pane").innerHTML = `
       <div class="editor">
         <div>
-          <p class="hint">Each day lists its stops in the order you went. The road route is drawn through every stop that has a location; uncheck <b>Drive</b> for places reached by boat or on foot. Saving recalculates the roads.</p>
+          <p class="hint">Each day lists its stops in the order you went. The road route is drawn through every stop that has a location; set <b>Flew here</b> for flights, <b>Side trip</b> for places reached by boat or on foot, and <b>Start here</b> when someone joins from somewhere else. Saving recalculates the roads.</p>
           ${days.map((d) => {
             const stops = t.stops.filter((s) => s.day === d.n);
             return `<div class="day" data-day="${d.n}">
@@ -359,7 +362,7 @@
               ${stops.map((s) => {
                 const p = pl.byStop.get(s.id);
                 return `<div class="stop" data-stop="${esc(s.id)}">
-                  <div class="dot ${!A.hasXY(s) ? "none" : s.kind === "stay" ? "stay" : ""}">${p ? (p.kind === "home" ? "⌂" : p.num) : "·"}</div>
+                  <div class="dot ${!A.hasXY(s) ? "none" : s.kind === "stay" ? "stay" : ""}">${p ? (p.kind === "home" ? "⌂" : p.kind === "airport" ? "✈" : p.num) : "·"}</div>
                   <select data-sk="kind">${KINDS.map(([k, l]) => `<option value="${k}" ${s.kind === k ? "selected" : ""}>${l}</option>`).join("")}</select>
                   <input type="text" data-sk="name" value="${esc(s.name)}" placeholder="Place name">
                   <div class="search-pop"><input type="search" placeholder="${A.hasXY(s) ? "Change location…" : "Find location…"}" data-ssearch></div>
@@ -371,7 +374,7 @@
                     <input type="text" data-sk="note" value="${esc(s.note)}" placeholder="Note">
                     <div style="display:flex;gap:8px;align-items:center">
                       ${(t.groups || []).length ? `<select data-sk="group" style="width:auto">${groupOpts(s.group)}</select>` : ""}
-                      <label style="display:flex;gap:6px;align-items:center;font-size:12px;color:var(--ink-soft)"><input type="checkbox" data-sk="route" ${s.route !== false ? "checked" : ""}>Drive</label>
+                      <select data-sk="travel" style="width:auto">${TRAVEL.map(([k, l]) => `<option value="${k}" ${travelOf(s) === k ? "selected" : ""}>${l}</option>`).join("")}</select>
                     </div>
                   </div>
                 </div>`;
@@ -391,13 +394,13 @@
     P.querySelectorAll("[data-sk]").forEach((el) => el.onchange = el.oninput = () => {
       const s = stopOfEl(el);
       const k = el.dataset.sk;
-      if (k === "route") s.route = el.checked;
+      if (k === "travel") { s.travel = el.value; delete s.route; }
       else if (k === "group") s.group = el.value || null;
       else s[k] = el.value;
       markDirty();
       if (k === "kind" || k === "name") drawEditorMarkers();
     });
-    P.querySelectorAll("[data-addstop]").forEach((b) => b.onclick = () => { t.stops.push({ id: uid(), day: dayOfEl(b), name: "", area: "", lat: null, lng: null, kind: "visit", note: "", time: "", group: null, route: true }); reorderStops(); renderItinerary(); markDirty(); });
+    P.querySelectorAll("[data-addstop]").forEach((b) => b.onclick = () => { t.stops.push({ id: uid(), day: dayOfEl(b), name: "", area: "", lat: null, lng: null, kind: "visit", note: "", time: "", group: null, travel: "drive" }); reorderStops(); renderItinerary(); markDirty(); });
     P.querySelectorAll("[data-sdel]").forEach((b) => b.onclick = () => { const s = stopOfEl(b); t.stops = t.stops.filter((x) => x !== s); renderItinerary(); markDirty(); });
     P.querySelectorAll("[data-up]").forEach((b) => b.onclick = () => {
       const s = stopOfEl(b);
@@ -484,7 +487,7 @@
     for (const p of pl.list) {
       const el = document.createElement("div");
       el.className = `mk ${p.kind}`;
-      el.textContent = p.kind === "home" ? "⌂" : p.num;
+      el.textContent = p.kind === "home" ? "⌂" : p.kind === "airport" ? "✈" : p.num;
       el.title = p.name;
       const m = new maplibregl.Marker({ element: el, draggable: true }).setLngLat([p.lng, p.lat]).addTo(emap);
       m.on("dragend", () => {
