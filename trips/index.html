@@ -75,8 +75,8 @@
   .masthead { font-family: var(--font-display); font-weight: 500; font-size: clamp(44px, 6vw, 76px); line-height: 0.92; margin: 6px 0 0; letter-spacing: -0.015em; }
   .masthead em { font-style: italic; font-weight: 400; color: var(--gold-deep); }
   .rule { height: 1px; background: linear-gradient(90deg, var(--gold), rgba(185,154,108,0)); margin: 22px 0; }
-  .totals { display: grid; grid-template-columns: repeat(5, auto); gap: 4px 16px; margin-top: 22px; justify-content: start; }
-  .totals b { display: block; font: 500 27px/1 var(--font-display); }
+  .totals { display: grid; grid-template-columns: repeat(4, auto); gap: 4px 20px; margin-top: 22px; justify-content: start; }
+  .totals b { display: block; font: 500 29px/1 var(--font-display); }
   .totals span { font: 500 9.5px var(--font-mono); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft); }
   .trip-list { overflow-y: auto; margin: 0 -8px; padding: 0 8px; flex: 1; -webkit-overflow-scrolling: touch; }
   /* Postcard: a photo (or the route drawn on paper), then the title and date. */
@@ -784,7 +784,6 @@
         <div><b>${fmtNum(tot.miles)}</b><span>Miles</span></div>
         <div><b>${tot.countries.size}</b><span>${tot.countries.size === 1 ? "Country" : "Countries"}</span></div>
         <div><b>${tot.states.size}</b><span>States</span></div>
-        <div><b>${tot.nights}</b><span>Nights</span></div>
       </div>
       <div class="rule"></div>
       <div class="trip-list">${trips.map(tripCard).join("") || `<div class="empty">No journeys yet. Add one from the admin page.</div>`}</div>
