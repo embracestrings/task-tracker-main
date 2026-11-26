@@ -2,8 +2,8 @@
   "name": "Rey Family Travel Map",
   "short_name": "Travel Map",
   "description": "The family's journeys, on a map.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/trips/",
+  "scope": "/trips/",
   "display": "fullscreen",
   "orientation": "landscape",
   "background_color": "#16233D",
@@ -26,5 +26,6 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "id": "/trips/"
 }

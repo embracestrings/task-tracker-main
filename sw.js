@@ -1,4 +1,4 @@
-const CACHE = 'tracker-v1';
+const CACHE = 'tracker-v2'; // v2 drops Travel Map files cached by v1
 const SHELL = [
   '/',
   '/index.html',
@@ -25,6 +25,9 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
+
+  // The family Travel Map shares this domain; leave its pages and files to the network.
+  if (url.pathname.startsWith('/trips/')) return;
 
   // API: network-first, offline returns a clean error JSON
   if (url.pathname.startsWith('/api/')) {

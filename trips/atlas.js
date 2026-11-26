@@ -536,11 +536,10 @@
   const esc = (s) =>
     String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
-  // On trips.embracestrings.com the pages live at / and /admin; on any other host
-  // (Vercel previews, tasks.embracestrings.com) they live under /trips/.
-  const onTripsHost = /^trips\./.test(location.hostname) || location.hostname === "localhost";
-  const home = onTripsHost ? "/" : "/trips/";
-  const adminHome = onTripsHost ? "/admin" : "/trips/admin";
+  // Everything lives under /trips/ on every host (trips.embracestrings.com also answers at
+  // "/"), so the home-screen app's scope stays inside the Travel Map.
+  const home = "/trips/";
+  const adminHome = "/trips/admin";
 
   window.Atlas = {
     BRAND,

@@ -247,6 +247,11 @@
   .pin.dim { opacity: 0.38; }
   body.ambient .pin.dim { opacity: 0; pointer-events: none; }
   .pin.merged { opacity: 0 !important; pointer-events: none; }
+  .pin.town .dot { width: 12px; height: 12px; border: 2px solid #fff; background: var(--ink); box-shadow: 0 0 0 1px rgba(22,35,61,0.35), 0 3px 8px -3px rgba(22,35,61,0.6); font-size: 0; }
+  .pin.town.home .dot { width: 22px; height: 22px; background: var(--gold); }
+  .pin.town.home .dot svg { width: 11px; height: 11px; color: #fff; }
+  .pin.town .lbl { left: calc(100% + 6px); font: italic 500 16px var(--font-display); }
+  .pin.town.sel .dot { transform: scale(1.4); }
   .pin.hidden { display: none; }
   .here { pointer-events: none; }
   .here i { position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; border-radius: 50%; background: #C0654A; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
@@ -684,7 +689,28 @@
     const p = padding();
     const single = Math.abs(b[0][0] - b[1][0]) < 0.02 && Math.abs(b[0][1] - b[1][1]) < 0.02;
     if (single) return map.flyTo({ center: b[0], zoom: opts.maxZoom || 11, padding: p, duration: opts.duration ?? 1600, essential: true, curve: 1.3 });
-    map.fitBounds(b, { padding: p, duration: opts.duration ?? 1600, maxZoom: opts.maxZoom || 11.5, essential: true, linear: false, ...(opts.extra || {}) });
+    safeFitBounds(b, { padding: p, duration: opts.duration ?? 1600, maxZoom: opts.maxZoom || 11.5, essential: true, linear: false, ...(opts.extra || {}) });
+  }
+
+  // MapLibre's globe camera math can throw for some box/padding combinations (seen on
+  // phones); fall back to a centre + zoom worked out on the Web Mercator plane.
+  function boundsZoom(b, p) {
+    const w = Math.max(80, innerWidth - (p.left || 0) - (p.right || 0));
+    const h = Math.max(80, innerHeight - (p.top || 0) - (p.bottom || 0));
+    const merc = (lat) => (Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360)) * 180) / Math.PI;
+    const lngSpan = Math.max(0.0005, b[1][0] - b[0][0]);
+    const latSpan = Math.max(0.0005, merc(b[1][1]) - merc(b[0][1]));
+    return Math.log2(Math.min((w * 360) / (512 * lngSpan), (h * 360) / (512 * latSpan)));
+  }
+  function safeFitBounds(b, o) {
+    try {
+      map.fitBounds(b, o);
+    } catch {
+      const zoom = Math.max(0.9, Math.min(boundsZoom(b, o.padding || {}), o.maxZoom || 16));
+      const center = [(b[0][0] + b[1][0]) / 2, (b[0][1] + b[1][1]) / 2];
+      const cam = { center, zoom, padding: o.padding, bearing: o.bearing ?? 0, pitch: o.pitch ?? map.getPitch() };
+      if (o.duration === 0) map.jumpTo(cam); else map.flyTo({ ...cam, duration: o.duration ?? 1600, essential: true });
+    }
   }
   const moveEnd = (ms = 4000) => new Promise((ok) => { let done = false; const f = () => { if (!done) { done = true; ok(); } }; map.once("moveend", f); setTimeout(f, ms); });
 
@@ -692,22 +718,33 @@
   function clearMarkers() { markers.forEach((m) => m.marker.remove()); markers = []; }
   function clearTags() { tagMarkers.forEach((m) => m.remove()); tagMarkers = []; }
 
+  // Stop numbers count within a day, in the order of that day's list (airports and home
+  // get icons instead), so the map and the day panel always agree.
+  function dayNumbers(trip, day) {
+    const pl = placesOf(trip);
+    const byPlace = new Map(), byStop = new Map();
+    let n = 0;
+    for (const s of trip.stops) {
+      if (s.day !== day) continue;
+      const place = pl.byStop.get(s.id);
+      if (!place || place.kind === "home" || place.kind === "airport") continue;
+      if (!byPlace.has(place)) byPlace.set(place, ++n);
+      byStop.set(s.id, byPlace.get(place));
+    }
+    return { byPlace, byStop };
+  }
+  const townOf = (place) => (place.area ? place.area.split(",")[0].trim() : "") || place.name;
+
   function buildPins(trip) {
     clearMarkers();
     const pl = placesOf(trip);
     for (const place of pl.list) {
       const photos = photosForPlace(trip, place);
       const el = document.createElement("div");
-      const cls = ["pin", place.kind === "home" ? "home" : place.kind === "airport" ? "airport" : place.kind === "stay" ? "stay" : "visit"];
-      if (photos.length) cls.push("photo");
-      el.className = cls.join(" ");
-      const cover = photos.find((p) => p.featured) || photos[0];
-      el.innerHTML = `<div class="dot">${cover ? `<img src="${A.photoUrl(cover, "t")}" alt="" loading="lazy">` : place.kind === "home" ? ICON.home : place.kind === "airport" ? ICON.plane : place.num}</div>
-        <span class="n">${place.kind === "home" ? "⌂" : place.kind === "airport" ? "✈" : place.num}</span><span class="more"></span><span class="lbl">${esc(place.name)}</span>`;
       const root = document.createElement("div");
       root.appendChild(el);
       const marker = new maplibregl.Marker({ element: root, anchor: "center" }).setLngLat([place.lng, place.lat]).addTo(map);
-      const m = { marker, el, place, photos, members: [place] };
+      const m = { marker, el, place, photos, members: [place], mode: null };
       el.addEventListener("click", (e) => {
         e.stopPropagation();
         if (S.ambient) return;
@@ -722,43 +759,85 @@
     updatePins();
   }
 
+  // Whole trip: only the overnight towns, as small labeled dots. One day: that day's stops,
+  // numbered 1, 2, 3… with photo bubbles where there are photos.
+  function renderPin(m, mode, n) {
+    const { place, photos } = m;
+    const key = `${mode}|${n}`;
+    if (m.mode === key) return;
+    m.mode = key;
+    const kind = place.kind === "home" ? "home" : place.kind === "airport" ? "airport" : place.kind === "stay" ? "stay" : "visit";
+    if (mode === "town") {
+      m.el.className = `pin town ${kind}`;
+      m.el.innerHTML = `<div class="dot">${kind === "home" ? ICON.home : ""}</div><span class="more"></span><span class="lbl">${esc(kind === "home" ? place.name : townOf(place))}</span>`;
+      return;
+    }
+    const cover = photos.find((p) => p.featured) || photos[0];
+    const glyph = kind === "home" ? ICON.home : kind === "airport" ? ICON.plane : n;
+    m.el.className = `pin ${kind}${cover ? " photo" : ""}`;
+    m.el.innerHTML = `<div class="dot">${cover ? `<img src="${A.photoUrl(cover, "t")}" alt="" loading="lazy">` : glyph}</div>
+      <span class="n">${kind === "home" ? "⌂" : kind === "airport" ? "✈" : n}</span><span class="more"></span><span class="lbl">${esc(place.name)}</span>`;
+  }
+
   function updatePins() {
     if (!markers.length || !S.trip) return;
     const sel = S.place;
     const d = S.day;
-    const tw = today(S.trip);
+    const lastDay = Math.max(...S.trip.days.map((x) => x.n));
+    const nums = d != null ? dayNumbers(S.trip, d).byPlace : null;
     for (const m of markers) {
-      const inDay = d == null || m.place.days.includes(d) || (m.place.kind === "home" && (d === 1 || d === Math.max(...S.trip.days.map((x) => x.n))));
-      m.el.classList.toggle("dim", !inDay);
-      m.el.classList.toggle("sel", m.place === sel);
-      m.el.classList.toggle("labeled", d != null && inDay);
-      m.inDay = inDay;
+      const p = m.place;
+      let show;
+      if (d == null) {
+        show = p.kind === "stay" || p.kind === "home" || p === sel;
+        if (show) renderPin(m, p === sel && p.kind !== "stay" && p.kind !== "home" ? "num" : "town", "");
+      } else {
+        show = p.days.includes(d) || (p.kind === "home" && (d === 1 || d === lastDay)) || p === sel;
+        if (show) renderPin(m, "num", nums.get(p) || "");
+      }
+      m.shown = show;
+      m.el.classList.toggle("hidden", !show);
+      m.el.classList.toggle("sel", p === sel);
+      m.el.classList.toggle("labeled", d != null || (m.mode || "").startsWith("town"));
+      m.inDay = show;
     }
     declutter();
   }
 
-  // Greedy screen-space merge so nearby pins (a condo and the beach next door) don't overlap.
+  // Greedy screen-space merge so nearby pins (a condo and the beach next door) don't overlap;
+  // town labels that would collide with a stronger one are dropped too.
   let declutterQueued = false;
   function declutter() {
     if (declutterQueued) return;
     declutterQueued = true;
     requestAnimationFrame(() => {
       declutterQueued = false;
-      const items = markers.map((m) => ({ m, p: map.project([m.place.lng, m.place.lat]) }));
-      const prio = (m) => (m.place === S.place ? 100 : 0) + (m.inDay ? 50 : 0) + (m.photos.length ? 20 : 0) + (m.place.kind === "stay" ? 8 : 0) + (m.place.kind === "home" ? 6 : 0);
+      const items = markers.filter((m) => m.shown).map((m) => ({ m, p: map.project([m.place.lng, m.place.lat]) }));
+      const prio = (m) => (m.place === S.place ? 100 : 0) + (m.photos.length ? 20 : 0) + (m.place.kind === "stay" ? 8 : 0) + (m.place.kind === "home" ? 6 : 0) + m.place.days.length;
       items.sort((a, b) => prio(b.m) - prio(a.m));
       const leaders = [];
       for (const it of items) {
-        const r = it.m.photos.length ? 40 : 30;
+        const town = it.m.el.classList.contains("town");
+        const r = town ? 18 : it.m.photos.length ? 40 : 30;
         const lead = leaders.find((L) => Math.hypot(L.p.x - it.p.x, L.p.y - it.p.y) < r);
         if (lead) { lead.m.members.push(it.m.place); it.m.members = [it.m.place]; it.m.el.classList.add("merged"); }
         else { it.m.members = [it.m.place]; it.m.el.classList.remove("merged"); leaders.push(it); }
       }
+      const labelBoxes = [];
       for (const L of leaders) {
+        const town = L.m.el.classList.contains("town");
         const extra = L.m.members.length - 1;
-        L.m.el.classList.toggle("has-more", extra > 0);
+        L.m.el.classList.toggle("has-more", extra > 0 && !town);
         L.m.el.querySelector(".more").textContent = extra > 0 ? `+${extra}` : "";
-        if (extra > 0) L.m.el.classList.remove("labeled");
+        if (extra > 0 && !town) L.m.el.classList.remove("labeled");
+        if (town) {
+          // a label sits to the right of its dot; keep it only if it doesn't hit one already placed
+          const w = (L.m.el.querySelector(".lbl").offsetWidth || 80) + 4;
+          const box = { l: L.p.x + 10, r: L.p.x + 10 + w, t: L.p.y - 11, b: L.p.y + 11 };
+          const hit = labelBoxes.some((q) => box.l < q.r && box.r > q.l && box.t < q.b && box.b > q.t);
+          L.m.el.classList.toggle("labeled", !hit);
+          if (!hit) labelBoxes.push(box);
+        }
       }
     });
   }
@@ -1045,10 +1124,10 @@
     requestAnimationFrame(() => fit(tripBounds(t, n) || tripBounds(t), { duration, maxZoom: 11 }));
   }
 
-  function stopRow(t, s) {
+  function stopRow(t, s, nums) {
     const pl = placesOf(t);
     const place = pl.byStop.get(s.id);
-    const n = place ? (place.kind === "home" ? ICON.home : place.kind === "airport" ? ICON.plane : place.num) : "·";
+    const n = place ? (place.kind === "home" ? ICON.home : place.kind === "airport" ? ICON.plane : (nums && nums.byStop.get(s.id)) || "") : "·";
     const cls = !place ? "none" : place.kind === "home" ? "home" : place.kind === "airport" ? "airport" : s.kind === "stay" ? "stay" : "";
     return `<li class="${place ? "" : "nopin"}" data-stop="${esc(s.id)}">
       <div class="num ${cls}">${n}</div>
@@ -1065,14 +1144,15 @@
     const shared = stops.filter((s) => !s.group);
     const groups = (t.groups || []).filter((g) => stops.some((s) => s.group === g.id));
     let tl;
-    if (!groups.length) tl = `<ul class="timeline">${stops.map((s) => stopRow(t, s)).join("")}</ul>`;
+    const nums = dayNumbers(t, S.day);
+    if (!groups.length) tl = `<ul class="timeline">${stops.map((s) => stopRow(t, s, nums)).join("")}</ul>`;
     else {
       const firstGroupIdx = stops.findIndex((s) => s.group);
       const before = shared.filter((s) => stops.indexOf(s) < firstGroupIdx);
       const after = shared.filter((s) => stops.indexOf(s) > firstGroupIdx);
-      tl = (before.length ? `<div class="section-label" style="--c:${t.color}"><i></i>Everyone</div><ul class="timeline">${before.map((s) => stopRow(t, s)).join("")}</ul>` : "") +
-        groups.map((g) => `<div class="section-label" style="--c:${g.color}"><i></i>${esc(g.name)}</div><ul class="timeline">${stops.filter((s) => s.group === g.id).map((s) => stopRow(t, s)).join("")}</ul>`).join("") +
-        (after.length ? `<div class="section-label" style="--c:${t.color}"><i></i>Together again</div><ul class="timeline">${after.map((s) => stopRow(t, s)).join("")}</ul>` : "");
+      tl = (before.length ? `<div class="section-label" style="--c:${t.color}"><i></i>Everyone</div><ul class="timeline">${before.map((s) => stopRow(t, s, nums)).join("")}</ul>` : "") +
+        groups.map((g) => `<div class="section-label" style="--c:${g.color}"><i></i>${esc(g.name)}</div><ul class="timeline">${stops.filter((s) => s.group === g.id).map((s) => stopRow(t, s, nums)).join("")}</ul>`).join("") +
+        (after.length ? `<div class="section-label" style="--c:${t.color}"><i></i>Together again</div><ul class="timeline">${after.map((s) => stopRow(t, s, nums)).join("")}</ul>` : "");
     }
     const ph = photosForDay(t, S.day);
     const idx = t.days.findIndex((x) => x.n === S.day);
@@ -1115,7 +1195,7 @@
         <button class="back kicker" id="pl-back">${ICON.back}${S.day != null ? `Day ${S.day}` : "Whole trip"}</button>
         <button class="icon-btn" id="pl-close" aria-label="Close">${ICON.close}</button>
       </div>
-      <div class="kicker" style="margin-top:18px">${place.kind === "home" ? "Home" : `Stop ${place.num}`}${place.area ? ` · ${esc(place.area)}` : ""}</div>
+      <div class="kicker" style="margin-top:18px">${place.kind === "home" ? "Home" : place.kind === "stay" ? "Overnight" : place.kind === "airport" ? "Airport" : "Stop"}${place.area ? ` · ${esc(place.area)}` : ""}</div>
       <h2>${esc(place.name)}</h2>
       ${place.stops.map((s) => s.note).filter(Boolean).map((n) => `<p class="lede" style="margin-bottom:8px">${esc(n)}</p>`).join("")}
       <div class="visits">${place.days.map((n) => { const d = dayOf(t, n); return d ? `<button data-day="${n}">Day ${n} · ${esc(A.dayLabel(d))}</button>` : ""; }).join("")}</div>
@@ -1353,7 +1433,7 @@
     if (b) map.jumpTo({ center: [(b[0][0] + b[1][0]) / 2 - 30, (b[0][1] + b[1][1]) / 2 - 8], zoom: 1.7, pitch: 0, bearing: 0 });
     await caption(`<div class="kicker">${S.trips.length} ${S.trips.length === 1 ? "journey" : "journeys"} · ${fmtNum(tot.miles)} miles · ${tot.countries.size} ${tot.countries.size === 1 ? "country" : "countries"} · ${tot.nights} nights</div><h2>Where we've been</h2><div class="line"></div>`);
     guard(me);
-    if (b) map.fitBounds(b, { padding: ambPad(120, 220, 120), duration: 5200, maxZoom: 5, essential: true, curve: 1.2 });
+    if (b) safeFitBounds(b, { padding: ambPad(120, 220, 120), duration: 5200, maxZoom: 5, essential: true, curve: 1.2 });
     await wait(5600, me);
     const c = map.getCenter();
     map.easeTo({ center: [c.lng + 9, c.lat], bearing: 0, duration: 9000, easing: (x) => x });
@@ -1371,7 +1451,7 @@
     const s = A.tripStats(t);
     await caption(`<div class="kicker">${esc(A.dateRange(t.startDate, t.endDate))}</div><h2>${esc(t.title)}</h2><p>${fmtNum(s.miles)} miles driven${s.flown ? ` · ${fmtNum(s.flown)} flown` : ""} · ${s.nights} nights · ${s.stops} stops${s.photos ? ` · ${s.photos} photos` : ""}</p>${t.family || (t.travelers || []).length ? `<div class="amb-who">${A.whoWent(t, 40)}</div>` : ""}<div class="line"></div>`);
     guard(me);
-    map.fitBounds(tripBounds(t), { padding: ambPad(120, 260, 140), pitch: 0, bearing: 0, duration: 2600, essential: true });
+    safeFitBounds(tripBounds(t), { padding: ambPad(120, 260, 140), pitch: 0, bearing: 0, duration: 2600, essential: true });
     await wait(2700, me);
     await drawRoute(t, null, 6500, me);
     buildPins(t);
@@ -1401,7 +1481,7 @@
       guard(me);
       const b = tripBounds(t, d.n);
       const bearing = (Math.random() - 0.5) * 24;
-      map.fitBounds(b, { padding: ambPad(130, 300, 160), maxZoom: 10.5, pitch: 42, bearing, duration: 3400, essential: true });
+      safeFitBounds(b, { padding: ambPad(130, 300, 160), maxZoom: 10.5, pitch: 42, bearing, duration: 3400, essential: true });
       await wait(2600, me);
       await drawRoute(t, d.n, 3200, me);
       map.easeTo({ bearing: bearing + 6, duration: 7000, easing: (x) => x });
@@ -1634,7 +1714,7 @@
       const others = photosForPlace(t, where.place).filter((x) => x !== p).slice(0, 4);
       await caption(`<div class="kicker">${d ? `Day ${d.n} · ${esc(A.dayLong(d))}` : ""}</div><h2>${esc((where.place && where.place.name) || "")}</h2><p>${esc((where.place && where.place.area) || "")}${d && d.title ? ` · ${esc(d.title)}` : ""}</p>${others.length ? `<div class="amb-thumbs">${others.map((x) => `<img src="${A.photoUrl(x, "t")}" alt="">`).join("")}</div>` : ""}`, { card: true });
       const db = where.day ? tripBounds(t, where.day) : null;
-      if (db) map.fitBounds(db, { padding: ambPad(140, 320, 180), maxZoom: 11, pitch: 35, duration: 4200, essential: true });
+      if (db) safeFitBounds(db, { padding: ambPad(140, 320, 180), maxZoom: 11, pitch: 35, duration: 4200, essential: true });
       await wait(7500, me);
     }
     await caption("");

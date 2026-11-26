@@ -530,8 +530,7 @@ export default async function handler(req, res) {
       p.invite = { hash: crypto.createHash("sha256").update(token).digest("hex"), expires: Date.now() + 7 * 864e5 };
       await savePeople(people);
       const host = str(req.body?.host, 200) || req.headers["x-forwarded-host"] || req.headers.host;
-      const path = /^trips\./.test(host) ? "/welcome" : "/trips/welcome";
-      return res.status(200).json({ person: publicPerson(p), link: `https://${host}${path}?token=${token}`, expires: p.invite.expires });
+      return res.status(200).json({ person: publicPerson(p), link: `https://${host}/trips/welcome?token=${token}`, expires: p.invite.expires });
     }
 
     if (action === "logout") {
